@@ -565,6 +565,59 @@
   .keys .caps { display: inline-flex; gap: 3px; flex: none; }
   .keys .label { min-width: 0; }
 
+  /* Levels panel (title screen): the campaign, this browser's saved levels, and the link level. */
+  .levels { grid-column: 1 / -1; padding: 16px 18px 18px; }
+  .levels-note {
+    margin: 12px 0 0;
+    padding: 9px 11px;
+    border-left: 3px solid var(--behind);
+    background: rgba(255, 90, 78, 0.12);
+    font-size: 13px;
+    line-height: 1.45;
+    color: #E8EDF1;
+  }
+  .levels-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 6px; }
+  .levels-list li { margin: 0; }
+  .level-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 6px 14px;
+    width: 100%;
+    padding: 10px 12px;
+    font-family: var(--f-body);
+    font-size: 14px;
+    text-align: left;
+    color: #E8EDF1;
+    background: rgba(232, 237, 241, 0.05);
+    border: 1px solid var(--panel-line);
+    border-left: 3px solid var(--paper-faint);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .level-row:hover:not(:disabled) { background: rgba(232, 237, 241, 0.11); }
+  .level-row:disabled { cursor: not-allowed; opacity: 0.75; border-left-color: var(--behind); }
+  .level-row[aria-current="true"] { border-left-color: var(--signal); background: rgba(242, 183, 5, 0.12); }
+  .level-row .lv-name { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .level-row .lv-tag {
+    font-family: var(--f-mono);
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(232, 237, 241, 0.7);
+  }
+  .level-row .lv-blocks { font-family: var(--f-mono); font-size: 11px; color: rgba(232, 237, 241, 0.72); }
+  .level-row .lv-best {
+    font-family: var(--f-mono);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: var(--ahead);
+    justify-self: end;
+  }
+  .level-row .lv-best.is-none { color: rgba(232, 237, 241, 0.45); }
+  .level-row .lv-why { grid-column: 1 / -1; font-size: 12px; line-height: 1.4; color: #FF9A92; }
+  .levels-hint { margin-top: 12px; font-size: 13px; }
+
   .settings-slot:empty { display: none; }
   .field + .field { margin-top: 14px; }
   .field-row {
@@ -685,6 +738,7 @@
     .pitch { margin-top: 12px; font-size: clamp(17px, 2vw, 21px); }
     .title-actions { margin-top: 18px; }
     .title-grid { margin-top: 18px; gap: 12px; }
+    .level-row { grid-template-columns: minmax(0, 1fr) auto; }
     .controls, .settings { padding: 14px 16px 16px; }
     .keys { gap: 8px 14px; }
     .field + .field { margin-top: 11px; }
@@ -941,6 +995,13 @@
     <p id="touch-note" class="touch-note" data-auto hidden>Vaultline needs a keyboard and mouse. Open this page on a computer to run the course.</p>
 
     <div class="title-grid">
+      <section id="levels" class="panel levels" aria-labelledby="levels-heading">
+        <h2 id="levels-heading" class="eyebrow">Levels</h2>
+        <p id="levels-note" class="levels-note" hidden></p>
+        <ul id="levels-list" class="levels-list"></ul>
+        <p class="panel-note levels-hint">Levels you save in the designer show up here. Share one with its play link.</p>
+      </section>
+
       <section class="panel controls" aria-labelledby="controls-heading">
         <h2 id="controls-heading" class="eyebrow">Controls</h2>
         <ul class="keys">
@@ -8332,6 +8393,7 @@ const IDS = [
   'toast', 'toast-index', 'toast-name', 'toast-split', 'toast-delta',
   'hint', 'speed', 'speed-value', 'speed-bar', 'speed-tick-walk', 'speed-tick-sprint',
   'screen-title', 'title-body', 'title-pb', 'title-pb-time', 'touch-note', 'title-settings-slot',
+  'levels', 'levels-list', 'levels-note',
   'settings', 'sens', 'sens-val', 'vol', 'vol-val',
   'quality-pc', 'quality-laptop', 'quality-help', 'show-fps', 'fps', 'fps-value',
   'screen-pause', 'pause-body', 'pause-time', 'pause-split', 'pause-settings-slot',
@@ -8339,6 +8401,8 @@ const IDS = [
   'screen-error', 'error-body', 'error-message',
   'btn-play', 'btn-resume', 'btn-restart', 'btn-again',
 ];
+
+const LEVEL_TAGS = { campaign: 'Campaign', stored: 'Saved here', link: 'From link' };
 
 const QUALITY_HELP = {
   pc: 'Full detail: sharp resolution, soft shadows, speed lines',
@@ -8466,6 +8530,7 @@ class Hud {
     this.showFps = false;
     this._qualityCbs = [];
     this._showFpsCbs = [];
+    this._levelCbs = [];
     this._fpsText = '';
 
     this.reducedMotion = false;
@@ -8480,6 +8545,10 @@ class Hud {
     this._speedScale = -1;
     this._speedFast = false;
     this._aimState = '';
+
+    // Records are per level: main.js points this at 'vaultline.pb.<level id>' as soon as it knows
+    // which level is loaded. The bare legacy key is the default so a Hud used on its own still works.
+    this._pbKey = KEY_PB;
 
     this._names = [];
     this._runSplits = [];
@@ -8657,16 +8726,23 @@ class Hud {
     this.setAimState('none');
   }
 
-  /** Read 'vaultline.pb' -> {time, splits[]} or null. */
-  loadBest() {
-    return parseBest(storageGet(KEY_PB));
+  /** Point the record at one level's storage key (main.js passes 'vaultline.pb.<level id>'). */
+  setPBKey(key) {
+    this._pbKey = typeof key === 'string' && key ? key : KEY_PB;
+    this._pbAtStart = this.loadBest();
+    if (this.screen === 'title') this._fillTitle();
   }
 
-  /** Write 'vaultline.pb'. Returns false if storage is unavailable. */
+  /** Read the current level's record -> {time, splits[]} or null. */
+  loadBest() {
+    return parseBest(storageGet(this._pbKey));
+  }
+
+  /** Write the current level's record. Returns false if storage is unavailable. */
   saveBest(time, splits) {
     if (!isNum(time) || time <= 0) return false;
     const clean = Array.isArray(splits) ? splits.map((v) => (isNum(v) ? v : null)) : [];
-    return storageSet(KEY_PB, JSON.stringify({ time: time, splits: clean }));
+    return storageSet(this._pbKey, JSON.stringify({ time: time, splits: clean }));
   }
 
   // ------------------------------------------------------------ graphics
@@ -8685,6 +8761,76 @@ class Hud {
     if (pc) pc.checked = q === 'pc';
     if (laptop) laptop.checked = q === 'laptop';
     this._setText(this.el['quality-help'], QUALITY_HELP[q]);
+  }
+
+  // ------------------------------------------------------------ levels
+
+  /** Register a listener for a pick in the Levels panel: cb(key). Not fired by setLevels(). */
+  onLevelPick(cb) {
+    if (typeof cb === 'function') this._levelCbs.push(cb);
+  }
+
+  /**
+   * Fill the Levels panel. `list` is [{ key, kind, name, blocks, best, error }] — best in seconds or
+   * null, error a reason the level cannot be played. `activeKey` marks the one that is loaded.
+   * Rows are buttons, so Tab and Enter work; Up/Down/Home/End move between them.
+   */
+  setLevels(list, activeKey) {
+    const host = this.el['levels-list'];
+    if (!host) return;
+    while (host.firstChild) host.removeChild(host.firstChild);
+    const rows = Array.isArray(list) ? list : [];
+    for (const item of rows) {
+      const li = this.doc.createElement('li');
+      const btn = this.doc.createElement('button');
+      btn.type = 'button';
+      btn.className = 'level-row';
+      btn.dataset.key = item.key;
+      if (item.error) btn.disabled = true;
+      if (item.key === activeKey) btn.setAttribute('aria-current', 'true');
+      btn.appendChild(this._span(item.name || 'Untitled', 'lv-name'));
+      btn.appendChild(this._span(LEVEL_TAGS[item.kind] || 'LEVEL', 'lv-tag'));
+      const blocks = isNum(item.blocks) ? item.blocks : 0;
+      btn.appendChild(this._span(blocks + (blocks === 1 ? ' block' : ' blocks'), 'lv-blocks'));
+      const best = isNum(item.best) && item.best > 0 ? formatTime(item.best) : null;
+      const time = this._span(best || 'no time yet', 'lv-best' + (best ? '' : ' is-none'));
+      time.setAttribute('aria-label', best ? 'Best time ' + best : 'No time yet');
+      btn.appendChild(time);
+      if (item.error) btn.appendChild(this._span(item.error, 'lv-why'));
+      btn.addEventListener('click', () => {
+        for (const cb of this._levelCbs) cb(item.key);
+      });
+      btn.addEventListener('keydown', (ev) => this._levelKey(ev, btn));
+      li.appendChild(btn);
+      host.appendChild(li);
+    }
+    if (this.el.levels) this.el.levels.hidden = rows.length === 0;
+  }
+
+  /** A line above the level list: why a link was refused, or nothing when the text is empty. */
+  setLevelNote(text) {
+    const el = this.el['levels-note'];
+    if (!el) return;
+    const message = typeof text === 'string' ? text : '';
+    this._setText(el, message);
+    el.hidden = !message;
+  }
+
+  _levelKey(ev, btn) {
+    const keys = ['ArrowDown', 'ArrowUp', 'Home', 'End'];
+    if (keys.indexOf(ev.key) < 0) return;
+    const host = this.el['levels-list'];
+    if (!host) return;
+    const all = Array.prototype.slice.call(host.querySelectorAll('button.level-row'));
+    if (!all.length) return;
+    const at = all.indexOf(btn);
+    let next = at;
+    if (ev.key === 'ArrowDown') next = Math.min(all.length - 1, at + 1);
+    else if (ev.key === 'ArrowUp') next = Math.max(0, at - 1);
+    else if (ev.key === 'Home') next = 0;
+    else next = all.length - 1;
+    ev.preventDefault();
+    all[next].focus();
   }
 
   /** Register a listener for the Show FPS checkbox: cb(boolean). Not fired by setShowFps(). */
@@ -9255,8 +9401,62 @@ return Object.freeze({ Flyover });
 // ---- js/game-records.js ----
 const __vl$m25_js_game_records = (function () {
 
-// Personal-best bookkeeping for main.js. Storage goes through Hud.loadBest/saveBest (key 'vaultline.pb',
-// JSON {time, splits:[]}); every call is additionally guarded so blocked storage can never break a run.
+// Personal-best bookkeeping for main.js.
+//
+// Records are PER LEVEL: the storage key is 'vaultline.pb.<level id>', where the id is the content hash
+// from js/level-codec.js, so a course keeps its time whether it was opened from the campaign, from a
+// link or out of the editor's storage. Storage goes through Hud.loadBest/saveBest (main.js points the
+// Hud at the right key with hud.setPBKey); every call here is additionally guarded so blocked storage
+// can never break a run.
+//
+// Before per-level records there was one key, 'vaultline.pb', holding the campaign time. migratePB()
+// copies it across to the campaign's own key the first time the game runs, so nobody loses their record.
+
+const LEGACY_PB_KEY = 'vaultline.pb';
+const PB_PREFIX = 'vaultline.pb.';
+
+function pbKeyFor(id) {
+  return PB_PREFIX + (id || 'unknown');
+}
+
+function storeGet(key) {
+  try {
+    return typeof localStorage !== 'undefined' && localStorage ? localStorage.getItem(key) : null;
+  } catch (err) {
+    return null;
+  }
+}
+
+function storeSet(key, value) {
+  try {
+    if (typeof localStorage === 'undefined' || !localStorage) return false;
+    localStorage.setItem(key, value);
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+/**
+ * One-way move of the old single-course record onto the campaign's per-level key. Runs on every boot
+ * but only ever writes when the new key is empty, so a later campaign run can never be overwritten by
+ * the stale legacy value. The legacy key is left in place: an older build of the game still reads it.
+ * -> true when something was copied.
+ */
+function migratePB(campaignId) {
+  const target = pbKeyFor(campaignId);
+  if (storeGet(target) != null) return false;
+  const legacy = storeGet(LEGACY_PB_KEY);
+  if (legacy == null) return false;
+  let parsed = null;
+  try {
+    parsed = JSON.parse(legacy);
+  } catch (err) {
+    return false;
+  }
+  if (!parsed || !Number.isFinite(parsed.time) || parsed.time <= 0) return false;
+  return storeSet(target, legacy);
+}
 
 function validPB(pb) {
   return pb && Number.isFinite(pb.time) && pb.time > 0 ? pb : null;
@@ -9284,6 +9484,17 @@ function writePB(hud, time, splits, prev) {
   return record;
 }
 
+/** The stored best for one level id, without touching the Hud. Used by the level list. */
+function bestFor(id) {
+  const raw = storeGet(pbKeyFor(id));
+  if (raw == null) return null;
+  try {
+    return validPB(JSON.parse(raw));
+  } catch (err) {
+    return null;
+  }
+}
+
 // Finish-screen data for Hud.showScreen('finish', data). `prev` is the PB from before this run.
 function finishData(time, splits, prev, checkpoints) {
   const old = validPB(prev);
@@ -9298,7 +9509,7 @@ function finishData(time, splits, prev, checkpoints) {
     names,
   };
 }
-return Object.freeze({ readPB, writePB, finishData });
+return Object.freeze({ LEGACY_PB_KEY, PB_PREFIX, pbKeyFor, migratePB, readPB, writePB, bestFor, finishData });
 })();
 
 // ---- js/game-quality.js ----
@@ -9450,8 +9661,1237 @@ class GraphicsControl {
 return Object.freeze({ GraphicsControl });
 })();
 
+// ---- js/level-codec.js ----
+const __vl$m27_js_level_codec = (function () {
+
+// Level <-> link payload, shared by the game and the level designer so the two can never drift.
+//
+// A payload is plain ASCII that survives a URL hash untouched: a three-character version tag, then
+// base64url (no padding, so no '=' to escape).
+//
+//   v1d<base64url>   the level's JSON, deflate-raw compressed with the browser's CompressionStream
+//   v1j<base64url>   the same JSON, not compressed — used where CompressionStream is missing
+//
+// Both tags decode everywhere, so a link made on a browser with compression opens on one without it and
+// the other way round. The tag is checked before anything else: a payload from a future version is
+// refused with a message rather than half-read.
+//
+// The level id is a hash of the same canonical JSON. It is what per-level records are keyed by, so it
+// has to be stable across a save/load/link round trip — hence the key-sorted canonical form rather than
+// whatever order the object happens to carry.
+//
+// Pure module: no DOM, no three, no imports. The globals it uses (btoa/atob, TextEncoder/TextDecoder,
+// CompressionStream) exist in browsers and in node, so the tests can drive it headless.
+
+const CODEC_VERSION = 1;
+const TAG_DEFLATE = 'v1d';
+const TAG_PLAIN = 'v1j';
+const LINK_WARN_LENGTH = 8000;   // chat apps start cutting links around here
+const HASH_PARAM = 'lvl';        // the game reads "#lvl=<payload>"
+
+// ------------------------------------------------------------------------------------ base64url
+function bytesToBase64url(bytes) {
+  let bin = '';
+  const CHUNK = 0x8000;                 // apply() on the whole array blows the argument limit
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function base64urlToBytes(text) {
+  const clean = String(text).replace(/-/g, '+').replace(/_/g, '/').replace(/\s+/g, '');
+  const pad = clean.length % 4 === 0 ? '' : '===='.slice(clean.length % 4);
+  const bin = atob(clean + pad);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+
+// ------------------------------------------------------------------------------------ streams
+function concatChunks(chunks, total) {
+  const out = new Uint8Array(total);
+  let at = 0;
+  for (const c of chunks) {
+    out.set(c, at);
+    at += c.length;
+  }
+  return out;
+}
+
+async function pump(stream, bytes) {
+  const writer = stream.writable.getWriter();
+  // A damaged payload rejects the write side as well as the read side. The read loop below is what
+  // reports the failure, so the write promises are swallowed here — otherwise they surface separately
+  // as an unhandled rejection after the error has already been dealt with.
+  writer.write(bytes).catch(() => {});
+  writer.close().catch(() => {});
+  const reader = stream.readable.getReader();
+  const chunks = [];
+  let total = 0;
+  for (;;) {
+    const step = await reader.read();
+    if (step.done) break;
+    chunks.push(step.value);
+    total += step.value.length;
+  }
+  return concatChunks(chunks, total);
+}
+
+// -> compressed bytes, or null when this browser cannot do deflate-raw.
+async function deflateRaw(bytes) {
+  if (typeof CompressionStream !== 'function') return null;
+  try {
+    return await pump(new CompressionStream('deflate-raw'), bytes);
+  } catch (err) {
+    return null;                        // older engines know 'gzip' but not 'deflate-raw'
+  }
+}
+
+async function inflateRaw(bytes) {
+  if (typeof DecompressionStream !== 'function') {
+    throw new Error('This link is compressed and this browser cannot read it. Open it in a newer browser.');
+  }
+  return pump(new DecompressionStream('deflate-raw'), bytes);
+}
+
+// ------------------------------------------------------------------------------------ canonical form
+// JSON with every object's keys in sorted order, so the same level always hashes the same whichever
+// way it was built (campaign module, editor document, decoded link).
+function canonicalText(value) {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value === undefined ? null : value);
+  if (Array.isArray(value)) return '[' + value.map(canonicalText).join(',') + ']';
+  const keys = Object.keys(value).filter((k) => value[k] !== undefined).sort();
+  return '{' + keys.map((k) => JSON.stringify(k) + ':' + canonicalText(value[k])).join(',') + '}';
+}
+
+// A short, stable id for a level: two 32-bit avalanche hashes of the canonical text, in base 36.
+// Content-addressed on purpose — the same course carries its records wherever it came from.
+function levelId(level) {
+  const text = canonicalText(level || {});
+  let h1 = 0x811c9dc5;
+  let h2 = 0x9e3779b9;
+  for (let i = 0; i < text.length; i++) {
+    const c = text.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 0x01000193) >>> 0;
+    h2 = Math.imul(h2 ^ c, 0x85ebca6b) >>> 0;
+    h2 = ((h2 << 13) | (h2 >>> 19)) >>> 0;
+  }
+  h1 = (h1 ^ (h1 >>> 15)) >>> 0;
+  h2 = (h2 ^ (h2 >>> 16)) >>> 0;
+  return h1.toString(36) + '-' + h2.toString(36);
+}
+
+// ------------------------------------------------------------------------------------ encode / decode
+/** Level object -> payload string for the URL hash. Compressed where the browser can. */
+async function encodeLevel(level) {
+  const json = JSON.stringify(level);
+  const bytes = new TextEncoder().encode(json);
+  const packed = await deflateRaw(bytes);
+  if (packed && packed.length < bytes.length) return TAG_DEFLATE + bytesToBase64url(packed);
+  return TAG_PLAIN + bytesToBase64url(bytes);
+}
+
+/** Payload string -> level object. Throws an Error whose message is fit to show on screen. */
+async function decodeLevel(payload) {
+  const raw = String(payload == null ? '' : payload).trim();
+  if (!raw) throw new Error('The link carries no level.');
+  const tag = raw.slice(0, 3);
+  const body = raw.slice(3);
+  if (tag !== TAG_DEFLATE && tag !== TAG_PLAIN) {
+    throw new Error('This link was made by a different version of Vaultline and cannot be opened here.');
+  }
+  let bytes = null;
+  try {
+    bytes = base64urlToBytes(body);
+  } catch (err) {
+    throw new Error('The link is damaged — it looks cut off or partly retyped.');
+  }
+  if (tag === TAG_DEFLATE) {
+    try {
+      bytes = await inflateRaw(bytes);
+    } catch (err) {
+      if (err && /newer browser/.test(err.message)) throw err;
+      throw new Error('The link is damaged — the compressed level could not be unpacked.');
+    }
+  }
+  let level = null;
+  try {
+    level = JSON.parse(new TextDecoder().decode(bytes));
+  } catch (err) {
+    throw new Error('The link does not contain a readable level.');
+  }
+  if (!level || typeof level !== 'object' || Array.isArray(level) || !Array.isArray(level.boxes)) {
+    throw new Error('The link does not contain a Vaultline level.');
+  }
+  return level;
+}
+
+// ------------------------------------------------------------------------------------ the URL hash
+/** The hash a play link carries for `payload`. */
+function hashFor(payload) {
+  return '#' + HASH_PARAM + '=' + payload;
+}
+
+/** The payload in "#lvl=..." (also accepts "#lvl=..&other=.."), or '' when there is none. */
+function readHashPayload(hash) {
+  const raw = String(hash == null ? '' : hash).replace(/^#/, '');
+  if (!raw) return '';
+  for (const part of raw.split('&')) {
+    const eq = part.indexOf('=');
+    if (eq < 0) continue;
+    if (part.slice(0, eq) !== HASH_PARAM) continue;
+    try {
+      return decodeURIComponent(part.slice(eq + 1));
+    } catch (err) {
+      return part.slice(eq + 1);        // a hash that was never escaped is fine as it stands
+    }
+  }
+  return '';
+}
+
+/** How many blocks a level is made of (movers count: they are solid too). */
+function blockCount(level) {
+  if (!level) return 0;
+  const boxes = Array.isArray(level.boxes) ? level.boxes.length : 0;
+  const movers = Array.isArray(level.movers) ? level.movers.length : 0;
+  return boxes + movers;
+}
+return Object.freeze({ CODEC_VERSION, TAG_DEFLATE, TAG_PLAIN, LINK_WARN_LENGTH, HASH_PARAM, canonicalText, levelId, encodeLevel, decodeLevel, hashFor, readHashPayload, blockCount });
+})();
+
+// ---- js/editor/ed-store.js ----
+const __vl$m28_js_editor_ed_store = (function () {
+
+// Named levels in localStorage. Every access is wrapped in try/catch: the editor also runs from file://
+// and inside sandboxed iframes, where storage can be missing, blocked or full.
+//
+// Layout: one key per document, 'vaultline.editor.lvl.<name>', holding the LEVEL-shaped JSON. An index key
+// lists the names so the picker does not have to enumerate storage.
+//
+// Pure module: no three, no DOM.
+
+const PREFIX = 'vaultline.editor.lvl.';
+const INDEX_KEY = 'vaultline.editor.index';
+const LAST_KEY = 'vaultline.editor.last';
+
+function storage() {
+  try {
+    if (typeof localStorage === 'undefined' || !localStorage) return null;
+    // Touch it: Safari in private mode throws only on write.
+    const probe = '__vl_probe__';
+    localStorage.setItem(probe, '1');
+    localStorage.removeItem(probe);
+    return localStorage;
+  } catch (err) {
+    return null;
+  }
+}
+
+function storageAvailable() {
+  return storage() !== null;
+}
+
+function cleanName(name) {
+  const raw = String(name == null ? '' : name);
+  let out = '';
+  for (let i = 0; i < raw.length && out.length < 64; i++) {
+    const c = raw.charCodeAt(i);
+    out += c < 32 || c === 127 ? ' ' : raw[i];
+  }
+  return out.trim();
+}
+
+// -> array of names, oldest first. Never throws.
+function listLevels() {
+  const ls = storage();
+  if (!ls) return [];
+  try {
+    const raw = ls.getItem(INDEX_KEY);
+    const list = raw ? JSON.parse(raw) : [];
+    return Array.isArray(list) ? list.filter((n) => typeof n === 'string') : [];
+  } catch (err) {
+    return [];
+  }
+}
+
+function writeIndex(ls, names) {
+  try {
+    ls.setItem(INDEX_KEY, JSON.stringify(names));
+  } catch (err) {
+    // the index is a convenience; the level itself is already stored
+  }
+}
+
+// -> { ok:true, name } or { ok:false, error:'...' }. Never throws.
+function saveLevel(name, levelJson) {
+  const key = cleanName(name);
+  if (!key) return { ok: false, error: 'Give the level a name first.' };
+  const ls = storage();
+  if (!ls) return { ok: false, error: 'This browser will not let the editor use localStorage. Use Export instead.' };
+  try {
+    ls.setItem(PREFIX + key, JSON.stringify(levelJson));
+  } catch (err) {
+    const why = err && err.name === 'QuotaExceededError' ? 'storage is full' : 'storage refused the write';
+    return { ok: false, error: 'Could not save "' + key + '": ' + why + '. Use Export instead.' };
+  }
+  const names = listLevels();
+  if (!names.includes(key)) {
+    names.push(key);
+    writeIndex(ls, names);
+  }
+  writeLast(key);
+  return { ok: true, name: key };
+}
+
+// -> { ok:true, level, name } or { ok:false, error }. Never throws.
+function loadLevel(name) {
+  const key = cleanName(name);
+  const ls = storage();
+  if (!ls) return { ok: false, error: 'localStorage is not available here.' };
+  try {
+    const raw = ls.getItem(PREFIX + key);
+    if (raw == null) return { ok: false, error: 'No saved level called "' + key + '".' };
+    const level = JSON.parse(raw);
+    if (!level || typeof level !== 'object') return { ok: false, error: '"' + key + '" is not a level.' };
+    return { ok: true, level, name: key };
+  } catch (err) {
+    return { ok: false, error: 'Could not read "' + key + '": ' + (err && err.message ? err.message : 'bad data') };
+  }
+}
+
+function deleteLevel(name) {
+  const key = cleanName(name);
+  const ls = storage();
+  if (!ls) return { ok: false, error: 'localStorage is not available here.' };
+  try {
+    ls.removeItem(PREFIX + key);
+  } catch (err) {
+    return { ok: false, error: 'Could not delete "' + key + '".' };
+  }
+  writeIndex(ls, listLevels().filter((n) => n !== key));
+  return { ok: true };
+}
+
+function readLast() {
+  const ls = storage();
+  if (!ls) return '';
+  try {
+    return cleanName(ls.getItem(LAST_KEY) || '');
+  } catch (err) {
+    return '';
+  }
+}
+
+function writeLast(name) {
+  const ls = storage();
+  if (!ls) return;
+  try {
+    ls.setItem(LAST_KEY, cleanName(name));
+  } catch (err) {
+    // nothing to do: the name is only a convenience
+  }
+}
+return Object.freeze({ PREFIX, INDEX_KEY, LAST_KEY, storageAvailable, cleanName, listLevels, saveLevel, loadLevel, deleteLevel, readLast, writeLast });
+})();
+
+// ---- js/editor/ed-doc.js ----
+const __vl$m29_js_editor_ed_doc = (function () {
+
+// Vaultline level designer — the document model.
+//
+// A "doc" is an editable superset of the LEVEL shape in SPEC.md. Every editable thing carries two
+// editor-only fields that never leave the editor:
+//   type  'box' | 'mover' | 'checkpoint' | 'sign' | 'spawn' | 'finish'
+//   uid   a number, unique inside the doc and stable across edits (selection, undo and the UI key on it)
+// toLevel() / docToJSON() strip both, so what the game and the exporter see is exactly the SPEC shape.
+//
+// Pure module: no DOM, no three, no imports. Runs headless under node.
+
+const GRID = 0.5;                       // metres: the snapping grid
+const MIN_SIZE = 0.5;                   // metres: thinnest box the editor will make
+const BOX_KINDS = ['floor', 'wall', 'wallrun', 'glass', 'bounce', 'deco', 'grapple'];
+const ENTITY_TYPES = ['box', 'mover', 'checkpoint', 'sign', 'spawn', 'finish'];
+
+// Palette copy: label + the one-line hint shown in the properties panel.
+const KIND_INFO = {
+  floor:   { label: 'Floor',    hint: 'Walkable concrete. The default surface.' },
+  wall:    { label: 'Wall',     hint: 'Solid, not wall-runnable.' },
+  wallrun: { label: 'Wall-run', hint: 'Signal yellow: wall-run and wall-jump on it.' },
+  glass:   { label: 'Glass',    hint: 'Solid but see-through.' },
+  bounce:  { label: 'Bounce',   hint: 'Teal pad: launches up at PHYS.bounceVel.' },
+  deco:    { label: 'Deco',     hint: 'Scenery only — never collides.' },
+  grapple: { label: 'Anchor',   hint: 'Emerald grapple anchor. Never collides.' },
+};
+
+const ANCHOR_HALF = 0.35;                      // the campaign's grapple cubes are 0.7 m
+const DEFAULT_KILL_Y = -12;
+
+// ---------------------------------------------------------------------------------------- numbers
+function snap(v, step) {
+  const s = step > 0 ? step : GRID;
+  const n = Number(v);
+  if (!Number.isFinite(n)) return 0;
+  return Math.round(n / s) * s;
+}
+
+function num(v, fallback) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function vec3(v, fallback) {
+  const f = fallback || [0, 0, 0];
+  if (!Array.isArray(v)) return f.slice();
+  return [num(v[0], f[0]), num(v[1], f[1]), num(v[2], f[2])];
+}
+
+// Round to 4 decimals so snapped values export as 3 and -12.5, never 3.0000000000000004.
+function tidy(v) {
+  const n = num(v, 0);
+  return Math.round(n * 10000) / 10000;
+}
+
+function tidyVec(v) {
+  return vec3(v, [0, 0, 0]).map(tidy);
+}
+
+// min/max exactly as given (tidied). Loading must NOT repair a degenerate box: the validity panel's job
+// is to flag min >= max, so the doc has to be able to hold one.
+function normaliseBounds(min, max) {
+  return { min: tidyVec(min), max: tidyVec(max) };
+}
+
+// Sorted, non-degenerate min/max: used when the editor CREATES or resizes geometry.
+function healBounds(min, max) {
+  const lo = tidyVec(min);
+  const hi = tidyVec(max);
+  for (let k = 0; k < 3; k++) {
+    if (lo[k] > hi[k]) { const t = lo[k]; lo[k] = hi[k]; hi[k] = t; }
+    if (hi[k] - lo[k] < MIN_SIZE) hi[k] = tidy(lo[k] + MIN_SIZE);
+  }
+  return { min: lo, max: hi };
+}
+
+// A box that is safe to raycast / outline even when the doc holds an inverted one.
+function sortedBounds(b) {
+  if (!b) return null;
+  const lo = [0, 0, 0];
+  const hi = [0, 0, 0];
+  for (let k = 0; k < 3; k++) {
+    lo[k] = Math.min(b.min[k], b.max[k]);
+    hi[k] = Math.max(b.min[k], b.max[k]);
+  }
+  return { min: lo, max: hi };
+}
+
+// ---------------------------------------------------------------------------------------- ids
+function uniqueId(doc, base) {
+  const taken = new Set();
+  for (const e of allEntities(doc)) if (e.id) taken.add(e.id);
+  const stem = String(base || 'box').replace(/-\d+$/, '') || 'box';
+  if (!taken.has(stem)) return stem;
+  for (let i = 1; i < 100000; i++) {
+    const candidate = stem + '-' + i;
+    if (!taken.has(candidate)) return candidate;
+  }
+  return stem + '-' + Date.now();
+}
+
+function nextUid(doc) {
+  doc._nextUid = (doc._nextUid || 1) + 1;
+  return doc._nextUid;
+}
+
+// ---------------------------------------------------------------------------------------- entities
+function makeBox(doc, raw) {
+  const b = raw || {};
+  const bounds = normaliseBounds(b.min, b.max);
+  const kind = BOX_KINDS.includes(b.kind) ? b.kind : 'floor';
+  const box = {
+    type: 'box',
+    uid: nextUid(doc),
+    id: b.id != null ? String(b.id) : '',
+    kind,
+    min: bounds.min,
+    max: bounds.max,
+  };
+  // The campaign's anchors carry `approach` (the spot they were designed to be fired from). Keep it
+  // so the real level survives a load/save round trip unchanged.
+  if (Array.isArray(b.approach)) box.approach = tidyVec(b.approach);
+  return box;
+}
+
+function makeMover(doc, raw) {
+  const m = raw || {};
+  const size = vec3(m.size, [3, 0.5, 3]).map((v) => Math.abs(tidy(v)));
+  const a = tidyVec(vec3(m.a, [0, 0, 0]));
+  return {
+    type: 'mover',
+    uid: nextUid(doc),
+    id: m.id != null ? String(m.id) : '',
+    kind: 'mover',
+    size,
+    a,
+    b: tidyVec(vec3(m.b, a)),
+    period: Math.max(0, tidy(num(m.period, 4))),
+    phase: tidy(num(m.phase, 0)),
+  };
+}
+
+function makeCheckpoint(doc, raw) {
+  const c = raw || {};
+  const bounds = normaliseBounds(c.min, c.max);
+  const r = c.respawn || {};
+  return {
+    type: 'checkpoint',
+    uid: nextUid(doc),
+    id: c.id != null ? String(c.id) : '',
+    name: c.name != null ? String(c.name) : 'CHECKPOINT',
+    min: bounds.min,
+    max: bounds.max,
+    respawn: {
+      pos: tidyVec(vec3(r.pos, [(bounds.min[0] + bounds.max[0]) / 2, bounds.min[1] + 0.01, (bounds.min[2] + bounds.max[2]) / 2])),
+      yaw: tidy(num(r.yaw, 0)),
+    },
+  };
+}
+
+function makeSign(doc, raw) {
+  const s = raw || {};
+  return {
+    type: 'sign',
+    uid: nextUid(doc),
+    pos: tidyVec(vec3(s.pos, [0, 2.4, 0])),
+    yaw: tidy(num(s.yaw, 0)),
+    text: s.text != null ? String(s.text) : 'SIGN',
+  };
+}
+
+// ---------------------------------------------------------------------------------------- doc
+function createDoc(name) {
+  const doc = {
+    name: name ? String(name) : 'Untitled',
+    killY: DEFAULT_KILL_Y,
+    _nextUid: 1,
+    spawn: null,
+    finish: null,
+    boxes: [],
+    movers: [],
+    checkpoints: [],
+    signs: [],
+  };
+  doc.spawn = { type: 'spawn', uid: nextUid(doc), pos: [0, 0.01, 0], yaw: 0 };
+  doc.finish = { type: 'finish', uid: nextUid(doc), min: [-5, 0, -45], max: [5, 4, -35] };
+  return doc;
+}
+
+// A blank document that is already a valid, runnable course: a start pad, three stepping platforms with
+// 4 m gaps and 0.5 m step-ups (all inside REACH), one checkpoint and a finish pad.
+function createStarterDoc(name) {
+  const doc = createDoc(name || 'New level');
+  const add = (raw) => doc.boxes.push(makeBox(doc, raw));
+  add({ id: 'start-pad', kind: 'floor', min: [-6, -1, -6], max: [6, 0, 6] });
+  add({ id: 'plat-1', kind: 'floor', min: [-4, -1, -16], max: [4, 0.5, -10] });
+  add({ id: 'plat-2', kind: 'floor', min: [-4, -1, -26], max: [4, 1, -20] });
+  add({ id: 'plat-3', kind: 'floor', min: [-4, -1, -36], max: [4, 1.5, -30] });
+  add({ id: 'finish-pad', kind: 'floor', min: [-5, -1, -50], max: [5, 1.5, -40] });
+  addEntity(doc, 'checkpoint', {
+    id: 'cp1', name: 'HALFWAY',
+    min: [-4, 1.5, -36], max: [4, 31.5, -30],
+    respawn: { pos: [0, 1.51, -32], yaw: 0 },
+  });
+  addEntity(doc, 'sign', { pos: [0, 2.4, -8], yaw: 0, text: 'WASD — MOVE\nSPACE — JUMP' });
+  doc.finish = { type: 'finish', uid: doc.finish.uid, min: [-4, 1.5, -48], max: [4, 5.5, -42] };
+  return doc;
+}
+
+// Build an editable doc from anything LEVEL-shaped (the campaign level, a JSON import, a saved doc).
+function docFromLevel(level, name) {
+  const lv = level || {};
+  const doc = createDoc(name || lv.name || 'Untitled');
+  doc.killY = tidy(num(lv.killY, DEFAULT_KILL_Y));
+
+  const sp = lv.spawn || {};
+  doc.spawn = {
+    type: 'spawn',
+    uid: doc.spawn.uid,
+    pos: tidyVec(vec3(sp.pos, [0, 0.01, 0])),
+    yaw: tidy(num(sp.yaw, 0)),
+  };
+
+  if (lv.finish && lv.finish.min && lv.finish.max) {
+    const fb = normaliseBounds(lv.finish.min, lv.finish.max);
+    doc.finish = { type: 'finish', uid: doc.finish.uid, min: fb.min, max: fb.max };
+  }
+
+  for (const b of Array.isArray(lv.boxes) ? lv.boxes : []) if (b) doc.boxes.push(makeBox(doc, b));
+  for (const m of Array.isArray(lv.movers) ? lv.movers : []) if (m) doc.movers.push(makeMover(doc, m));
+  for (const c of Array.isArray(lv.checkpoints) ? lv.checkpoints : []) if (c) doc.checkpoints.push(makeCheckpoint(doc, c));
+  for (const s of Array.isArray(lv.signs) ? lv.signs : []) if (s) doc.signs.push(makeSign(doc, s));
+  return doc;
+}
+
+function cloneDoc(doc) {
+  return JSON.parse(JSON.stringify(doc));
+}
+
+// Every selectable thing, in a stable order.
+function allEntities(doc) {
+  if (!doc) return [];
+  const out = [];
+  if (doc.spawn) out.push(doc.spawn);
+  for (const b of doc.boxes) out.push(b);
+  for (const m of doc.movers) out.push(m);
+  for (const c of doc.checkpoints) out.push(c);
+  for (const s of doc.signs) out.push(s);
+  if (doc.finish) out.push(doc.finish);
+  return out;
+}
+
+function findEntity(doc, uid) {
+  if (uid == null) return null;
+  for (const e of allEntities(doc)) if (e.uid === uid) return e;
+  return null;
+}
+
+function listFor(doc, type) {
+  if (type === 'box') return doc.boxes;
+  if (type === 'mover') return doc.movers;
+  if (type === 'checkpoint') return doc.checkpoints;
+  if (type === 'sign') return doc.signs;
+  return null;
+}
+
+// Spawn and finish are singletons: they can be edited but never removed.
+function removeEntity(doc, uid) {
+  const ent = findEntity(doc, uid);
+  if (!ent || ent.type === 'spawn' || ent.type === 'finish') return false;
+  const list = listFor(doc, ent.type);
+  const i = list.indexOf(ent);
+  if (i < 0) return false;
+  list.splice(i, 1);
+  return true;
+}
+
+function addEntity(doc, type, raw) {
+  let ent = null;
+  if (type === 'box') ent = makeBox(doc, raw);
+  else if (type === 'mover') ent = makeMover(doc, raw);
+  else if (type === 'checkpoint') ent = makeCheckpoint(doc, raw);
+  else if (type === 'sign') ent = makeSign(doc, raw);
+  if (!ent) return null;
+  if (ent.type !== 'sign' && !ent.id) ent.id = uniqueId(doc, defaultIdStem(ent));
+  listFor(doc, ent.type).push(ent);
+  return ent;
+}
+
+function defaultIdStem(ent) {
+  if (ent.type === 'box') return ent.kind === 'grapple' ? 'anchor' : ent.kind;
+  if (ent.type === 'mover') return 'mover';
+  if (ent.type === 'checkpoint') return 'cp';
+  return 'item';
+}
+
+// Copy of `uid`, offset by `offset` metres, appended to the doc. Returns the new entity or null.
+function duplicateEntity(doc, uid, offset) {
+  const src = findEntity(doc, uid);
+  if (!src || src.type === 'spawn' || src.type === 'finish') return null;
+  const off = vec3(offset, [0, 0, 0]);
+  const copy = JSON.parse(JSON.stringify(src));
+  delete copy.uid;
+  if (copy.min && copy.max) {
+    copy.min = copy.min.map((v, k) => tidy(v + off[k]));
+    copy.max = copy.max.map((v, k) => tidy(v + off[k]));
+  }
+  if (copy.pos) copy.pos = copy.pos.map((v, k) => tidy(v + off[k]));
+  if (copy.a) copy.a = copy.a.map((v, k) => tidy(v + off[k]));
+  if (copy.b) copy.b = copy.b.map((v, k) => tidy(v + off[k]));
+  if (copy.respawn && copy.respawn.pos) copy.respawn.pos = copy.respawn.pos.map((v, k) => tidy(v + off[k]));
+  if (copy.id) copy.id = uniqueId(doc, copy.id);
+  return addEntity(doc, src.type, copy);
+}
+
+// Move an entity by a world-space delta (in place).
+function translateEntity(ent, delta) {
+  const d = vec3(delta, [0, 0, 0]);
+  if (!ent) return;
+  if (ent.min && ent.max) {
+    ent.min = ent.min.map((v, k) => tidy(v + d[k]));
+    ent.max = ent.max.map((v, k) => tidy(v + d[k]));
+  }
+  if (ent.pos) ent.pos = ent.pos.map((v, k) => tidy(v + d[k]));
+  if (ent.a) ent.a = ent.a.map((v, k) => tidy(v + d[k]));
+  if (ent.b) ent.b = ent.b.map((v, k) => tidy(v + d[k]));
+  if (ent.respawn && ent.respawn.pos && ent.type === 'checkpoint') {
+    ent.respawn.pos = ent.respawn.pos.map((v, k) => tidy(v + d[k]));
+  }
+}
+
+// The AABB an entity is picked and outlined by. Movers are picked at endpoint a.
+function entityBounds(ent) {
+  if (!ent) return null;
+  if (ent.type === 'mover') {
+    const h = ent.size.map((v) => v / 2);
+    return { min: ent.a.map((v, k) => v - h[k]), max: ent.a.map((v, k) => v + h[k]) };
+  }
+  if (ent.type === 'spawn') {
+    return { min: [ent.pos[0] - 0.35, ent.pos[1], ent.pos[2] - 0.35], max: [ent.pos[0] + 0.35, ent.pos[1] + 1.8, ent.pos[2] + 0.35] };
+  }
+  if (ent.type === 'sign') {
+    return { min: [ent.pos[0] - 1.1, ent.pos[1] - 0.45, ent.pos[2] - 0.3], max: [ent.pos[0] + 1.1, ent.pos[1] + 0.45, ent.pos[2] + 0.3] };
+  }
+  if (ent.min && ent.max) return { min: ent.min.slice(), max: ent.max.slice() };
+  return null;
+}
+
+function moverBoundsAt(ent, which) {
+  const c = which === 'b' ? ent.b : ent.a;
+  const h = ent.size.map((v) => v / 2);
+  return { min: c.map((v, k) => v - h[k]), max: c.map((v, k) => v + h[k]) };
+}
+
+function entityLabel(ent) {
+  if (!ent) return '—';
+  if (ent.type === 'spawn') return 'Spawn';
+  if (ent.type === 'finish') return 'Finish volume';
+  if (ent.type === 'sign') return 'Sign "' + String(ent.text).split('\n')[0].slice(0, 18) + '"';
+  if (ent.type === 'checkpoint') return 'Checkpoint ' + (ent.name || ent.id || '');
+  if (ent.type === 'mover') return 'Mover ' + (ent.id || '');
+  const info = KIND_INFO[ent.kind];
+  return (info ? info.label : ent.kind) + ' ' + (ent.id || '');
+}
+
+// World bounds of everything in the doc (or a sane default for an empty one).
+function docBounds(doc) {
+  const min = [Infinity, Infinity, Infinity];
+  const max = [-Infinity, -Infinity, -Infinity];
+  const grow = (b) => {
+    if (!b) return;
+    for (let k = 0; k < 3; k++) {
+      if (b.min[k] < min[k]) min[k] = b.min[k];
+      if (b.max[k] > max[k]) max[k] = b.max[k];
+    }
+  };
+  for (const e of allEntities(doc)) {
+    grow(entityBounds(e));
+    if (e.type === 'mover') grow(moverBoundsAt(e, 'b'));
+  }
+  if (!Number.isFinite(min[0])) return { min: [-20, -2, -20], max: [20, 10, 20] };
+  return { min, max };
+}
+
+// ---------------------------------------------------------------------------------------- output
+// Exactly the SPEC LEVEL shape: no type, no uid, boxes in doc order (Player's ground test depends on it).
+function toLevel(doc) {
+  const boxes = doc.boxes.map((b) => {
+    const out = { id: b.id, kind: b.kind, min: b.min.slice(), max: b.max.slice() };
+    if (b.approach) out.approach = b.approach.slice();
+    return out;
+  });
+  const anchors = boxes.filter((b) => b.kind === 'grapple').map((b) => ({
+    id: b.id,
+    point: [0, 1, 2].map((k) => tidy((b.min[k] + b.max[k]) / 2)),
+  }));
+  return {
+    name: doc.name,
+    spawn: { pos: doc.spawn.pos.slice(), yaw: doc.spawn.yaw },
+    killY: doc.killY,
+    boxes,
+    movers: doc.movers.map((m) => ({
+      id: m.id, size: m.size.slice(), a: m.a.slice(), b: m.b.slice(),
+      period: m.period, phase: m.phase, kind: 'mover',
+    })),
+    anchors,
+    checkpoints: doc.checkpoints.map((c) => ({
+      id: c.id, name: c.name, min: c.min.slice(), max: c.max.slice(),
+      respawn: { pos: c.respawn.pos.slice(), yaw: c.respawn.yaw },
+    })),
+    finish: { min: doc.finish.min.slice(), max: doc.finish.max.slice() },
+    signs: doc.signs.map((s) => ({ pos: s.pos.slice(), yaw: s.yaw, text: s.text })),
+  };
+}
+
+function docToJSON(doc) {
+  return toLevel(doc);
+}
+
+function docFromJSON(obj, name) {
+  return docFromLevel(obj, name || (obj && obj.name) || 'Imported');
+}
+
+// ---------------------------------------------------------------------------------------- factories
+// Defaults used by the palette when a kind is placed with a single click.
+function defaultBoxFor(kind, point) {
+  const p = vec3(point, [0, 0, 0]);
+  if (kind === 'grapple') {
+    return {
+      kind: 'grapple',
+      min: [p[0] - ANCHOR_HALF, p[1] - ANCHOR_HALF, p[2] - ANCHOR_HALF],
+      max: [p[0] + ANCHOR_HALF, p[1] + ANCHOR_HALF, p[2] + ANCHOR_HALF],
+    };
+  }
+  if (kind === 'bounce') {
+    return { kind, min: [p[0] - 1.5, p[1], p[2] - 1.5], max: [p[0] + 1.5, p[1] + 0.5, p[2] + 1.5] };
+  }
+  if (kind === 'wallrun' || kind === 'wall' || kind === 'glass') {
+    return { kind, min: [p[0] - 0.25, p[1], p[2] - 4], max: [p[0] + 0.25, p[1] + 4, p[2] + 4] };
+  }
+  return { kind, min: [p[0] - 2, p[1] - 0.5, p[2] - 2], max: [p[0] + 2, p[1], p[2] + 2] };
+}
+
+function defaultMoverAt(point) {
+  const p = vec3(point, [0, 0, 0]);
+  return {
+    size: [3, 0.5, 3],
+    a: [p[0], p[1] + 0.25, p[2]],
+    b: [p[0] + 6, p[1] + 0.25, p[2]],
+    period: 4,
+    phase: 0,
+  };
+}
+
+function defaultCheckpointAt(point, index) {
+  const p = vec3(point, [0, 0, 0]);
+  return {
+    name: 'CHECKPOINT ' + (index + 1),
+    min: [p[0] - 5, p[1], p[2] - 5],
+    max: [p[0] + 5, p[1] + 30, p[2] + 5],
+    respawn: { pos: [p[0], p[1] + 0.01, p[2] + 2], yaw: 0 },
+  };
+}
+
+function defaultSignAt(point) {
+  const p = vec3(point, [0, 0, 0]);
+  return { pos: [p[0], p[1] + 2.4, p[2]], yaw: 0, text: 'NEW SIGN' };
+}
+return Object.freeze({ GRID, MIN_SIZE, BOX_KINDS, ENTITY_TYPES, KIND_INFO, snap, num, vec3, tidy, tidyVec, normaliseBounds, healBounds, sortedBounds, uniqueId, createDoc, createStarterDoc, docFromLevel, cloneDoc, allEntities, findEntity, listFor, removeEntity, addEntity, duplicateEntity, translateEntity, entityBounds, moverBoundsAt, entityLabel, docBounds, toLevel, docToJSON, docFromJSON, defaultBoxFor, defaultMoverAt, defaultCheckpointAt, defaultSignAt });
+})();
+
+// ---- js/editor/ed-validate.js ----
+const __vl$m30_js_editor_ed_validate = (function () {
+const { PHYS, REACH, GRAPPLE } = __vl$m0_js_config;
+const { World } = __vl$m10_js_world;
+const { toLevel, entityBounds, moverBoundsAt, entityLabel } = __vl$m29_js_editor_ed_doc;
+// Level validity, checked against the game's own rules.
+//
+// Everything here is measured with the real World (js/world.js builds the collider list, so 'deco' and
+// 'grapple' are excluded exactly as they are in play) and the real limits in js/config.js. Nothing is
+// re-derived: if PHYS or REACH changes, this panel changes with it.
+//
+// Two severities:
+//   error  the level is broken — the game would misbehave (degenerate box, duplicate id, checkpoints in
+//          the wrong order, a spawn buried in geometry or with nothing under it)
+//   warn   the level loads but a move looks impossible — a gap or a rise beyond REACH with no wall-run
+//          wall, bounce pad, mover or grapple anchor to make it
+//
+// Pure module: no DOM, no three.
+
+
+
+
+
+const STEP = 0.5;                 // m between samples along a route leg
+const CORRIDOR_DROP = 30;         // m: a support this far below the route is not a support
+const NEAR_WALLRUN = 3.0;         // m: a wall-run wall this close to a gap makes it a wall-run gap
+const NEAR_BOUNCE = 3.5;          // m: a bounce pad this close before a rise makes it a bounce
+const SPAWN_CLEAR = 0.05;         // m of tolerance when testing whether a spawn is inside geometry
+const MAX_AIRDROP = 6;            // m: a spawn point higher than this above its floor is suspicious
+
+function issue(level, message, uid, at) {
+  return { level, message, uid: uid == null ? null : uid, at: at || null };
+}
+
+function overlaps(amin, amax, bmin, bmax, slack) {
+  const s = slack || 0;
+  return amin[0] < bmax[0] - s && amax[0] > bmin[0] + s &&
+         amin[1] < bmax[1] - s && amax[1] > bmin[1] + s &&
+         amin[2] < bmax[2] - s && amax[2] > bmin[2] + s;
+}
+
+// Every surface a body can stand on at (x, z): static collider tops plus both mover endpoints.
+function supportList(world) {
+  const list = [];
+  for (const c of world.colliders) {
+    if (c.kind === 'mover') continue;
+    list.push({ min: c.min, max: c.max, kind: c.kind, id: c.id });
+  }
+  for (const m of world.movers) {
+    const h = m.size.map((v) => v / 2);
+    for (const p of [m.a, m.b]) {
+      list.push({
+        min: p.map((v, k) => v - h[k]),
+        max: p.map((v, k) => v + h[k]),
+        kind: 'mover',
+        id: m.id,
+      });
+    }
+  }
+  return list;
+}
+
+// Highest support top under (x, z) that a body at height `fromY` could plausibly be standing on.
+function supportAt(list, x, z, fromY) {
+  const r = PHYS.radius;
+  const ceil = fromY + REACH.bounceApex + 1;
+  const floorLimit = fromY - CORRIDOR_DROP;
+  let best = null;
+  for (const s of list) {
+    if (x < s.min[0] - r || x > s.max[0] + r) continue;
+    if (z < s.min[2] - r || z > s.max[2] + r) continue;
+    const top = s.max[1];
+    if (top > ceil || top < floorLimit) continue;
+    if (!best || top > best.top) best = { top, kind: s.kind, id: s.id };
+  }
+  return best;
+}
+
+function nearKind(list, kind, x, z, y, radius) {
+  for (const s of list) {
+    if (s.kind !== kind) continue;
+    const dx = Math.max(s.min[0] - x, 0, x - s.max[0]);
+    const dz = Math.max(s.min[2] - z, 0, z - s.max[2]);
+    if (Math.hypot(dx, dz) > radius) continue;
+    if (y != null && (s.max[1] < y - 12 || s.min[1] > y + 12)) continue;
+    return true;
+  }
+  return false;
+}
+
+function anchorNear(world, x, y, z) {
+  for (const a of world.anchors) {
+    if (Math.hypot(a.point[0] - x, a.point[1] - y, a.point[2] - z) <= GRAPPLE.range) return true;
+  }
+  return false;
+}
+
+// ------------------------------------------------------------------------------------ route
+// The line a runner is expected to follow: spawn -> every checkpoint respawn -> the finish centre.
+function routePoints(doc) {
+  const pts = [{ pos: doc.spawn.pos.slice(), uid: doc.spawn.uid, label: 'spawn' }];
+  for (const c of doc.checkpoints) {
+    pts.push({ pos: c.respawn.pos.slice(), uid: c.uid, label: c.name || c.id || 'checkpoint' });
+  }
+  if (doc.finish) {
+    pts.push({
+      pos: [(doc.finish.min[0] + doc.finish.max[0]) / 2, doc.finish.min[1] + 0.01, (doc.finish.min[2] + doc.finish.max[2]) / 2],
+      uid: doc.finish.uid,
+      label: 'finish',
+    });
+  }
+  return pts;
+}
+
+function fmt(p) {
+  return p.map((v) => (Math.round(v * 10) / 10).toFixed(1)).join(', ');
+}
+
+// Walk one leg of the route, reporting gaps and rises that exceed REACH.
+function checkLeg(world, list, from, to, out) {
+  const dx = to.pos[0] - from.pos[0];
+  const dz = to.pos[2] - from.pos[2];
+  const len = Math.hypot(dx, dz);
+  if (!(len > STEP)) return;
+  const steps = Math.min(4000, Math.ceil(len / STEP));
+  let y = from.pos[1];
+  let gapStart = null;
+  let gapAt = null;
+  let lastTop = null;
+
+  const closeGap = (endX, endZ) => {
+    if (gapStart == null) return;
+    const gapLen = Math.hypot(endX - gapStart[0], endZ - gapStart[1]);
+    gapStart = null;
+    if (gapLen <= REACH.gapSprint) return;
+    const mx = gapAt[0], mz = gapAt[1];
+    if (anchorNear(world, mx, y, mz)) return;                                   // grapple across it
+    const wall = nearKind(list, 'wallrun', mx, mz, y, NEAR_WALLRUN);
+    const limit = wall ? REACH.wallrunGap : REACH.gapSprint;
+    if (gapLen <= limit) return;
+    out.push(issue('warn',
+      (wall ? 'Wall-run gap of ' : 'Gap of ') + gapLen.toFixed(1) + ' m at (' + fmt([mx, y, mz]) +
+      ') is past REACH.' + (wall ? 'wallrunGap ' + REACH.wallrunGap : 'gapSprint ' + REACH.gapSprint) + ' m.',
+      to.uid, [mx, y, mz]));
+  };
+
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const x = from.pos[0] + dx * t;
+    const z = from.pos[2] + dz * t;
+    const sup = supportAt(list, x, z, y);
+    if (!sup) {
+      if (gapStart == null) { gapStart = [x, z]; gapAt = [x, z]; }
+      continue;
+    }
+    closeGap(x, z);
+    if (lastTop != null) {
+      const rise = sup.top - lastTop;
+      if (rise > REACH.mantleFromJump) {
+        const bounce = nearKind(list, 'bounce', x, z, lastTop, NEAR_BOUNCE);
+        const wall = nearKind(list, 'wallrun', x, z, lastTop, NEAR_WALLRUN);
+        const limit = bounce ? REACH.bounceApex : REACH.mantleFromJump;
+        if (!wall && !anchorNear(world, x, sup.top, z) && rise > limit) {
+          out.push(issue('warn',
+            'Step up of ' + rise.toFixed(1) + ' m onto "' + sup.id + '" at (' + fmt([x, sup.top, z]) +
+            ') is past REACH.' + (bounce ? 'bounceApex ' + REACH.bounceApex : 'mantleFromJump ' + REACH.mantleFromJump) + ' m.',
+            to.uid, [x, sup.top, z]));
+        }
+      }
+    }
+    lastTop = sup.top;
+    y = sup.top;
+  }
+  closeGap(to.pos[0], to.pos[2]);
+}
+
+// ------------------------------------------------------------------------------------ point checks
+function checkStandPoint(world, list, pos, uid, what, out) {
+  const r = PHYS.radius;
+  const min = [pos[0] - r, pos[1], pos[2] - r];
+  const max = [pos[0] + r, pos[1] + PHYS.height, pos[2] + r];
+
+  if (pos[1] < world.killY) {
+    out.push(issue('error', what + ' at (' + fmt(pos) + ') is below killY (' + world.killY + ').', uid, pos));
+    return;
+  }
+  for (const c of world.colliders) {
+    if (overlaps(min, max, c.min, c.max, SPAWN_CLEAR)) {
+      out.push(issue('error', what + ' at (' + fmt(pos) + ') is inside collider "' + c.id + '".', uid, pos));
+      return;
+    }
+  }
+  const sup = supportAt(list, pos[0], pos[2], pos[1]);
+  const below = [];
+  for (const s of list) {
+    if (pos[0] < s.min[0] - r || pos[0] > s.max[0] + r) continue;
+    if (pos[2] < s.min[2] - r || pos[2] > s.max[2] + r) continue;
+    if (s.max[1] <= pos[1] + 0.05) below.push(s.max[1]);
+  }
+  const top = below.length ? Math.max(...below) : null;
+  if (top == null) {
+    out.push(issue('error', what + ' at (' + fmt(pos) + ') has no floor under it — the runner falls straight out of the level.', uid, pos));
+    return;
+  }
+  const drop = pos[1] - top;
+  if (drop > MAX_AIRDROP) {
+    out.push(issue('warn', what + ' at (' + fmt(pos) + ') is ' + drop.toFixed(1) + ' m above its floor ("' +
+      (sup ? sup.id : '?') + '") — the runner starts with a fall.', uid, pos));
+  }
+}
+
+// ------------------------------------------------------------------------------------ main
+// -> { errors, warnings, issues, ok, summary }  (issues are in report order: errors first)
+function validate(doc) {
+  const out = [];
+  if (!doc) return { errors: [], warnings: [], issues: [], ok: true, summary: 'No level' };
+
+  // --- geometry -----------------------------------------------------------------------------
+  for (const b of doc.boxes) {
+    const axes = ['x', 'y', 'z'].filter((_, k) => !(b.max[k] > b.min[k]));
+    if (axes.length) {
+      out.push(issue('error', entityLabel(b) + ': min >= max on ' + axes.join('/') + ' — the box has no volume and the game drops it.', b.uid));
+    }
+  }
+  for (const m of doc.movers) {
+    if (!(m.size[0] > 0 && m.size[1] > 0 && m.size[2] > 0)) {
+      out.push(issue('error', entityLabel(m) + ': size must be positive on every axis.', m.uid));
+    }
+    if (!(m.period > 0)) {
+      out.push(issue('warn', entityLabel(m) + ': period is 0 — it stays parked at endpoint A.', m.uid));
+    }
+  }
+  for (const c of doc.checkpoints) {
+    const axes = ['x', 'y', 'z'].filter((_, k) => !(c.max[k] > c.min[k]));
+    if (axes.length) out.push(issue('error', entityLabel(c) + ': trigger volume has min >= max on ' + axes.join('/') + '.', c.uid));
+  }
+  if (doc.finish) {
+    const axes = ['x', 'y', 'z'].filter((_, k) => !(doc.finish.max[k] > doc.finish.min[k]));
+    if (axes.length) out.push(issue('error', 'Finish volume: min >= max on ' + axes.join('/') + ' — nothing can trigger it.', doc.finish.uid));
+  }
+
+  // --- ids ----------------------------------------------------------------------------------
+  const seen = new Map();
+  for (const e of [...doc.boxes, ...doc.movers, ...doc.checkpoints]) {
+    if (!e.id) {
+      out.push(issue('warn', entityLabel(e) + ' has no id.', e.uid));
+      continue;
+    }
+    if (seen.has(e.id)) out.push(issue('error', 'Duplicate id "' + e.id + '" (also used by ' + entityLabel(seen.get(e.id)) + ').', e.uid));
+    else seen.set(e.id, e);
+  }
+
+  // --- checkpoint order ---------------------------------------------------------------------
+  // The course runs toward -Z (SPEC.md), so checkpoint N must sit further along -Z than N-1.
+  for (let i = 1; i < doc.checkpoints.length; i++) {
+    const prev = doc.checkpoints[i - 1];
+    const cur = doc.checkpoints[i];
+    const pz = (prev.min[2] + prev.max[2]) / 2;
+    const cz = (cur.min[2] + cur.max[2]) / 2;
+    if (cz >= pz) {
+      out.push(issue('error', 'Checkpoints out of order: ' + entityLabel(cur) + ' (z ' + cz.toFixed(1) +
+        ') is not past ' + entityLabel(prev) + ' (z ' + pz.toFixed(1) + '). Split ' + (i + 1) + ' comes before split ' + i + '.', cur.uid));
+    }
+  }
+  for (let i = 0; i < doc.checkpoints.length; i++) {
+    const c = doc.checkpoints[i];
+    for (let j = 0; j < doc.checkpoints.length; j++) {
+      if (i === j) continue;
+      const o = doc.checkpoints[j];
+      if (j > i && overlaps(c.min, c.max, o.min, o.max, 0)) {
+        out.push(issue('warn', entityLabel(c) + ' overlaps ' + entityLabel(o) + ' — the higher index always wins.', c.uid));
+      }
+    }
+  }
+  if (doc.checkpoints.length === 0) out.push(issue('warn', 'No checkpoints: the run has no splits and no respawn points.', null));
+
+  // --- the world, and everything measured in it ----------------------------------------------
+  let world = null;
+  try {
+    world = new World(toLevel(doc));
+  } catch (err) {
+    out.push(issue('error', 'The level could not be built: ' + (err && err.message ? err.message : String(err)), null));
+  }
+
+  if (world) {
+    const list = supportList(world);
+    checkStandPoint(world, list, doc.spawn.pos, doc.spawn.uid, 'Spawn', out);
+    for (const c of doc.checkpoints) {
+      checkStandPoint(world, list, c.respawn.pos, c.uid, 'Respawn of ' + entityLabel(c), out);
+    }
+    const route = routePoints(doc);
+    for (let i = 1; i < route.length; i++) checkLeg(world, list, route[i - 1], route[i], out);
+
+    if (doc.finish) {
+      const fb = entityBounds(doc.finish);
+      const cx = (fb.min[0] + fb.max[0]) / 2;
+      const cz = (fb.min[2] + fb.max[2]) / 2;
+      if (!supportAt(list, cx, cz, fb.min[1])) {
+        out.push(issue('warn', 'Nothing to stand on inside the finish volume at (' + fmt([cx, fb.min[1], cz]) + ').', doc.finish.uid));
+      }
+    }
+    for (const m of doc.movers) {
+      const a = moverBoundsAt(m, 'a');
+      const b = moverBoundsAt(m, 'b');
+      if (Math.hypot(b.min[0] - a.min[0], b.min[1] - a.min[1], b.min[2] - a.min[2]) < 0.01 && m.period > 0) {
+        out.push(issue('warn', entityLabel(m) + ': endpoints A and B are the same, so it never moves.', m.uid));
+      }
+    }
+  }
+
+  const errors = out.filter((i) => i.level === 'error');
+  const warnings = out.filter((i) => i.level === 'warn');
+  const issues = errors.concat(warnings);
+  const summary = errors.length === 0 && warnings.length === 0
+    ? 'Level is valid'
+    : errors.length + ' error' + (errors.length === 1 ? '' : 's') + ' · ' + warnings.length + ' warning' + (warnings.length === 1 ? '' : 's');
+  return { errors, warnings, issues, ok: errors.length === 0, summary };
+}
+return Object.freeze({ validate });
+})();
+
+// ---- js/level-source.js ----
+const __vl$m31_js_level_source = (function () {
+const { levelId, blockCount, decodeLevel, readHashPayload } = __vl$m27_js_level_codec;
+const { listLevels, loadLevel } = __vl$m28_js_editor_ed_store;
+const { docFromLevel } = __vl$m29_js_editor_ed_doc;
+const { validate } = __vl$m30_js_editor_ed_validate;
+// Where a playable level can come from.
+//
+// The campaign in js/level-data.js is still the default and is never touched. On top of it the game can
+// play:
+//   - a level embedded in the URL hash, "#lvl=<payload>" (js/level-codec.js decodes it)
+//   - a level the designer saved in this browser (the very same localStorage the editor writes, so
+//     js/editor/ed-store.js is imported rather than re-implemented)
+//
+// Anything that did not come from the campaign is put through the editor's own validator before it is
+// allowed near the Player, and a level that fails comes back as an entry carrying `error` — a message
+// for the screen — instead of a level. Nothing here throws and nothing here touches the DOM beyond
+// reading a hash string it is handed.
+
+
+
+
+
+
+const MAX_ISSUES_SHOWN = 3;
+
+// -> { ok:true } | { ok:false, error }   using the editor's rules, not a second set of them.
+function checkLevel(level) {
+  if (!level || typeof level !== 'object' || !Array.isArray(level.boxes) || !level.boxes.length) {
+    return { ok: false, error: 'That level has no geometry in it.' };
+  }
+  let result = null;
+  try {
+    result = validate(docFromLevel(level, level.name));
+  } catch (err) {
+    return { ok: false, error: 'That level could not be read: ' + (err && err.message ? err.message : 'bad data') };
+  }
+  if (!result.errors.length) return { ok: true };
+  const shown = result.errors.slice(0, MAX_ISSUES_SHOWN).map((i) => i.message);
+  if (result.errors.length > shown.length) shown.push('…and ' + (result.errors.length - shown.length) + ' more.');
+  return { ok: false, error: shown.join(' ') };
+}
+
+function entryFor(kind, key, name, level, error) {
+  return {
+    kind,
+    key,
+    name: name || (level && level.name) || 'Untitled',
+    level: error ? null : level,
+    id: error ? null : levelId(level),
+    blocks: level ? blockCount(level) : 0,
+    error: error || null,
+  };
+}
+
+/** The campaign entry. Always first, always playable. */
+function campaignEntry(level) {
+  return entryFor('campaign', 'campaign', level.name || 'Vaultline', level, null);
+}
+
+/** Every level the editor saved in this browser, oldest first. Never throws. */
+function storedEntries() {
+  const out = [];
+  for (const name of listLevels()) {
+    const res = loadLevel(name);
+    if (!res.ok) {
+      out.push(entryFor('stored', 'saved:' + name, name, null, res.error));
+      continue;
+    }
+    const check = checkLevel(res.level);
+    out.push(entryFor('stored', 'saved:' + name, res.level.name || name, res.level, check.ok ? null : check.error));
+  }
+  return out;
+}
+
+/** The level in the URL, or null when the hash carries none. Never throws. */
+async function linkEntry(hash) {
+  const payload = readHashPayload(hash);
+  if (!payload) return null;
+  let level = null;
+  try {
+    level = await decodeLevel(payload);
+  } catch (err) {
+    return entryFor('link', 'link', 'Level from link', null, err && err.message ? err.message : 'The link could not be read.');
+  }
+  const check = checkLevel(level);
+  return entryFor('link', 'link', level.name || 'Level from link', level, check.ok ? null : check.error);
+}
+
+/**
+ * Everything the Levels panel lists: the campaign, this browser's saved levels, and the link level.
+ * The link level comes first when there is one, because that is what the player just clicked.
+ */
+async function collectSources(campaignLevel, hash) {
+  const link = await linkEntry(hash);
+  const list = [campaignEntry(campaignLevel)].concat(storedEntries());
+  return link ? [link].concat(list) : list;
+}
+return Object.freeze({ checkLevel, campaignEntry, storedEntries, linkEntry, collectSources });
+})();
+
 // ---- js/main.js ----
-const __vl$m27_js_main = (function () {
+const __vl$m32_js_main = (function () {
 const { PHYS } = __vl$m0_js_config;
 const { LEVEL } = __vl$m9_js_level_data;
 const { World } = __vl$m10_js_world;
@@ -9461,10 +10901,20 @@ const { Renderer } = __vl$m20_js_render;
 const { Sfx } = __vl$m22_js_audio;
 const { Hud } = __vl$m23_js_hud;
 const { Flyover } = __vl$m24_js_game_flyover;
-const { readPB, writePB, finishData } = __vl$m25_js_game_records;
+const { readPB, writePB, finishData, migratePB, pbKeyFor, bestFor } = __vl$m25_js_game_records;
 const { GraphicsControl } = __vl$m26_js_game_quality;
+const { levelId } = __vl$m27_js_level_codec;
+const { collectSources, campaignEntry, linkEntry } = __vl$m31_js_level_source;
 // Vaultline boot + game loop: wires Renderer, World, Player, Input, Sfx, Hud.
 // States: 'title' -> 'playing' <-> 'paused' -> 'finished'. Fixed-step physics at PHYS.dt (max 8 steps/frame).
+//
+// The level is no longer fixed. js/level-source.js collects everything playable — the campaign, the
+// levels the designer saved in this browser, and the one in the URL hash — and mount() swaps the World,
+// Player, Renderer and Input over to whichever one is picked in the Levels panel. The campaign is the
+// default and is never modified; anything else has to pass the editor's validator first, and a level
+// that fails is listed with the reason instead of being loaded.
+
+
 
 
 
@@ -9480,18 +10930,23 @@ const { GraphicsControl } = __vl$m26_js_game_quality;
 
 const MAX_STEPS = 8;
 const MAX_FRAME_DT = 0.25;
-const CHECKPOINTS = LEVEL.checkpoints || [];
 
-const canvas = document.getElementById('game');
 const hud = new Hud();
-const world = new World(LEVEL);
-const player = new Player(world, LEVEL.spawn);
-const input = new Input(canvas);
 const sfx = new Sfx();
-const flyover = new Flyover(LEVEL);
 const graphics = new GraphicsControl(hud);   // graphics preset + FPS readout (persisted, auto-detected)
 
+let canvas = document.getElementById('game');
+let level = LEVEL;
+let checkpoints = LEVEL.checkpoints || [];
+let world = null;
+let player = null;
+let input = null;
 let renderer = null;
+let flyover = null;
+
+let sources = [];         // every entry the Levels panel lists
+let active = null;        // the entry currently mounted
+
 let state = 'title';
 let simTime = 0;          // continuous world time for movers (reset on restart)
 let titleTime = 0;        // mover time while the title flyover runs
@@ -9499,7 +10954,7 @@ let runTime = 0;          // stopwatch
 let timerRunning = false;
 let lastCp = -1;
 let splits = [];
-let pb = readPB(hud);
+let pb = null;
 let acc = 0;
 let lastFrame = -1;
 let deaths = 0;
@@ -9511,8 +10966,8 @@ const trigMax = [0, 0, 0];
 // ------------------------------------------------------------------ run control
 
 function respawnPoint() {
-  const cp = lastCp >= 0 ? CHECKPOINTS[lastCp] : null;
-  return cp && cp.respawn ? cp.respawn : LEVEL.spawn;
+  const cp = lastCp >= 0 ? checkpoints[lastCp] : null;
+  return cp && cp.respawn ? cp.respawn : level.spawn;
 }
 
 function placePlayer(point) {
@@ -9528,11 +10983,11 @@ function resetRun() {
   runTime = 0;
   timerRunning = false;
   lastCp = -1;
-  splits = new Array(CHECKPOINTS.length).fill(null);
+  splits = new Array(checkpoints.length).fill(null);
   pb = readPB(hud);
   acc = 0;
   world.step(0, PHYS.dt);
-  placePlayer(LEVEL.spawn);
+  placePlayer(level.spawn);
   if (renderer) renderer.resetCheckpoints();
   hud.resetRun();
   hud.setRunTime(0);
@@ -9567,12 +11022,14 @@ function setState(name) {
     reelSfx = false;
     sfx.stopLoops();
     if (name === 'paused') {
-      const cp = lastCp >= 0 ? CHECKPOINTS[lastCp] : null;
+      const cp = lastCp >= 0 ? checkpoints[lastCp] : null;
       hud.showScreen('pause', cp ? { time: runTime } : { time: runTime, checkpointName: 'None yet' });
     } else if (name === 'finished') {
-      hud.showScreen('finish', finishInfo || finishData(runTime, splits, pb, CHECKPOINTS));
+      hud.showScreen('finish', finishInfo || finishData(runTime, splits, pb, checkpoints));
+      refreshLevelTimes();
     } else if (name === 'title') {
       flyover.reset();
+      refreshLevelTimes();
       hud.showScreen('title');
     }
   }
@@ -9607,7 +11064,7 @@ function finishRun() {
   const counts = runComplete();       // a teleport/debug jump into the gate is not a run
   timerRunning = false;
   const record = counts ? writePB(hud, runTime, splits, pb) : pb;
-  finishInfo = finishData(runTime, splits, pb, CHECKPOINTS);
+  finishInfo = finishData(runTime, splits, pb, checkpoints);
   if (!counts) {
     finishInfo.isPB = false;
     finishInfo.best = pb ? pb.time : runTime;
@@ -9618,6 +11075,140 @@ function finishRun() {
   pb = record;
 }
 
+// ------------------------------------------------------------------ levels
+
+// Re-read the stored best of every listed level and redraw the panel. Cheap (one storage read each):
+// the levels themselves are collected once, at boot.
+function refreshLevelTimes() {
+  hud.setLevels(sources.map((e) => {
+    const best = e.id ? bestFor(e.id) : null;
+    return {
+      key: e.key,
+      kind: e.kind,
+      name: e.name,
+      blocks: e.blocks,
+      best: best ? best.time : null,
+      error: e.error,
+    };
+  }), active ? active.key : null);
+}
+
+// A fresh <canvas id="game"> in place of the old one. A WebGLRenderer keeps the context it was built
+// with, so reusing the element for a second Renderer would hand it a dead context.
+function swapCanvas(old) {
+  const next = old.cloneNode(false);
+  if (old.parentNode) old.parentNode.replaceChild(next, old);
+  return next;
+}
+
+function wireInput() {
+  input.onPause = (reason) => {
+    if (state === 'playing') setState('paused');
+    else if (state === 'paused' && reason === 'key') { sfx.unlock(); setState('playing'); }
+  };
+  input.onRestart = () => {
+    if (state === 'title') return;
+    sfx.unlock();
+    startRun();
+  };
+  input.onRespawn = () => {
+    if (state === 'playing') respawnAtCheckpoint();
+  };
+  if (Number.isFinite(hud.settings.sens)) input.setSensitivity(hud.settings.sens);
+}
+
+// Build the viewport for `lv`: a new Input on a new canvas, and a Renderer to match.
+// -> true when the picture is up, false when WebGL refused (the error screen is already showing).
+function mountView(lv) {
+  if (input) {
+    input.dispose();
+    input = null;
+  }
+  if (renderer) {
+    try {
+      // Hand the GPU context back before dropping the element, so switching levels a few times cannot
+      // walk into the browser's per-page WebGL context limit.
+      const gl = renderer.renderer;
+      renderer.dispose();
+      if (gl && typeof gl.forceContextLoss === 'function') gl.forceContextLoss();
+    } catch (err) {
+      console.warn('Vaultline: the old renderer did not shut down cleanly', err);
+    }
+    renderer = null;
+    canvas = swapCanvas(canvas);
+  }
+  input = new Input(canvas);
+  wireInput();
+  try {
+    renderer = new Renderer(canvas, lv);
+    graphics.attach(renderer);
+    return true;
+  } catch (err) {
+    console.warn('Vaultline: renderer failed to start', err);
+    renderer = null;
+    input.setEnabled(false);
+    hud.showError(err && err.message ? err.message : 'WebGL could not start. Enable hardware acceleration or try another browser.');
+    return false;
+  }
+}
+
+/** Load one collected entry and show its title screen. */
+function mount(entry) {
+  active = entry;
+  level = entry.level;
+  checkpoints = level.checkpoints || [];
+  hud.setPBKey(pbKeyFor(entry.id));
+  world = new World(level);
+  player = new Player(world, level.spawn);
+  flyover = new Flyover(level);
+  if (!mountView(level)) return false;
+  resetRun();
+  setState('title');
+  return true;
+}
+
+// A play link pasted into the address bar of an open game changes only the fragment, so the browser
+// never reloads. Pick the new level up instead of sitting there showing the old one.
+async function onHashChange() {
+  const hash = window.location ? window.location.hash : '';
+  let entry = null;
+  try {
+    entry = await linkEntry(hash);
+  } catch (err) {
+    return;
+  }
+  const at = sources.findIndex((e) => e.kind === 'link');
+  if (!entry) {
+    if (at >= 0) sources.splice(at, 1);
+    refreshLevelTimes();
+    return;
+  }
+  if (at >= 0) sources[at] = entry;
+  else sources.unshift(entry);
+  if (entry.error) {
+    hud.setLevelNote('That play link could not be opened: ' + entry.error);
+    refreshLevelTimes();
+    return;
+  }
+  if (active && active.id === entry.id) {
+    active = entry;
+    refreshLevelTimes();
+    return;
+  }
+  hud.setLevelNote('');
+  mount(entry);
+}
+
+function pickLevel(key) {
+  const entry = sources.find((e) => e.key === key);
+  if (!entry || entry.error || !entry.level) return;
+  sfx.unlock();
+  sfx.play('uiClick');
+  if (active && entry.key === active.key) return;
+  hud.setLevelNote('');
+  mount(entry);
+}
+
 // ------------------------------------------------------------------ callbacks
 
 hud.onPlay = () => { sfx.unlock(); sfx.play('uiClick'); startRun(); };
@@ -9625,22 +11216,10 @@ hud.onAgain = () => { sfx.unlock(); sfx.play('uiClick'); startRun(); };
 hud.onRestart = () => { sfx.unlock(); sfx.play('uiClick'); startRun(); };
 hud.onResume = () => { sfx.unlock(); sfx.play('uiClick'); if (state === 'paused') setState('playing'); };
 hud.onSettings = (s) => {
-  if (s && Number.isFinite(s.sens)) input.setSensitivity(s.sens);
+  if (s && Number.isFinite(s.sens) && input) input.setSensitivity(s.sens);
   if (s && Number.isFinite(s.vol)) sfx.setVolume(s.vol);
 };
-
-input.onPause = (reason) => {
-  if (state === 'playing') setState('paused');
-  else if (state === 'paused' && reason === 'key') { sfx.unlock(); setState('playing'); }
-};
-input.onRestart = () => {
-  if (state === 'title') return;
-  sfx.unlock();
-  startRun();
-};
-input.onRespawn = () => {
-  if (state === 'playing') respawnAtCheckpoint();
-};
+hud.onLevelPick((key) => pickLevel(key));
 
 window.addEventListener('pointerdown', () => sfx.unlock(), { passive: true });
 window.addEventListener('keydown', () => sfx.unlock(), { passive: true });
@@ -9690,7 +11269,7 @@ function stepGame(dt) {
     lastCp = i;
     splits[i] = runTime;
     const best = pb && Array.isArray(pb.splits) && Number.isFinite(pb.splits[i]) ? pb.splits[i] : null;
-    const cp = CHECKPOINTS[i];
+    const cp = checkpoints[i];
     hud.checkpoint(i, cp && cp.name ? cp.name : 'Checkpoint ' + (i + 1), runTime, best);
     if (renderer) renderer.setCheckpointReached(i);
     sfx.play('checkpoint');
@@ -9702,6 +11281,7 @@ function frame(now) {
   requestAnimationFrame(frame);
   const dt = lastFrame < 0 ? 0 : Math.min(Math.max((now - lastFrame) / 1000, 0), MAX_FRAME_DT);
   lastFrame = now;
+  if (!world || !player) return;
 
   if (state === 'playing') {
     acc += dt;
@@ -9737,12 +11317,24 @@ function teleport(pos, yaw) {
 }
 
 window.__vaultline = {
-  world,
-  player,
   graphics,
-  input,
   sfx,
   hud,
+  /** True once boot() has resolved the level sources and mounted one. */
+  get ready() { return !!world && !!player; },
+  get canvas() { return canvas; },
+  get world() { return world; },
+  get player() { return player; },
+  get input() { return input; },
+  get renderer() { return renderer; },
+  get level() { return level; },
+  get levelKey() { return active ? active.key : null; },
+  get levelId() { return active ? active.id : null; },
+  get pbKey() { return active ? pbKeyFor(active.id) : null; },
+  get levels() {
+    return sources.map((e) => ({ key: e.key, kind: e.kind, name: e.name, blocks: e.blocks, id: e.id, error: e.error }));
+  },
+  pickLevel,
   get state() { return state; },
   get runTime() { return runTime; },
   get checkpoint() { return lastCp; },
@@ -9753,22 +11345,29 @@ window.__vaultline = {
   },
 };
 
-try {
-  renderer = new Renderer(canvas, LEVEL);
-  window.__vaultline.renderer = renderer;
-  graphics.attach(renderer);
-} catch (err) {
-  console.warn('Vaultline: renderer failed to start', err);
-  input.setEnabled(false);
-  hud.showError(err && err.message ? err.message : 'WebGL could not start. Enable hardware acceleration or try another browser.');
-}
+async function boot() {
+  migratePB(levelId(LEVEL));
+  try {
+    sources = await collectSources(LEVEL, window.location ? window.location.hash : '');
+  } catch (err) {
+    console.warn('Vaultline: could not read the saved/linked levels', err);
+    sources = [campaignEntry(LEVEL)];
+  }
 
-if (renderer) {
-  window.addEventListener('resize', () => renderer.resize());
-  resetRun();
-  setState('title');
+  const link = sources.find((e) => e.kind === 'link');
+  const campaign = sources.find((e) => e.kind === 'campaign');
+  if (link && link.error) {
+    hud.setLevelNote('That play link could not be opened: ' + link.error + ' The campaign is loaded instead.');
+  }
+  const start = link && !link.error ? link : campaign;
+
+  if (!mount(start) && start !== campaign) mount(campaign);
+  window.addEventListener('resize', () => { if (renderer) renderer.resize(); });
+  window.addEventListener('hashchange', () => { onHashChange(); });
   requestAnimationFrame(frame);
 }
+
+boot();
 return Object.freeze({  });
 })();
 </script>
