@@ -135,6 +135,36 @@
   .chip.is-behind { background: #FF5A4E; color: #0F1B26; }
   .chip.is-even { background: rgba(232, 237, 241, 0.82); color: #0F1B26; }
   .chip.is-new { background: transparent; color: var(--paper-dim); box-shadow: inset 0 0 0 1px rgba(232, 237, 241, 0.4); }
+  /* ghost racing: the same ahead/behind colours as the PB chips, ringed so the two never read alike */
+  .chip-ghost { box-shadow: inset 0 0 0 1px rgba(127, 227, 255, 0.85); }
+
+  .ghost-delta {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    align-self: flex-start;
+    padding: 4px 12px 3px 10px;
+    border-left: 4px solid #7FE3FF;
+    border-radius: 2px 4px 4px 2px;
+    font-family: var(--f-mono);
+    font-variant-numeric: tabular-nums;
+  }
+  .ghost-delta-label {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(127, 227, 255, 0.92);
+  }
+  .ghost-delta-value {
+    font-family: var(--f-display);
+    font-weight: 800;
+    font-size: clamp(22px, 2.4vw, 34px);
+    line-height: 1;
+    color: #E8EDF1;
+  }
+  .ghost-delta-value.is-ahead { color: #3DDC84; }
+  .ghost-delta-value.is-behind { color: #FF5A4E; }
+  .ghost-delta-value.is-even { color: rgba(232, 237, 241, 0.86); }
 
   .btn {
     display: inline-flex;
@@ -239,6 +269,7 @@
     font-variant-numeric: tabular-nums;
     color: #E8EDF1;
   }
+  .splits li.has-ghost { grid-template-columns: 2.2em minmax(0, 1fr) auto 5.6em 5.6em; }
   .splits li:nth-last-child(n + 8) { display: none; }
   .splits li.is-latest { box-shadow: inset 2px 0 0 #F2B705; }
   .sp-idx { color: rgba(232, 237, 241, 0.6); }
@@ -818,6 +849,53 @@
   .finish-flags .chip { font-size: 13px; padding: 3px 8px 2px; }
   .chip-pb { background: #3DDC84; color: #0F1B26; letter-spacing: 0.1em; }
   .finish-compare { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .finish-ghost {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    padding: 8px 12px;
+    border-left: 3px solid #7FE3FF;
+    border-radius: 2px 4px 4px 2px;
+    background: rgba(127, 227, 255, 0.08);
+    font-family: var(--f-mono);
+    font-size: 14px;
+    font-variant-numeric: tabular-nums;
+  }
+  .finish-ghost-tag {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(127, 227, 255, 0.92);
+  }
+  .finish-ghost-verdict { color: rgba(232, 237, 241, 0.78); }
+  .finish-ghost.is-beaten .finish-ghost-verdict { color: #3DDC84; }
+  .ghost-share { margin-top: 16px; }
+  .ghost-link-note.is-warn { color: #FFC9A3; }
+  .ghost-link-field {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    min-height: 64px;
+    padding: 8px;
+    font-family: var(--f-mono);
+    font-size: 12px;
+    color: #E8EDF1;
+    background: rgba(15, 27, 38, 0.55);
+    border: 1px solid rgba(232, 237, 241, 0.25);
+    border-radius: 3px;
+    resize: vertical;
+    word-break: break-all;
+  }
+  .ghost-field { margin-top: 12px; }
+  .ghost-field .field-label { font-size: 12px; }
+  .ghost-field .segmented { margin-top: 4px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ghost-field .seg span { padding: 6px 6px 5px; font-size: 12px; }
+  .ghost-field .field-help { margin-top: 6px; font-size: 12px; }
+  /* a choice with no ghost behind it: still shown, so the panel does not jump about, but plainly off */
+  .seg input:disabled { cursor: default; }
+  .seg input:disabled + span { opacity: 0.45; }
 
   #pause-settings-slot .settings {
     padding: 0;
@@ -948,6 +1026,10 @@
 <div id="hud" class="hud" aria-hidden="true">
   <section class="hud-run" aria-label="Run timer and splits">
     <div id="timer" class="timer panel is-idle"><span id="timer-digits">00:00.00</span></div>
+    <div id="ghost-delta" class="ghost-delta panel" data-tone="even" role="status" aria-live="off" aria-label="Gap to the ghost" hidden>
+      <span id="ghost-delta-label" class="ghost-delta-label">GHOST</span>
+      <span id="ghost-delta-value" class="ghost-delta-value is-even">&#177;0.00</span>
+    </div>
     <ol id="splits" class="splits" aria-label="Splits"></ol>
   </section>
 
@@ -961,6 +1043,7 @@
     <div class="toast-body">
       <span id="toast-split" class="toast-split">00:00.00</span>
       <span id="toast-delta" class="chip is-new">No PB yet</span>
+      <span id="toast-ghost" class="chip chip-ghost is-even" hidden>GHOST &#177;0.00</span>
     </div>
   </div>
 
@@ -1000,6 +1083,15 @@
         <h2 id="levels-heading" class="eyebrow">Levels</h2>
         <p id="levels-note" class="levels-note" hidden></p>
         <ul id="levels-list" class="levels-list"></ul>
+        <div id="ghost-field" class="field ghost-field">
+          <div class="field-row"><span id="ghost-label" class="field-label">Ghost</span></div>
+          <div class="segmented" role="radiogroup" aria-labelledby="ghost-label" aria-describedby="ghost-help">
+            <label class="seg"><input id="ghost-best" type="radio" name="ghost" value="best" checked><span>Your best</span></label>
+            <label class="seg"><input id="ghost-imported" type="radio" name="ghost" value="imported"><span>Imported</span></label>
+            <label class="seg"><input id="ghost-off" type="radio" name="ghost" value="off"><span>None</span></label>
+          </div>
+          <p id="ghost-help" class="field-help">Race the fastest run you have stored for this level.</p>
+        </div>
         <p class="panel-note levels-hint">Levels you save in the designer show up here. Share one with its play link.</p>
       </section>
 
@@ -1082,6 +1174,12 @@
       <span id="finish-pb" class="chip chip-pb" hidden>NEW PB</span>
       <span id="finish-compare" class="finish-compare"></span>
     </div>
+    <div id="finish-ghost" class="finish-ghost" hidden>
+      <span class="finish-ghost-tag">Ghost</span>
+      <span id="finish-ghost-time" class="finish-ghost-time">00:00.00</span>
+      <span id="finish-ghost-delta" class="chip chip-ghost is-even">&#177;0.00</span>
+      <span id="finish-ghost-verdict" class="finish-ghost-verdict"></span>
+    </div>
     <div class="table-wrap">
       <table class="split-table">
         <thead>
@@ -1091,10 +1189,16 @@
             <th class="c-num" scope="col">Time</th>
             <th class="c-num c-seg" scope="col">Segment</th>
             <th class="c-num" scope="col">&#177; PB</th>
+            <th id="col-ghost" class="c-num c-ghost" scope="col" hidden>&#177; Ghost</th>
           </tr>
         </thead>
         <tbody id="finish-splits"></tbody>
       </table>
+    </div>
+    <div id="ghost-share" class="ghost-share" hidden>
+      <button id="btn-ghost-link" class="btn btn-ghost" type="button">Copy ghost link</button>
+      <p id="ghost-link-note" class="panel-note ghost-link-note" hidden></p>
+      <textarea id="ghost-link-field" class="ghost-link-field" readonly spellcheck="false" aria-label="Ghost link" hidden></textarea>
     </div>
     <div class="btn-row">
       <button id="btn-again" class="btn btn-primary btn-xl" type="button">
@@ -5765,8 +5869,305 @@ function createGrappleRope(THREE, maxSegments) {
 return Object.freeze({ EMERALD, buildGrappleAnchors, createGrappleRope });
 })();
 
+// ---- js/render-ghost.js ----
+const __vl$m17_js_render_ghost = (function () {
+const { PALETTE } = __vl$m14_js_render_materials;
+// The ghost runner: a translucent figure in the game's palette, plus the motion trail behind it.
+// Does not import three — render.js passes the THREE namespace in, like the other render helpers.
+//
+// Cost, because this is drawn on top of a full course in both presets: six small meshes (torso, head,
+// two arms, two legs) sharing two materials, and one ribbon for the trail. No shadows, no lights, no
+// per-frame allocation — the pose is applied as position/rotation only, and the trail rewrites one
+// Float32Array in place. The 'cheap' detail level drops the trail to half its points and the arms
+// stop swinging; everything else is identical, so the Laptop preset pays about 7 unlit draw calls.
+//
+// The figure is built facing -Z, which is the way yaw=0 looks, so posing it is one rotation.y = yaw.
+
+
+
+const TRAIL_POINTS = 18;          // ribbon points kept behind the runner (about 1.2 s at running speed)
+const TRAIL_STEP = 0.45;          // m between trail points
+const TRAIL_WIDTH = 0.17;         // m, at the runner's end; it tapers to nothing at the tail
+const STRIDE = 2.2;               // m per full leg cycle
+const EYE = 1.55;                 // m: where the ghost's rope leaves it (its own eye line)
+
+const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
+
+// Limb angles per state: [thighSwing, armSwing, lean, bodyDrop, tuck]
+const POSE = {
+  ground:  { swing: 1, arm: 1, lean: 0.12, drop: 0, tuck: 0, roll: 0 },
+  air:     { swing: 0.25, arm: 0.5, lean: 0.06, drop: 0, tuck: 0.55, roll: 0 },
+  slide:   { swing: 0, arm: 0, lean: -0.95, drop: 0.62, tuck: -0.5, roll: 0 },
+  wallrun: { swing: 0.8, arm: 0.8, lean: 0.18, drop: 0, tuck: 0, roll: 0.3 },
+  mantle:  { swing: 0.2, arm: 0, lean: 0.55, drop: 0.18, tuck: 0.7, roll: 0 },
+};
+
+function limb(THREE, geo, material, x, y) {
+  const mesh = new THREE.Mesh(geo, material);
+  mesh.position.set(x, y, 0);
+  mesh.castShadow = false;
+  mesh.receiveShadow = false;
+  mesh.matrixAutoUpdate = true;
+  return mesh;
+}
+
+/**
+ * The ghost figure + trail.
+ *   setPose(pose, dt, camPos, perPixel, motion)   pose from js/ghost.js samplePose(), or null to hide
+ *   setDetail('full' | 'cheap')
+ */
+function createGhostRunner(THREE, options) {
+  const opts = options || {};
+  const bodyColor = new THREE.Color(opts.color || PALETTE.beam);
+  const limbColor = new THREE.Color(opts.limbColor || PALETTE.skyZenith);
+
+  const bodyMat = new THREE.MeshBasicMaterial({
+    color: bodyColor,
+    transparent: true,
+    opacity: 0.5,
+    depthWrite: false,
+    toneMapped: false,
+  });
+  const limbMat = new THREE.MeshBasicMaterial({
+    color: limbColor,
+    transparent: true,
+    opacity: 0.44,
+    depthWrite: false,
+    toneMapped: false,
+  });
+
+  // The figure is posed (and so carries a transform); the trail is world-space, so it hangs off the
+  // holder at identity — no inverse transform per trail point.
+  const holder = new THREE.Group();
+  holder.name = 'ghost';
+  const root = new THREE.Group();
+  root.name = 'ghost-runner';
+  root.visible = false;
+  root.renderOrder = 18;
+  holder.add(root);
+
+  const body = new THREE.Group();          // everything above the feet: leans and drops as one
+  root.add(body);
+
+  const torsoGeo = new THREE.CapsuleGeometry(0.21, 0.52, 3, 8);
+  const torso = limb(THREE, torsoGeo, bodyMat, 0, 1.06);
+  const headGeo = new THREE.SphereGeometry(0.15, 10, 8);
+  const head = limb(THREE, headGeo, bodyMat, 0, 1.63);
+
+  const armGeo = new THREE.CapsuleGeometry(0.07, 0.34, 2, 6);
+  armGeo.translate(0, -0.24, 0);           // pivot at the shoulder
+  const armL = limb(THREE, armGeo, limbMat, -0.25, 1.32);
+  const armR = limb(THREE, armGeo, limbMat, 0.25, 1.32);
+
+  const legGeo = new THREE.CapsuleGeometry(0.095, 0.4, 2, 6);
+  legGeo.translate(0, -0.3, 0);            // pivot at the hip
+  const legL = limb(THREE, legGeo, limbMat, -0.12, 0.86);
+  const legR = limb(THREE, legGeo, limbMat, 0.12, 0.86);
+
+  body.add(torso, head, armL, armR, legL, legR);
+
+  // ---- trail ---------------------------------------------------------------------------------
+  const maxPts = TRAIL_POINTS;
+  const trailPos = new Float32Array(maxPts * 2 * 3);
+  const trailFade = new Float32Array(maxPts * 2);
+  const trailIdx = new Uint16Array((maxPts - 1) * 6);
+  for (let i = 0; i < maxPts - 1; i++) {
+    const a = i * 2;
+    trailIdx.set([a, a + 1, a + 2, a + 1, a + 3, a + 2], i * 6);
+  }
+  const trailGeo = new THREE.BufferGeometry();
+  const trailAttr = new THREE.BufferAttribute(trailPos, 3);
+  trailAttr.setUsage(THREE.DynamicDrawUsage);
+  const fadeAttr = new THREE.BufferAttribute(trailFade, 1);
+  fadeAttr.setUsage(THREE.DynamicDrawUsage);
+  trailGeo.setAttribute('position', trailAttr);
+  trailGeo.setAttribute('aFade', fadeAttr);
+  trailGeo.setIndex(new THREE.BufferAttribute(trailIdx, 1));
+  trailGeo.setDrawRange(0, 0);
+
+  const trailMat = new THREE.MeshBasicMaterial({
+    color: bodyColor,
+    transparent: true,
+    depthWrite: false,
+    toneMapped: false,
+    side: THREE.DoubleSide,
+  });
+  trailMat.onBeforeCompile = (shader) => {
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nattribute float aFade;\nvarying float vlFade;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvlFade = aFade;');
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying float vlFade;')
+      .replace('#include <color_fragment>', '#include <color_fragment>\ndiffuseColor.a *= vlFade;');
+  };
+  trailMat.customProgramCacheKey = () => 'vaultline-ghost-trail';
+
+  const trail = new THREE.Mesh(trailGeo, trailMat);
+  trail.name = 'ghost-trail';
+  trail.frustumCulled = false;
+  trail.renderOrder = 17;
+  trail.visible = false;
+  holder.add(trail);
+
+  // ring buffer of world-space trail points, newest last
+  const pts = [];
+  const P = new THREE.Vector3();
+  const A = new THREE.Vector3();
+  const B = new THREE.Vector3();
+  const S = new THREE.Vector3();
+  const T = new THREE.Vector3();
+
+  let phase = 0;
+  let detail = 'full';
+  let trailPoints = TRAIL_POINTS;
+
+  function resetTrail() {
+    pts.length = 0;
+    trailGeo.setDrawRange(0, 0);
+    trail.visible = false;
+  }
+
+  function pushTrail(x, y, z) {
+    const last = pts.length ? pts[pts.length - 1] : null;
+    if (last) {
+      const dx = x - last[0];
+      const dy = y - last[1];
+      const dz = z - last[2];
+      const moved = dx * dx + dy * dy + dz * dz;
+      if (moved < TRAIL_STEP * TRAIL_STEP) return;
+      if (moved > 400) pts.length = 0;     // a respawn or a restart: do not draw a streak across the map
+    }
+    pts.push([x, y, z]);
+    while (pts.length > trailPoints) pts.shift();
+  }
+
+  // Camera-facing ribbon through the trail points, widest and brightest at the runner.
+  function buildTrail(camPos, perPixel) {
+    const n = pts.length;
+    if (n < 2 || !camPos) {
+      trailGeo.setDrawRange(0, 0);
+      trail.visible = false;
+      return;
+    }
+    for (let i = 0; i < n; i++) {
+      const p = pts[i];
+      P.set(p[0], p[1] + 0.95, p[2]);
+      const nextI = Math.min(n - 1, i + 1);
+      const prevI = Math.max(0, i - 1);
+      A.set(pts[nextI][0], pts[nextI][1], pts[nextI][2]);
+      B.set(pts[prevI][0], pts[prevI][1], pts[prevI][2]);
+      T.copy(A).sub(B);
+      if (T.lengthSq() < 1e-8) T.set(0, 0, 1);
+      const fade = i / (n - 1);
+      const dist = Math.max(0.3, P.distanceTo(camPos));
+      const w = Math.max(TRAIL_WIDTH * fade, dist * (perPixel || 0.002) * 1.2);
+      S.copy(P).sub(camPos).cross(T);
+      if (S.lengthSq() < 1e-8) S.set(1, 0, 0);
+      else S.normalize();
+      S.multiplyScalar(w);
+      const sx = S.x;
+      const sy = S.y;
+      const sz = S.z;
+      const o = i * 6;
+      trailPos[o] = P.x - sx; trailPos[o + 1] = P.y - sy; trailPos[o + 2] = P.z - sz;
+      trailPos[o + 3] = P.x + sx; trailPos[o + 4] = P.y + sy; trailPos[o + 5] = P.z + sz;
+      const alpha = fade * fade * 0.55;
+      trailFade[i * 2] = alpha;
+      trailFade[i * 2 + 1] = alpha;
+    }
+    trailAttr.needsUpdate = true;
+    fadeAttr.needsUpdate = true;
+    trailGeo.setDrawRange(0, (n - 1) * 6);
+    trail.visible = true;
+  }
+
+  const api = {
+    object: holder,
+    /** Where the ghost's rope leaves it, in world space (written into `out`). */
+    ropeOrigin(pose, out) {
+      const dropY = POSE[pose.state] ? POSE[pose.state].drop : 0;
+      out.set(
+        pose.pos[0] - Math.sin(pose.yaw) * 0.18,
+        pose.pos[1] + EYE - dropY,
+        pose.pos[2] - Math.cos(pose.yaw) * 0.18
+      );
+      return out;
+    },
+
+    setDetail(name) {
+      const kind = name === 'cheap' ? 'cheap' : 'full';
+      if (kind === detail) return;
+      detail = kind;
+      trailPoints = kind === 'cheap' ? Math.round(TRAIL_POINTS / 2) : TRAIL_POINTS;
+      while (pts.length > trailPoints) pts.shift();
+    },
+
+    hide() {
+      root.visible = false;
+      resetTrail();
+    },
+
+    /**
+     * Pose the figure. `pose` is js/ghost.js samplePose() output (or null to hide); `motion` false
+     * freezes the run cycle and the trail for prefers-reduced-motion.
+     */
+    setPose(pose, dt, camPos, perPixel, motion) {
+      if (!pose) {
+        api.hide();
+        return;
+      }
+      const shape = POSE[pose.state] || POSE.air;
+      root.visible = true;
+      root.position.set(pose.pos[0], pose.pos[1], pose.pos[2]);
+      root.rotation.y = pose.yaw;
+
+      body.position.y = -shape.drop;
+      body.rotation.x = -shape.lean;
+      body.rotation.z = shape.roll;
+
+      if (motion) phase += (pose.speed || 0) * (dt || 0) * (Math.PI * 2 / STRIDE);
+      const running = pose.state === 'ground' || pose.state === 'wallrun';
+      const cycle = running ? Math.sin(phase) : 0;
+      const swing = cycle * shape.swing * 0.9;
+      legL.rotation.x = swing - shape.tuck;
+      legR.rotation.x = -swing - shape.tuck;
+      const armSwing = detail === 'cheap' ? swing * 0.5 : swing;
+      armL.rotation.x = -armSwing * shape.arm - shape.tuck * 0.6;
+      armR.rotation.x = armSwing * shape.arm - shape.tuck * 0.6;
+      head.position.y = 1.63 + (running && motion ? Math.abs(Math.sin(phase)) * 0.03 : 0);
+
+      pushTrail(pose.pos[0], pose.pos[1], pose.pos[2]);
+      if (motion) buildTrail(camPos, perPixel);
+      else {
+        trailGeo.setDrawRange(0, 0);
+        trail.visible = false;
+      }
+    },
+
+    /** Forget the trail (a restart, a respawn, or a different ghost). */
+    reset() {
+      resetTrail();
+      phase = 0;
+    },
+
+    dispose() {
+      torsoGeo.dispose();
+      headGeo.dispose();
+      armGeo.dispose();
+      legGeo.dispose();
+      trailGeo.dispose();
+      bodyMat.dispose();
+      limbMat.dispose();
+      trailMat.dispose();
+    },
+  };
+  return api;
+}
+return Object.freeze({ createGhostRunner });
+})();
+
 // ---- js/render-cheap.js ----
-const __vl$m17_js_render_cheap = (function () {
+const __vl$m18_js_render_cheap = (function () {
 const { PALETTE, FOG_FRAGMENT, MODE_COLOR } = __vl$m14_js_render_materials;
 // Vaultline laptop shading path: the same surfaces drawn with an unlit material whose lighting is baked
 // per vertex instead of MeshStandardMaterial's per-pixel PBR. Every level face is a flat axis-aligned quad,
@@ -6123,7 +6524,7 @@ return Object.freeze({ createGridTexture, createCheapLightUniforms, createCheapS
 })();
 
 // ---- js/render-text.js ----
-const __vl$m18_js_render_text = (function () {
+const __vl$m19_js_render_text = (function () {
 const { PALETTE, patchBasicFog } = __vl$m14_js_render_materials;
 // Vaultline render helpers: canvas-textured in-world text (signs, FINISH gate).
 // Does not import three: render.js passes the THREE namespace in (SPEC: only render.js imports three).
@@ -6452,7 +6853,7 @@ return Object.freeze({ whenFontsReady, createSign, createFinishGate });
 })();
 
 // ---- js/quality.js ----
-const __vl$m19_js_quality = (function () {
+const __vl$m20_js_quality = (function () {
 
 // Vaultline graphics presets. Pure data + tiny helpers: no imports, no DOM/window access at import time.
 // Renderer.setQuality(name) applies a preset live; main.js/Hud own the UI and persistence.
@@ -6534,16 +6935,18 @@ return Object.freeze({ QUALITY_KEY, SHOW_FPS_KEY, AUTO_SAMPLE_SEC, AUTO_SWITCH_M
 })();
 
 // ---- js/render.js ----
-const __vl$m20_js_render = (function () {
+const __vl$m21_js_render = (function () {
 const { PHYS } = __vl$m0_js_config;
 const { PALETTE, createSharedUniforms, createSurfaceMaterials, createSkyMaterial, createSpeedLinesMaterial } = __vl$m14_js_render_materials;
 const { levelBounds, buildCoursePath, courseDirectionAt, supportTopAt, buildStaticMeshes, buildMoverMeshes, buildSkyline, buildCheckpointBeacon, collectGrappleAnchors } = __vl$m15_js_render_build;
 const { buildGrappleAnchors, createGrappleRope } = __vl$m16_js_render_grapple;
-const { createCheapLightUniforms, createCheapSurfaceMaterials, createGridTexture, createCheapSkyMaterial } = __vl$m17_js_render_cheap;
-const { createSign, createFinishGate, whenFontsReady } = __vl$m18_js_render_text;
-const { QUALITY, detectDefaultQuality } = __vl$m19_js_quality;
+const { createGhostRunner } = __vl$m17_js_render_ghost;
+const { createCheapLightUniforms, createCheapSurfaceMaterials, createGridTexture, createCheapSkyMaterial } = __vl$m18_js_render_cheap;
+const { createSign, createFinishGate, whenFontsReady } = __vl$m19_js_render_text;
+const { QUALITY, detectDefaultQuality } = __vl$m20_js_quality;
 // Vaultline renderer: scene, sky, fog, lights, shadows, level meshes, camera + speed feel.
 // The only module that imports three (helpers receive the THREE namespace as a parameter).
+
 
 
 
@@ -6740,6 +7143,18 @@ class Renderer {
     this._ropeFromGiven = false;
     this._ropeOn = false;
     this._hand = new THREE.Vector3();
+
+    // --- ghost runner ---------------------------------------------------------
+    // A recorded run replayed next to you: the figure and its trail (js/render-ghost.js) plus a rope
+    // of its own, so a ghost that was grappling is drawn grappling. Hidden until main.js poses it.
+    this._ghost = createGhostRunner(THREE, {});
+    scene.add(this._ghost.object);
+    this._ghostRope = createGrappleRope(THREE, ROPE_MAX_SEGMENTS);
+    this._ghostRope.object.name = 'ghost-rope';
+    this._ghostRope.object.renderOrder = 17;
+    scene.add(this._ghostRope.object);
+    this._ghostFrom = new THREE.Vector3();
+    this._ghostTo = new THREE.Vector3();
 
     this._signs = (lvl.signs || []).map((s) => {
       const sign = createSign(THREE, s, this.shared, anisotropy);
@@ -6950,6 +7365,39 @@ class Renderer {
       ? this._ropeFrom
       : this._handPoint(this._v2);
     this._rope.set(from, this._ropeTo, this.camera.position, this._time, this._perPixel, !this.reducedMotion);
+  }
+
+  // ---- ghost --------------------------------------------------------------
+
+  /**
+   * Pose the ghost runner for this frame. `pose` is js/ghost.js samplePose() output — {pos, yaw,
+   * pitch, state, speed, rope} — or null to hide it. Call it AFTER update(): the trail and the ghost's
+   * rope are sized against the camera this frame.
+   */
+  setGhostPose(pose, dt) {
+    if (!this._ghost) return;
+    if (!pose) {
+      this._ghost.hide();
+      this._ghostRope.hide();
+      return;
+    }
+    const step = clamp(num(dt, 0), 0, 0.1);
+    this._ghost.setPose(pose, step, this.camera.position, this._perPixel, !this.reducedMotion);
+    if (pose.rope) {
+      this._ghost.ropeOrigin(pose, this._ghostFrom);
+      this._ghostTo.set(pose.rope[0], pose.rope[1], pose.rope[2]);
+      this._ghostRope.set(this._ghostFrom, this._ghostTo, this.camera.position, this._time, this._perPixel, !this.reducedMotion);
+    } else {
+      this._ghostRope.hide();
+    }
+  }
+
+  /** Drop the trail and hide the ghost (a restart, or a different ghost). */
+  resetGhost() {
+    if (!this._ghost) return;
+    this._ghost.reset();
+    this._ghost.hide();
+    this._ghostRope.hide();
   }
 
   update(dt, player) {
@@ -7171,6 +7619,9 @@ class Renderer {
     // grapple visuals: same two draw calls in both presets, smaller halo quads and a coarser rope on laptop
     if (this._anchors) this._anchors.setGlow(num(q.grappleGlow, 1));
     if (this._rope) this._rope.setSegments(num(q.ropeSegments, 26));
+    // the ghost: the same figure either way, a shorter trail and a coarser rope on laptop
+    if (this._ghost) this._ghost.setDetail(q.shading === 'cheap' ? 'cheap' : 'full');
+    if (this._ghostRope) this._ghostRope.setSegments(num(q.ropeSegments, 26));
 
     if (!q.speedLines) this._speedFx = 0;
     this._dpr = -1;                        // force resize() to re-apply the pixel ratio
@@ -7252,7 +7703,7 @@ return Object.freeze({ Renderer });
 })();
 
 // ---- js/audio-synth.js ----
-const __vl$m21_js_audio_synth = (function () {
+const __vl$m22_js_audio_synth = (function () {
 
 // Vaultline audio building blocks used by Sfx (js/audio.js): envelopes, param helpers, procedural noise buffers,
 // and the sustained sound graphs (slide scrape, wall-run patter, speed wind). WebAudio only, no DOM access.
@@ -7642,8 +8093,8 @@ return Object.freeze({ clamp, rand, env, glideTo, aimParam, aimWithHold, stopSou
 })();
 
 // ---- js/audio.js ----
-const __vl$m22_js_audio = (function () {
-const { clamp, rand, env, glideTo, aimParam, aimWithHold, disconnect, pannedOutput, makeNoiseBuffer, makeSoftClipCurve, fadeOutLoop, createSlideLoop, createWallrunLoop, createReelLoop, createWind } = __vl$m21_js_audio_synth;
+const __vl$m23_js_audio = (function () {
+const { clamp, rand, env, glideTo, aimParam, aimWithHold, disconnect, pannedOutput, makeNoiseBuffer, makeSoftClipCurve, fadeOutLoop, createSlideLoop, createWallrunLoop, createReelLoop, createWind } = __vl$m22_js_audio_synth;
 // Vaultline sound effects: fully synthesized WebAudio (no asset files).
 //
 // Graph:  one-shot voices ─┐
@@ -8360,7 +8811,7 @@ return Object.freeze({ Sfx });
 })();
 
 // ---- js/hud.js ----
-const __vl$m23_js_hud = (function () {
+const __vl$m24_js_hud = (function () {
 const { PHYS } = __vl$m0_js_config;
 // HUD + menu screens. DOM lives in index.html; every lookup is optional so a missing
 // element never throws. Only reads config for speed-bar scaling.
@@ -8369,6 +8820,7 @@ const { PHYS } = __vl$m0_js_config;
 const KEY_SENS = 'vaultline.sens';
 const KEY_VOL = 'vaultline.vol';
 const KEY_PB = 'vaultline.pb';
+const KEY_GHOST_MODE = 'vaultline.ghostmode';
 const DEFAULT_SENS = 0.0022;
 const DEFAULT_VOL = 0.8;
 
@@ -8382,6 +8834,12 @@ const PLUS_MINUS = '±';
 const TIMES = '×';
 
 const AIM_STATES = ['none', 'inRange', 'attached'];
+const GHOST_MODES = ['best', 'imported', 'off'];
+const GHOST_HELP = {
+  best: 'Race the fastest run you have stored for this level.',
+  imported: 'Race the ghost that came in with the link.',
+  off: 'No ghost. Just you and the clock.',
+};
 
 const SCREENS = ['title', 'pause', 'finish', 'error'];
 const FOCUS_TARGET = {
@@ -8393,14 +8851,18 @@ const FOCUS_TARGET = {
 
 const IDS = [
   'hud', 'timer', 'timer-digits', 'splits', 'crosshair',
-  'toast', 'toast-index', 'toast-name', 'toast-split', 'toast-delta',
+  'toast', 'toast-index', 'toast-name', 'toast-split', 'toast-delta', 'toast-ghost',
   'hint', 'speed', 'speed-value', 'speed-bar', 'speed-tick-walk', 'speed-tick-sprint',
   'screen-title', 'title-body', 'title-pb', 'title-pb-time', 'touch-note', 'title-settings-slot',
   'levels', 'levels-list', 'levels-note',
+  'ghost-field', 'ghost-best', 'ghost-imported', 'ghost-off', 'ghost-help',
+  'ghost-delta', 'ghost-delta-label', 'ghost-delta-value',
   'settings', 'sens', 'sens-val', 'vol', 'vol-val',
   'quality-pc', 'quality-laptop', 'quality-help', 'show-fps', 'fps', 'fps-value',
   'screen-pause', 'pause-body', 'pause-time', 'pause-split', 'pause-settings-slot',
   'screen-finish', 'finish-body', 'finish-time', 'finish-pb', 'finish-compare', 'finish-splits',
+  'finish-ghost', 'finish-ghost-time', 'finish-ghost-delta', 'finish-ghost-verdict',
+  'col-ghost', 'ghost-share', 'btn-ghost-link', 'ghost-link-note', 'ghost-link-field',
   'screen-error', 'error-body', 'error-message',
   'btn-play', 'btn-resume', 'btn-restart', 'btn-again', 'btn-levels', 'btn-pause-levels',
 ];
@@ -8553,10 +9015,19 @@ class Hud {
     // which level is loaded. The bare legacy key is the default so a Hud used on its own still works.
     this._pbKey = KEY_PB;
 
+    /** Ghost racing: which ghost the level panel is set to, and the live delta readout. */
+    this.ghostMode = 'best';
+    this._ghostCbs = [];
+    this._ghostRacing = false;
+    this._ghostDeltaCs = null;
+    this._ghostDeltaTone = '';
+    this._ghostLink = '';
+
     this._names = [];
     this._runSplits = [];
     this._runBest = [];
     this._runBestKnown = [];
+    this._runGhost = [];
     this._lastCheckpoint = -1;
     this._pbAtStart = this.loadBest();
 
@@ -8568,6 +9039,7 @@ class Hud {
     this._initEnvironment();
     this._initSettings();
     this._initQuality();
+    this._initGhost();
     this._initButtons();
     this._initSpeedTicks();
     this._renderTimer(formatTime(0));
@@ -8626,20 +9098,23 @@ class Hud {
    * Checkpoint reached. splitTime = run time at the checkpoint; bestSplit = the PB run's
    * split for the same index (null/undefined when there is no PB yet).
    */
-  checkpoint(index, name, splitTime, bestSplit) {
+  checkpoint(index, name, splitTime, bestSplit, ghostSplit) {
     const i = Number.isInteger(index) && index >= 0 ? index : this._lastCheckpoint + 1;
     const label = typeof name === 'string' && name.trim() ? name.trim() : 'Checkpoint ' + (i + 1);
     const split = isNum(splitTime) ? splitTime : this._time;
     const best = isNum(bestSplit) && bestSplit > 0 ? bestSplit : null;
+    const ghost = isNum(ghostSplit) && ghostSplit > 0 ? ghostSplit : null;
 
     this._names[i] = label;
     this._runSplits[i] = split;
     this._runBest[i] = best;
     this._runBestKnown[i] = true;
+    this._runGhost[i] = ghost;
     this._lastCheckpoint = i;
 
     const delta = best === null ? null : deltaOf(split, best);
-    this._renderSplitRow(i, label, split, delta);
+    const ghostDelta = ghost === null ? null : deltaOf(split, ghost);
+    this._renderSplitRow(i, label, split, delta, ghostDelta);
 
     this._setText(this.el['toast-index'], 'SPLIT ' + pad2(i + 1));
     this._setText(this.el['toast-name'], label);
@@ -8655,6 +9130,18 @@ class Hud {
         chip.textContent = formatDelta(delta);
         chip.className = 'chip is-' + tone;
         chip.setAttribute('aria-label', this._deltaWords(delta) + ' personal best');
+      }
+    }
+    const gchip = this.el['toast-ghost'];
+    if (gchip) {
+      if (ghostDelta === null) {
+        gchip.hidden = true;
+      } else {
+        gchip.hidden = false;
+        const tone = deltaTone(ghostDelta);
+        gchip.textContent = 'GHOST ' + formatDelta(ghostDelta);
+        gchip.className = 'chip chip-ghost is-' + tone;
+        gchip.setAttribute('aria-label', this._deltaWords(ghostDelta) + ' the ghost');
       }
     }
     this._flash(this.el.toast, '_toastTimer', '_toastOutTimer', TOAST_MS);
@@ -8717,7 +9204,11 @@ class Hud {
     this._runSplits = [];
     this._runBest = [];
     this._runBestKnown = [];
+    this._runGhost = [];
     this._lastCheckpoint = -1;
+    this._ghostDeltaCs = null;
+    this._ghostDeltaTone = '';
+    this._renderGhostDelta(null);
     this._timeCs = 0;
     this._time = 0;
     this._pbAtStart = this.loadBest();
@@ -8818,6 +9309,220 @@ class Hud {
     const message = typeof text === 'string' ? text : '';
     this._setText(el, message);
     el.hidden = !message;
+  }
+
+  // ------------------------------------------------------------ ghost racing
+
+  /** Register a listener for the ghost toggle: cb('best'|'imported'|'off'). Not fired by setGhostMode(). */
+  onGhostModeChange(cb) {
+    if (typeof cb === 'function') this._ghostCbs.push(cb);
+  }
+
+  /** Show a ghost choice as the active one (no callback). Persisted so it survives a reload. */
+  setGhostMode(name, persist) {
+    const mode = GHOST_MODES.indexOf(name) >= 0 ? name : 'best';
+    this.ghostMode = mode;
+    for (const m of GHOST_MODES) {
+      const el = this.el['ghost-' + m];
+      if (el) el.checked = m === mode;
+    }
+    if (persist !== false) storageSet(KEY_GHOST_MODE, mode);
+    this._renderGhostHelp();
+  }
+
+  /**
+   * What the toggle can offer for the level that is loaded:
+   * `{ best: seconds|null, imported: seconds|null, note: string }`. A choice with nothing behind it is
+   * disabled rather than hidden, so the panel does not jump around between levels.
+   */
+  setGhostOptions(info) {
+    const data = info && typeof info === 'object' ? info : {};
+    this._ghostOptions = {
+      best: isNum(data.best) && data.best > 0 ? data.best : null,
+      imported: isNum(data.imported) && data.imported > 0 ? data.imported : null,
+      note: typeof data.note === 'string' ? data.note : '',
+    };
+    for (const m of ['best', 'imported']) {
+      const el = this.el['ghost-' + m];
+      if (el) el.disabled = this._ghostOptions[m] === null;
+    }
+    this._renderGhostHelp();
+  }
+
+  _renderGhostHelp() {
+    const opts = this._ghostOptions || { best: null, imported: null, note: '' };
+    let text = GHOST_HELP[this.ghostMode] || '';
+    if (this.ghostMode === 'best') {
+      text = opts.best ? 'Racing your best run, ' + formatTime(opts.best) + '.' : 'No ghost stored for this level yet — finish a run and it is kept.';
+    } else if (this.ghostMode === 'imported') {
+      text = opts.imported ? 'Racing the ghost from the link, ' + formatTime(opts.imported) + '.' : 'No ghost came in with a link.';
+    }
+    if (opts.note) text = opts.note + ' ' + text;
+    this._setText(this.el['ghost-help'], text);
+  }
+
+  /**
+   * Turn the live readout next to the timer on or off. `info.time` is the ghost's own run time, shown
+   * as the label so you know what you are chasing.
+   */
+  setGhostRacing(on, info) {
+    const racing = !!on;
+    this._ghostRacing = racing;
+    const el = this.el['ghost-delta'];
+    if (el) el.hidden = !racing;
+    const data = info && typeof info === 'object' ? info : {};
+    const label = racing ? (isNum(data.time) && data.time > 0 ? 'GHOST ' + formatTime(data.time) : 'GHOST') : 'GHOST';
+    this._setText(this.el['ghost-delta-label'], label);
+    if (!racing) {
+      this._ghostDeltaCs = null;
+      this._ghostDeltaTone = '';
+      this._renderGhostDelta(null);
+    }
+  }
+
+  /**
+   * The live gap to the ghost, in seconds: negative means you are ahead. null while there is nothing
+   * to compare (before the run starts). Called every frame, so it only touches the DOM on a change.
+   */
+  setGhostDelta(delta) {
+    if (!this._ghostRacing) return;
+    if (!isNum(delta)) {
+      if (this._ghostDeltaCs === null) return;
+      this._ghostDeltaCs = null;
+      this._renderGhostDelta(null);
+      return;
+    }
+    const cs = Math.round(delta * 100);
+    if (cs === this._ghostDeltaCs) return;
+    this._ghostDeltaCs = cs;
+    this._renderGhostDelta(cs / 100);
+  }
+
+  _renderGhostDelta(delta) {
+    const value = this.el['ghost-delta-value'];
+    const box = this.el['ghost-delta'];
+    if (!value) return;
+    if (delta === null) {
+      this._setText(value, PLUS_MINUS + '0.00');
+      value.className = 'ghost-delta-value is-even';
+      if (box) box.setAttribute('data-tone', 'even');
+      this._ghostDeltaTone = 'even';
+      return;
+    }
+    const tone = deltaTone(delta);
+    this._setText(value, formatDelta(delta));
+    if (tone !== this._ghostDeltaTone) {
+      this._ghostDeltaTone = tone;
+      value.className = 'ghost-delta-value is-' + tone;
+      if (box) box.setAttribute('data-tone', tone);
+    }
+    value.setAttribute('aria-label', this._deltaWords(delta) + ' the ghost');
+  }
+
+  /**
+   * The finish screen's share row. `state` is `{ url, length, warn, message, enabled }`; the button
+   * copies `url`. Pass null (or enabled:false) to hide the row.
+   */
+  setGhostLink(state) {
+    const row = this.el['ghost-share'];
+    const btn = this.el['btn-ghost-link'];
+    const field = this.el['ghost-link-field'];
+    const data = state && typeof state === 'object' ? state : null;
+    const on = !!(data && data.enabled !== false && data.url);
+    this._ghostLink = on ? String(data.url) : '';
+    if (field) {
+      field.value = this._ghostLink;
+      field.hidden = true;
+    }
+    if (btn) {
+      btn.disabled = !on;
+      btn.textContent = data && data.label ? data.label : 'Copy ghost link';
+    }
+    if (row) row.hidden = !(data && (on || data.message));
+    const note = this.el['ghost-link-note'];
+    if (note) {
+      const text = data && data.message ? data.message : '';
+      this._setText(note, text);
+      note.className = 'panel-note ghost-link-note' + (data && data.warn ? ' is-warn' : '');
+      note.hidden = !text;
+    }
+  }
+
+  // The copy has to work from file://, from a sandboxed iframe and from a plain page. The old
+  // select-and-execCommand runs inside the click itself, so it is tried first: it is the one that
+  // works in every one of those. navigator.clipboard is the fallback, on a timeout because a headless
+  // or unfocused page can leave that promise hanging for ever — and if both are refused the link is
+  // left on screen, selected, to be copied by hand.
+  _copyGhostLink() {
+    const note = this.el['ghost-link-note'];
+    const field = this.el['ghost-link-field'];
+    if (!this._ghostLink) return;
+    let settled = false;
+    const done = (ok, message) => {
+      if (settled) return;
+      settled = true;
+      if (!note) return;
+      this._setText(note, message);
+      note.className = 'panel-note ghost-link-note' + (ok ? '' : ' is-warn');
+      note.hidden = false;
+    };
+
+    let copied = false;
+    if (field) {
+      field.hidden = false;
+      field.value = this._ghostLink;
+      try {
+        field.focus();
+        field.select();
+        copied = !!(this.doc && this.doc.execCommand && this.doc.execCommand('copy'));
+      } catch (e) {
+        copied = false;
+      }
+      if (copied) field.hidden = true;
+    }
+    if (copied) {
+      done(true, 'Ghost link copied to the clipboard.');
+      return;
+    }
+
+    let async = null;
+    try {
+      if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+        async = navigator.clipboard.writeText(this._ghostLink);
+      }
+    } catch (e) {
+      async = null;
+    }
+    const blocked = () => done(false, 'Copy was blocked here — the link is above, select it and copy by hand.');
+    if (async && typeof async.then === 'function') {
+      async.then(() => {
+        if (field) field.hidden = true;
+        done(true, 'Ghost link copied to the clipboard.');
+      }, blocked);
+      setTimeout(blocked, 1500);
+      return;
+    }
+    blocked();
+  }
+
+  _initGhost() {
+    this._ghostOptions = { best: null, imported: null, note: '' };
+    const stored = storageGet(KEY_GHOST_MODE);
+    this.setGhostMode(GHOST_MODES.indexOf(stored) >= 0 ? stored : 'best', false);
+    for (const m of GHOST_MODES) {
+      const el = this.el['ghost-' + m];
+      if (!el) continue;
+      const pick = () => {
+        if (this.ghostMode === m) return;
+        this.setGhostMode(m);
+        for (const cb of this._ghostCbs) cb(this.ghostMode);
+      };
+      el.addEventListener('change', () => { if (el.checked) pick(); });
+    }
+    const btn = this.el['btn-ghost-link'];
+    if (btn) btn.addEventListener('click', () => this._copyGhostLink());
+    this.setGhostRacing(false);
+    this.setGhostLink(null);
   }
 
   _levelKey(ev, btn) {
@@ -9066,9 +9771,15 @@ class Hud {
       }
     }
 
+    this._fillFinishGhost(info, time);
+
     const body = this.el['finish-splits'];
     if (!body) return;
     this._clear(body);
+
+    const ghost = this._finishGhost(info);
+    const ghostCol = this.el['col-ghost'];
+    if (ghostCol) ghostCol.hidden = !ghost;
 
     const rows = [];
     let lastCs = -1;
@@ -9104,6 +9815,15 @@ class Hud {
         const d = deltaOf(row.time, row.reference);
         tr.appendChild(this._cell(formatDelta(d), 'c-num d-' + deltaTone(d), this._deltaWords(d)));
       }
+      if (ghost) {
+        const g = row.finish ? ghost.time : this._ghostReference(row.index, ghost);
+        if (!isNum(g) || g <= 0) {
+          tr.appendChild(this._cell('—', 'c-num c-ghost d-none', 'no ghost split'));
+        } else {
+          const d = deltaOf(row.time, g);
+          tr.appendChild(this._cell(formatDelta(d), 'c-num c-ghost d-' + deltaTone(d), this._deltaWords(d) + ' the ghost'));
+        }
+      }
       body.appendChild(tr);
     }
   }
@@ -9118,6 +9838,43 @@ class Hud {
       return isNum(s) && s > 0 ? s : null;
     }
     return g;
+  }
+
+  // The ghost this finish screen compares against: { time, splits[] } or null.
+  _finishGhost(info) {
+    const g = info && info.ghost && typeof info.ghost === 'object' ? info.ghost : null;
+    if (!g || !isNum(g.time) || g.time <= 0) return null;
+    return { time: g.time, splits: Array.isArray(g.splits) ? g.splits : [], beat: !!g.beat, source: g.source || '' };
+  }
+
+  _ghostReference(index, ghost) {
+    const live = this._runGhost[index];
+    if (isNum(live) && live > 0) return live;
+    const v = ghost.splits[index];
+    return isNum(v) && v > 0 ? v : null;
+  }
+
+  // "Ghost 01:12.34  −0.42  You beat it" above the split table.
+  _fillFinishGhost(info, time) {
+    const row = this.el['finish-ghost'];
+    const ghost = this._finishGhost(info);
+    if (!row) return;
+    if (!ghost) {
+      row.hidden = true;
+      return;
+    }
+    row.hidden = false;
+    this._setText(this.el['finish-ghost-time'], formatTime(ghost.time));
+    const d = deltaOf(time, ghost.time);
+    const chip = this.el['finish-ghost-delta'];
+    if (chip) {
+      chip.textContent = formatDelta(d);
+      chip.className = 'chip chip-ghost is-' + deltaTone(d);
+      chip.setAttribute('aria-label', this._deltaWords(d) + ' the ghost');
+    }
+    const beat = d < 0;
+    this._setText(this.el['finish-ghost-verdict'], beat ? 'You beat the ghost' : d === 0 ? 'Dead heat with the ghost' : 'The ghost wins');
+    this._setClass(row, 'is-beaten', beat);
   }
 
   _fillError(info) {
@@ -9178,7 +9935,7 @@ class Hud {
     host.setAttribute('aria-label', text);
   }
 
-  _renderSplitRow(index, label, split, delta) {
+  _renderSplitRow(index, label, split, delta, ghostDelta) {
     const list = this.el.splits;
     if (!list || !this.doc) return;
     let li = null;
@@ -9195,7 +9952,7 @@ class Hud {
       list.insertBefore(li, before);
     }
     this._clear(li);
-    li.className = 'is-latest';
+    li.className = 'is-latest' + (ghostDelta === null || ghostDelta === undefined ? '' : ' has-ghost');
     li.appendChild(this._span(pad2(index + 1), 'sp-idx'));
     const nameEl = this._span(label, 'sp-name');
     nameEl.title = label;
@@ -9203,6 +9960,9 @@ class Hud {
     li.appendChild(this._span(formatTime(split), 'sp-time'));
     const d = delta === null ? this._span('—', 'sp-delta chip is-new') : this._span(formatDelta(delta), 'sp-delta chip is-' + deltaTone(delta));
     li.appendChild(d);
+    if (ghostDelta !== null && ghostDelta !== undefined) {
+      li.appendChild(this._span(formatDelta(ghostDelta), 'sp-delta sp-ghost chip chip-ghost is-' + deltaTone(ghostDelta)));
+    }
   }
 
   _fillWithKeycaps(el, text) {
@@ -9299,7 +10059,7 @@ return Object.freeze({ formatTime, formatDelta, Hud });
 })();
 
 // ---- js/game-flyover.js ----
-const __vl$m24_js_game_flyover = (function () {
+const __vl$m25_js_game_flyover = (function () {
 
 // Title-screen camera: a slow, smoothed flight along the course (spawn -> checkpoints -> finish).
 // No three.js here: it produces a fake "player" object that Renderer.update(dt, player) understands.
@@ -9406,7 +10166,7 @@ return Object.freeze({ Flyover });
 })();
 
 // ---- js/game-records.js ----
-const __vl$m25_js_game_records = (function () {
+const __vl$m26_js_game_records = (function () {
 
 // Personal-best bookkeeping for main.js.
 //
@@ -9520,8 +10280,8 @@ return Object.freeze({ LEGACY_PB_KEY, PB_PREFIX, pbKeyFor, migratePB, readPB, wr
 })();
 
 // ---- js/game-quality.js ----
-const __vl$m26_js_game_quality = (function () {
-const { QUALITY, QUALITY_KEY, SHOW_FPS_KEY, AUTO_SAMPLE_SEC, AUTO_SWITCH_MS, isQualityName, readStoredQuality } = __vl$m19_js_quality;
+const __vl$m27_js_game_quality = (function () {
+const { QUALITY, QUALITY_KEY, SHOW_FPS_KEY, AUTO_SAMPLE_SEC, AUTO_SWITCH_MS, isQualityName, readStoredQuality } = __vl$m20_js_quality;
 // Graphics preset + FPS readout controller for main.js.
 // Owns: the persisted choice ('vaultline.quality'), the one-time auto switch on first launch, applying the
 // preset to the Renderer (guarded: setQuality/getStats may be missing) and the ~4 Hz FPS readout.
@@ -9669,7 +10429,7 @@ return Object.freeze({ GraphicsControl });
 })();
 
 // ---- js/level-codec.js ----
-const __vl$m27_js_level_codec = (function () {
+const __vl$m28_js_level_codec = (function () {
 
 // Level <-> link payload, shared by the game and the level designer so the two can never drift.
 //
@@ -9789,20 +10549,21 @@ function levelId(level) {
   return h1.toString(36) + '-' + h2.toString(36);
 }
 
-// ------------------------------------------------------------------------------------ encode / decode
-/** Level object -> payload string for the URL hash. Compressed where the browser can. */
-async function encodeLevel(level) {
-  const json = JSON.stringify(level);
-  const bytes = new TextEncoder().encode(json);
+// ------------------------------------------------------------------------------------ bytes <-> payload
+// The tag + base64url envelope on its own, so anything else that has to ride in a link (a ghost run,
+// js/ghost-codec.js) uses exactly the same compression and the same refusal messages.
+
+/** Bytes -> payload string. Compressed where the browser can, plain where it cannot. */
+async function encodeBytes(bytes) {
   const packed = await deflateRaw(bytes);
   if (packed && packed.length < bytes.length) return TAG_DEFLATE + bytesToBase64url(packed);
   return TAG_PLAIN + bytesToBase64url(bytes);
 }
 
-/** Payload string -> level object. Throws an Error whose message is fit to show on screen. */
-async function decodeLevel(payload) {
+/** Payload string -> bytes. Throws an Error whose message is fit to show on screen. */
+async function decodeBytes(payload) {
   const raw = String(payload == null ? '' : payload).trim();
-  if (!raw) throw new Error('The link carries no level.');
+  if (!raw) throw new Error('The link carries nothing.');
   const tag = raw.slice(0, 3);
   const body = raw.slice(3);
   if (tag !== TAG_DEFLATE && tag !== TAG_PLAIN) {
@@ -9819,8 +10580,31 @@ async function decodeLevel(payload) {
       bytes = await inflateRaw(bytes);
     } catch (err) {
       if (err && /newer browser/.test(err.message)) throw err;
+      throw new Error('The link is damaged — the compressed part could not be unpacked.');
+    }
+  }
+  return bytes;
+}
+
+// ------------------------------------------------------------------------------------ encode / decode
+/** Level object -> payload string for the URL hash. Compressed where the browser can. */
+async function encodeLevel(level) {
+  const json = JSON.stringify(level);
+  return encodeBytes(new TextEncoder().encode(json));
+}
+
+/** Payload string -> level object. Throws an Error whose message is fit to show on screen. */
+async function decodeLevel(payload) {
+  const raw = String(payload == null ? '' : payload).trim();
+  if (!raw) throw new Error('The link carries no level.');
+  let bytes = null;
+  try {
+    bytes = await decodeBytes(raw);
+  } catch (err) {
+    if (err && /compressed part/.test(err.message)) {
       throw new Error('The link is damaged — the compressed level could not be unpacked.');
     }
+    throw err;
   }
   let level = null;
   try {
@@ -9840,14 +10624,14 @@ function hashFor(payload) {
   return '#' + HASH_PARAM + '=' + payload;
 }
 
-/** The payload in "#lvl=..." (also accepts "#lvl=..&other=.."), or '' when there is none. */
-function readHashPayload(hash) {
+/** One "name=value" out of a hash ("#lvl=..&gst=.."), or '' when it is not in there. */
+function readHashParam(hash, name) {
   const raw = String(hash == null ? '' : hash).replace(/^#/, '');
   if (!raw) return '';
   for (const part of raw.split('&')) {
     const eq = part.indexOf('=');
     if (eq < 0) continue;
-    if (part.slice(0, eq) !== HASH_PARAM) continue;
+    if (part.slice(0, eq) !== name) continue;
     try {
       return decodeURIComponent(part.slice(eq + 1));
     } catch (err) {
@@ -9857,6 +10641,11 @@ function readHashPayload(hash) {
   return '';
 }
 
+/** The payload in "#lvl=..." (also accepts "#lvl=..&other=.."), or '' when there is none. */
+function readHashPayload(hash) {
+  return readHashParam(hash, HASH_PARAM);
+}
+
 /** How many blocks a level is made of (movers count: they are solid too). */
 function blockCount(level) {
   if (!level) return 0;
@@ -9864,11 +10653,11 @@ function blockCount(level) {
   const movers = Array.isArray(level.movers) ? level.movers.length : 0;
   return boxes + movers;
 }
-return Object.freeze({ CODEC_VERSION, TAG_DEFLATE, TAG_PLAIN, LINK_WARN_LENGTH, HASH_PARAM, canonicalText, levelId, encodeLevel, decodeLevel, hashFor, readHashPayload, blockCount });
+return Object.freeze({ CODEC_VERSION, TAG_DEFLATE, TAG_PLAIN, LINK_WARN_LENGTH, HASH_PARAM, canonicalText, levelId, encodeBytes, decodeBytes, encodeLevel, decodeLevel, hashFor, readHashParam, readHashPayload, blockCount });
 })();
 
 // ---- js/levels/tutorial2.js ----
-const __vl$m28_js_levels_tutorial2 = (function () {
+const __vl$m29_js_levels_tutorial2 = (function () {
 
 // CHALLENGE LEVEL 1 — PROVING GROUND. A longer tutorial that picks up where the campaign stops:
 // precise mantling -> slide-jump chains -> wall-run into wall-jump -> the grappling hook (E ropes, F reels).
@@ -10026,7 +10815,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/wallrun.js ----
-const __vl$m29_js_levels_wallrun = (function () {
+const __vl$m30_js_levels_wallrun = (function () {
 
 // CHALLENGE LEVEL 2 — YELLOW LINE.  WALL-RUN ONLY: every gap and every metre of climb is crossed by running
 // on the yellow walls and kicking off them. There is not one grapple anchor in the level, and no gap is
@@ -10182,7 +10971,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/slide.js ----
-const __vl$m30_js_levels_slide = (function () {
+const __vl$m31_js_levels_slide = (function () {
 
 // CHALLENGE LEVEL 4 — THE UNDERPASS.  SLIDE ONLY: ducts with 1.1 m of headroom, lips that end in gaps no
 // standing jump can clear, and a serpentine you have to steer through on your back. Hold C from the first
@@ -10310,7 +11099,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/grapple.js ----
-const __vl$m31_js_levels_grapple = (function () {
+const __vl$m32_js_levels_grapple = (function () {
 
 // CHALLENGE LEVEL 3 — SKYHOOK.  GRAPPLE ONLY: a line of small decks strung over an open void, with nothing
 // between them but green anchors. Every gap is 18 .. 20 m — two and a half times a sprint jump — so the only
@@ -10422,7 +11211,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/gauntlet.js ----
-const __vl$m32_js_levels_gauntlet = (function () {
+const __vl$m33_js_levels_gauntlet = (function () {
 
 // CHALLENGE LEVEL 5 — THE GAUNTLET.  The last unlock: every move in the game, back to back, with the
 // tolerances the other levels give you spent. Pure data: no imports, no DOM.
@@ -10566,12 +11355,12 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/catalog.js ----
-const __vl$m33_js_levels_catalog = (function () {
-const { LEVEL: TUTORIAL2 } = __vl$m28_js_levels_tutorial2;
-const { LEVEL: WALLRUN } = __vl$m29_js_levels_wallrun;
-const { LEVEL: SLIDE } = __vl$m30_js_levels_slide;
-const { LEVEL: GRAPPLE } = __vl$m31_js_levels_grapple;
-const { LEVEL: GAUNTLET } = __vl$m32_js_levels_gauntlet;
+const __vl$m34_js_levels_catalog = (function () {
+const { LEVEL: TUTORIAL2 } = __vl$m29_js_levels_tutorial2;
+const { LEVEL: WALLRUN } = __vl$m30_js_levels_wallrun;
+const { LEVEL: SLIDE } = __vl$m31_js_levels_slide;
+const { LEVEL: GRAPPLE } = __vl$m32_js_levels_grapple;
+const { LEVEL: GAUNTLET } = __vl$m33_js_levels_gauntlet;
 // Catalogue of the standalone challenge levels, in intended play order (easiest first, the gauntlet last).
 // Pure data + imports: no DOM, no side effects. A level-select screen can read this directly —
 // `level` is the LEVEL object itself, in exactly the js/level-data.js shape, ready for `new World(level)`.
@@ -10629,7 +11418,7 @@ return Object.freeze({ CHALLENGE_LEVELS });
 })();
 
 // ---- js/editor/ed-store.js ----
-const __vl$m34_js_editor_ed_store = (function () {
+const __vl$m35_js_editor_ed_store = (function () {
 
 // Named levels in localStorage. Every access is wrapped in try/catch: the editor also runs from file://
 // and inside sandboxed iframes, where storage can be missing, blocked or full.
@@ -10764,7 +11553,7 @@ return Object.freeze({ PREFIX, INDEX_KEY, LAST_KEY, storageAvailable, cleanName,
 })();
 
 // ---- js/editor/ed-doc.js ----
-const __vl$m35_js_editor_ed_doc = (function () {
+const __vl$m36_js_editor_ed_doc = (function () {
 
 // Vaultline level designer — the document model.
 //
@@ -11237,10 +12026,10 @@ return Object.freeze({ GRID, MIN_SIZE, BOX_KINDS, ENTITY_TYPES, KIND_INFO, snap,
 })();
 
 // ---- js/editor/ed-validate.js ----
-const __vl$m36_js_editor_ed_validate = (function () {
+const __vl$m37_js_editor_ed_validate = (function () {
 const { PHYS, REACH, GRAPPLE } = __vl$m0_js_config;
 const { World } = __vl$m10_js_world;
-const { toLevel, entityBounds, moverBoundsAt, entityLabel } = __vl$m35_js_editor_ed_doc;
+const { toLevel, entityBounds, moverBoundsAt, entityLabel } = __vl$m36_js_editor_ed_doc;
 // Level validity, checked against the game's own rules.
 //
 // Everything here is measured with the real World (js/world.js builds the collider list, so 'deco' and
@@ -11558,12 +12347,12 @@ return Object.freeze({ validate });
 })();
 
 // ---- js/level-source.js ----
-const __vl$m37_js_level_source = (function () {
-const { levelId, blockCount, decodeLevel, readHashPayload } = __vl$m27_js_level_codec;
-const { CHALLENGE_LEVELS } = __vl$m33_js_levels_catalog;
-const { listLevels, loadLevel } = __vl$m34_js_editor_ed_store;
-const { docFromLevel } = __vl$m35_js_editor_ed_doc;
-const { validate } = __vl$m36_js_editor_ed_validate;
+const __vl$m38_js_level_source = (function () {
+const { levelId, blockCount, decodeLevel, readHashPayload } = __vl$m28_js_level_codec;
+const { CHALLENGE_LEVELS } = __vl$m34_js_levels_catalog;
+const { listLevels, loadLevel } = __vl$m35_js_editor_ed_store;
+const { docFromLevel } = __vl$m36_js_editor_ed_doc;
+const { validate } = __vl$m37_js_editor_ed_validate;
 // Where a playable level can come from.
 //
 // The campaign in js/level-data.js is still the default and is never touched. On top of it the game can
@@ -11670,21 +12459,914 @@ async function collectSources(campaignLevel, hash) {
 return Object.freeze({ checkLevel, campaignEntry, challengeEntries, storedEntries, linkEntry, collectSources });
 })();
 
+// ---- js/ghost.js ----
+const __vl$m39_js_ghost = (function () {
+
+// Ghost runs: record the player's motion, replay it, and measure how far ahead or behind you are.
+//
+// Recording is OBSERVATION ONLY. GhostRecorder.sample() is handed the Player after its step and reads
+// public fields; nothing here is ever fed back into the simulation, so a race runs exactly like a run
+// with no ghost in it. The module is pure — no DOM, no three, no storage — so node can drive it.
+//
+// A sample is taken at a fixed rate (GHOST_RATE, 20 Hz: 50 ms, twice the eye's flicker threshold for
+// motion this smooth after interpolation) and quantised on the way in:
+//   position   centimetres, as integers
+//   yaw/pitch  1/512 of a turn (0.7°, finer than the mouse moves between two samples)
+//   state      an index into GHOST_STATES, so the replay can pose the figure
+//   rope       0 for none, else 1 + an index into the ghost's own small anchor table
+// Quantising here rather than in the codec means the stored numbers ARE the numbers that were shared,
+// so a ghost replays identically whether it came from this browser or out of a link.
+
+const GHOST_VERSION = 1;
+const GHOST_RATE = 20;                  // samples per second
+const GHOST_STATES = ['ground', 'air', 'slide', 'wallrun', 'mantle'];
+const ANGLE_UNITS = 512;                // quantisation of a full turn
+const MAX_GHOST_SECONDS = 900;          // safety cap: a forgotten run never grows without limit
+const MIN_GHOST_FRAMES = 4;
+
+const TAU = Math.PI * 2;
+
+const num = (v, fallback) => (typeof v === 'number' && Number.isFinite(v) ? v : fallback);
+const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
+
+/** Centimetres, as an integer. */
+function toCm(metres) {
+  return Math.round(num(metres, 0) * 100);
+}
+
+/** Angle in radians -> 1/512 turn units, wrapped into [0, 512). */
+function toAngleUnits(radians) {
+  const u = Math.round((num(radians, 0) / TAU) * ANGLE_UNITS);
+  return ((u % ANGLE_UNITS) + ANGLE_UNITS) % ANGLE_UNITS;
+}
+
+/** 1/512 turn units -> radians in [0, 2π). */
+function fromAngleUnits(units) {
+  return (num(units, 0) / ANGLE_UNITS) * TAU;
+}
+
+/** Shortest signed difference between two angles, in radians. */
+function angleDelta(from, to) {
+  let d = (to - from) % TAU;
+  if (d > Math.PI) d -= TAU;
+  if (d < -Math.PI) d += TAU;
+  return d;
+}
+
+function stateIndex(name) {
+  const i = GHOST_STATES.indexOf(name);
+  return i < 0 ? 1 : i;                        // anything unexpected poses as 'air'
+}
+
+// ---------------------------------------------------------------------------------------- recorder
+
+/**
+ * Samples a run at a fixed rate. Feed it every physics step:
+ *
+ *   rec.sample(runTime, player);          // after player.step(), before anything else needs the pose
+ *   rec.mark(checkpointIndex, runTime);   // when a checkpoint is taken
+ *   const ghost = rec.finish(runTime);    // on the finish gate; null when there is nothing worth keeping
+ */
+class GhostRecorder {
+  constructor(options) {
+    const opts = options || {};
+    this.rate = Math.max(1, Math.round(num(opts.rate, GHOST_RATE)));
+    this.levelId = typeof opts.levelId === 'string' ? opts.levelId : '';
+    this.maxSeconds = Math.max(1, num(opts.maxSeconds, MAX_GHOST_SECONDS));
+    this.reset();
+  }
+
+  reset() {
+    this.x = [];
+    this.y = [];
+    this.z = [];
+    this.yaw = [];
+    this.pitch = [];
+    this.state = [];
+    this.rope = [];
+    this.splits = [];
+    this.anchors = [];
+    this._anchorKeys = new Map();
+    this._next = 0;                            // index of the frame that is due next
+    this.full = false;
+  }
+
+  get frames() {
+    return this.x.length;
+  }
+
+  /** Index (1-based, 0 = no rope) of an anchor in this ghost's own table. */
+  _anchorSlot(anchor) {
+    if (!anchor) return 0;
+    const point = anchor.point || anchor.pos || null;
+    if (!point || point.length < 3) return 0;
+    const key = anchor.id !== undefined && anchor.id !== null
+      ? String(anchor.id)
+      : toCm(point[0]) + ',' + toCm(point[1]) + ',' + toCm(point[2]);
+    const known = this._anchorKeys.get(key);
+    if (known !== undefined) return known;
+    this.anchors.push([toCm(point[0]), toCm(point[1]), toCm(point[2])]);
+    const slot = this.anchors.length;          // 1-based
+    this._anchorKeys.set(key, slot);
+    return slot;
+  }
+
+  _push(player) {
+    const pos = player && player.pos ? player.pos : [0, 0, 0];
+    this.x.push(toCm(pos[0]));
+    this.y.push(toCm(pos[1]));
+    this.z.push(toCm(pos[2]));
+    this.yaw.push(toAngleUnits(player ? player.yaw : 0));
+    this.pitch.push(toAngleUnits(player ? player.pitch : 0));
+    this.state.push(stateIndex(player ? player.state : 'air'));
+    this.rope.push(this._anchorSlot(player ? player.grappleAnchor : null));
+  }
+
+  /**
+   * Record the pose if a sample is due at `time` (seconds since the run started). Cheap and safe to
+   * call every physics step; it does nothing between samples.
+   */
+  sample(time, player) {
+    const t = num(time, 0);
+    if (t < 0 || this.full) return false;
+    if (t * this.rate < this._next) return false;
+    let wrote = false;
+    // A frame per due slot, so the frame index really is the sample time even if a frame was long.
+    while (this._next <= t * this.rate) {
+      if (this.x.length >= this.maxSeconds * this.rate) {
+        this.full = true;
+        break;
+      }
+      this._push(player);
+      this._next++;
+      wrote = true;
+    }
+    return wrote;
+  }
+
+  /** Split time at a checkpoint. */
+  mark(index, time) {
+    if (!Number.isInteger(index) || index < 0 || index > 512) return;
+    this.splits[index] = num(time, 0);
+  }
+
+  /**
+   * The finished ghost, or null when the run was too short to be worth replaying. `time` is the final
+   * run time; the last pose is recorded so the ghost ends exactly on the finish gate.
+   */
+  finish(time) {
+    const t = num(time, 0);
+    if (this.x.length < MIN_GHOST_FRAMES) return null;
+    const splits = [];
+    for (let i = 0; i < this.splits.length; i++) {
+      splits.push(Number.isFinite(this.splits[i]) ? this.splits[i] : null);
+    }
+    return {
+      version: GHOST_VERSION,
+      rate: this.rate,
+      time: t,
+      levelId: this.levelId,
+      splits,
+      anchors: this.anchors.map((a) => a.slice()),
+      x: this.x.slice(),
+      y: this.y.slice(),
+      z: this.z.slice(),
+      yaw: this.yaw.slice(),
+      pitch: this.pitch.slice(),
+      state: this.state.slice(),
+      rope: this.rope.slice(),
+    };
+  }
+}
+
+// ---------------------------------------------------------------------------------------- replay
+
+function frameCount(ghost) {
+  return ghost && Array.isArray(ghost.x) ? ghost.x.length : 0;
+}
+
+/** Seconds of recorded motion (the run time itself is `ghost.time`). */
+function ghostDuration(ghost) {
+  const n = frameCount(ghost);
+  if (!n) return 0;
+  return (n - 1) / (ghost.rate || GHOST_RATE);
+}
+
+/** True when the object looks like a ghost this build can replay. */
+function isGhost(ghost) {
+  if (!ghost || typeof ghost !== 'object') return false;
+  const n = frameCount(ghost);
+  if (n < MIN_GHOST_FRAMES) return false;
+  for (const key of ['y', 'z', 'yaw', 'pitch', 'state', 'rope']) {
+    if (!Array.isArray(ghost[key]) || ghost[key].length !== n) return false;
+  }
+  return Number.isFinite(ghost.time) && ghost.time > 0;
+}
+
+/** A reusable pose object for samplePose(). */
+function makePose() {
+  return {
+    pos: [0, 0, 0],
+    yaw: 0,
+    pitch: 0,
+    state: 'air',
+    speed: 0,
+    rope: null,
+    ropePoint: [0, 0, 0],
+    ended: false,
+    time: 0,
+  };
+}
+
+/**
+ * The ghost's pose at `time` seconds into its run, written into `out` (makePose()). Positions and
+ * angles are interpolated between samples; the state and the rope come from the sample that is
+ * already in effect, because those are steps, not curves.
+ */
+function samplePose(ghost, time, out) {
+  const pose = out || makePose();
+  const n = frameCount(ghost);
+  if (!n) {
+    pose.ended = true;
+    return pose;
+  }
+  const rate = ghost.rate || GHOST_RATE;
+  const t = clamp(num(time, 0), 0, (n - 1) / rate);
+  const idx = t * rate;
+  const i0 = clamp(Math.floor(idx), 0, n - 1);
+  const i1 = Math.min(i0 + 1, n - 1);
+  const f = i1 === i0 ? 0 : idx - i0;
+
+  const ax = ghost.x[i0] / 100;
+  const ay = ghost.y[i0] / 100;
+  const az = ghost.z[i0] / 100;
+  const bx = ghost.x[i1] / 100;
+  const by = ghost.y[i1] / 100;
+  const bz = ghost.z[i1] / 100;
+  pose.pos[0] = ax + (bx - ax) * f;
+  pose.pos[1] = ay + (by - ay) * f;
+  pose.pos[2] = az + (bz - az) * f;
+
+  const yaw0 = fromAngleUnits(ghost.yaw[i0]);
+  pose.yaw = yaw0 + angleDelta(yaw0, fromAngleUnits(ghost.yaw[i1])) * f;
+  const pitch0 = fromAngleUnits(ghost.pitch[i0]);
+  pose.pitch = pitch0 + angleDelta(pitch0, fromAngleUnits(ghost.pitch[i1])) * f;
+  if (pose.pitch > Math.PI) pose.pitch -= TAU;
+
+  pose.state = GHOST_STATES[ghost.state[i0]] || 'air';
+  const slot = ghost.rope[i0] | 0;
+  const anchor = slot > 0 && Array.isArray(ghost.anchors) ? ghost.anchors[slot - 1] : null;
+  if (anchor) {
+    pose.ropePoint[0] = anchor[0] / 100;
+    pose.ropePoint[1] = anchor[1] / 100;
+    pose.ropePoint[2] = anchor[2] / 100;
+    pose.rope = pose.ropePoint;
+  } else {
+    pose.rope = null;
+  }
+
+  const dx = bx - ax;
+  const dy = by - ay;
+  const dz = bz - az;
+  pose.speed = i1 === i0 ? 0 : Math.sqrt(dx * dx + dy * dy + dz * dz) * rate;
+  pose.time = t;
+  pose.ended = num(time, 0) >= ghost.time - 1e-9 || idx >= n - 1;
+  return pose;
+}
+
+/** The ghost's split at a checkpoint, or null when it has none. */
+function ghostSplit(ghost, index) {
+  if (!ghost || !Array.isArray(ghost.splits)) return null;
+  const v = ghost.splits[index];
+  return Number.isFinite(v) && v >= 0 ? v : null;
+}
+
+// ---------------------------------------------------------------------------------------- the delta
+
+const DEFAULT_WINDOW = 6;        // seconds of ghost searched either side of your own run time
+const FAR_AWAY = 9;              // m: past this the closest point stops meaning much
+
+/**
+ * How far ahead or behind the ghost you are, continuously.
+ *
+ * The honest way to ask "am I ahead?" is: at which point of its run was the ghost where I am now?
+ * update() finds the closest point on the ghost's path (searching a window around your own run time,
+ * so a lap that doubles back cannot snap the readout to the wrong pass) and subtracts its time from
+ * yours. Negative = you are ahead.
+ */
+class GhostTracker {
+  constructor(ghost, options) {
+    const opts = options || {};
+    this.ghost = isGhost(ghost) ? ghost : null;
+    this.window = Math.max(0.5, num(opts.window, DEFAULT_WINDOW));
+    this.farAway = Math.max(1, num(opts.farAway, FAR_AWAY));
+    this.reset();
+  }
+
+  reset() {
+    this.delta = null;
+    this.ghostTime = 0;
+    this.distance = 0;
+    this.near = false;
+  }
+
+  /**
+   * `time` is your run time, `pos` your feet. -> the delta in seconds (positive = behind the ghost),
+   * or null when there is no ghost.
+   */
+  update(time, pos) {
+    const g = this.ghost;
+    if (!g || !pos) return null;
+    const rate = g.rate || GHOST_RATE;
+    const n = frameCount(g);
+    const t = num(time, 0);
+    const centre = clamp(Math.round(t * rate), 0, n - 1);
+    const span = Math.max(2, Math.round(this.window * rate));
+    const lo = Math.max(0, centre - span);
+    const hi = Math.min(n - 1, centre + span);
+
+    const px = num(pos[0], 0);
+    const py = num(pos[1], 0);
+    const pz = num(pos[2], 0);
+    let best = Infinity;
+    let bestI = lo;
+    for (let i = lo; i <= hi; i++) {
+      const dx = g.x[i] / 100 - px;
+      const dy = g.y[i] / 100 - py;
+      const dz = g.z[i] / 100 - pz;
+      const d = dx * dx + dy * dy + dz * dz;
+      if (d < best) {
+        best = d;
+        bestI = i;
+      }
+    }
+
+    // Refine onto the neighbouring segments, so the delta moves smoothly instead of in 50 ms steps.
+    let at = bestI;
+    let bestDist = best;
+    for (const j of [bestI - 1, bestI]) {
+      if (j < 0 || j + 1 > n - 1) continue;
+      const ax = g.x[j] / 100;
+      const ay = g.y[j] / 100;
+      const az = g.z[j] / 100;
+      const ex = g.x[j + 1] / 100 - ax;
+      const ey = g.y[j + 1] / 100 - ay;
+      const ez = g.z[j + 1] / 100 - az;
+      const len = ex * ex + ey * ey + ez * ez;
+      if (len < 1e-9) continue;
+      const s = clamp(((px - ax) * ex + (py - ay) * ey + (pz - az) * ez) / len, 0, 1);
+      const cx = ax + ex * s - px;
+      const cy = ay + ey * s - py;
+      const cz = az + ez * s - pz;
+      const d = cx * cx + cy * cy + cz * cz;
+      if (d <= bestDist) {
+        bestDist = d;
+        at = j + s;
+      }
+    }
+
+    this.distance = Math.sqrt(bestDist);
+    this.near = this.distance <= this.farAway;
+    this.ghostTime = at / rate;
+    // Past the end of the recording the ghost is simply finished: you are behind by the whole gap.
+    if (at >= n - 1 && t > g.time) this.ghostTime = g.time;
+    this.delta = t - this.ghostTime;
+    return this.delta;
+  }
+}
+return Object.freeze({ GHOST_VERSION, GHOST_RATE, GHOST_STATES, ANGLE_UNITS, MAX_GHOST_SECONDS, MIN_GHOST_FRAMES, toCm, toAngleUnits, fromAngleUnits, angleDelta, stateIndex, GhostRecorder, frameCount, ghostDuration, isGhost, makePose, samplePose, ghostSplit, GhostTracker });
+})();
+
+// ---- js/ghost-codec.js ----
+const __vl$m40_js_ghost_codec = (function () {
+const { encodeBytes, decodeBytes, readHashParam, HASH_PARAM, LINK_WARN_LENGTH } = __vl$m28_js_level_codec;
+const { GHOST_VERSION, GHOST_RATE, GHOST_STATES, ANGLE_UNITS, MAX_GHOST_SECONDS, MIN_GHOST_FRAMES, isGhost } = __vl$m39_js_ghost;
+// A ghost run, packed small enough to ride in a URL next to the level it belongs to.
+//
+// The envelope is the level codec's: js/level-codec.js encodeBytes/decodeBytes give the same
+// deflate-or-plain tag, the same base64url and the same refusal messages, so one link can carry both
+// halves — "#lvl=<level>&gst=<ghost>" plays THIS level against THIS ghost.
+//
+// What changes is what goes inside the envelope. A level is JSON; 1800 samples of a 90 s run as JSON
+// would be tens of kilobytes before compression, so a ghost is packed as bytes first:
+//
+//   header    'VG', version, rate, run time, level id, splits, the anchor table, the frame count
+//   columns   one per channel (x, y, z, yaw, pitch, state, rope), each one whole column at a time
+//
+// Column order (rather than frame order) puts like next to like, which is what deflate can actually
+// compress. Positions are stored as the residual against a straight-line prediction from the two
+// previous samples — a runner moves smoothly, so that residual is a couple of centimetres and fits in
+// one byte. Angles are wrap-aware deltas; state and rope are run-length coded, because both hold still
+// for dozens of frames at a time.
+//
+// Pure module: it imports only the codec and js/ghost.js, touches no DOM and runs headless under node.
+
+
+
+
+const GHOST_PARAM = 'gst';        // the game reads "#gst=<payload>"
+const GHOST_MAGIC = 0x5647;       // 'VG'
+/** Past this a link is long enough to warn about; past LINK_MAX_LENGTH the ghost is dropped. */
+const GHOST_WARN_LENGTH = LINK_WARN_LENGTH;
+const LINK_MAX_LENGTH = 32000;    // browsers and chat apps give up somewhere around here
+
+const MAX_FRAMES = MAX_GHOST_SECONDS * 120;
+const MAX_ANCHORS = 4096;
+const MAX_SPLITS = 512;
+
+// ------------------------------------------------------------------------------------ byte streams
+class Writer {
+  constructor() {
+    this.buf = new Uint8Array(1024);
+    this.at = 0;
+  }
+
+  _room(n) {
+    if (this.at + n <= this.buf.length) return;
+    let size = this.buf.length * 2;
+    while (size < this.at + n) size *= 2;
+    const next = new Uint8Array(size);
+    next.set(this.buf.subarray(0, this.at));
+    this.buf = next;
+  }
+
+  u8(v) {
+    this._room(1);
+    this.buf[this.at++] = v & 0xff;
+    return this;
+  }
+
+  /** Unsigned LEB128. */
+  uint(v) {
+    let n = Math.max(0, Math.round(v));
+    this._room(10);
+    for (;;) {
+      const byte = n & 0x7f;
+      n = Math.floor(n / 128);
+      if (n === 0) {
+        this.buf[this.at++] = byte;
+        return this;
+      }
+      this.buf[this.at++] = byte | 0x80;
+    }
+  }
+
+  /** Zigzag then LEB128: small negatives cost one byte, like small positives. */
+  sint(v) {
+    const n = Math.round(v);
+    return this.uint(n < 0 ? -n * 2 - 1 : n * 2);
+  }
+
+  text(s) {
+    const bytes = new TextEncoder().encode(String(s == null ? '' : s));
+    this.uint(bytes.length);
+    this._room(bytes.length);
+    this.buf.set(bytes, this.at);
+    this.at += bytes.length;
+    return this;
+  }
+
+  bytes() {
+    return this.buf.slice(0, this.at);
+  }
+}
+
+class Reader {
+  constructor(bytes) {
+    this.buf = bytes;
+    this.at = 0;
+  }
+
+  u8() {
+    if (this.at >= this.buf.length) throw new Error('short');
+    return this.buf[this.at++];
+  }
+
+  uint() {
+    let out = 0;
+    let shift = 1;
+    for (let i = 0; i < 10; i++) {
+      const byte = this.u8();
+      out += (byte & 0x7f) * shift;
+      if ((byte & 0x80) === 0) return out;
+      shift *= 128;
+    }
+    throw new Error('bad number');
+  }
+
+  sint() {
+    const v = this.uint();
+    return v % 2 === 1 ? -(v + 1) / 2 : v / 2;
+  }
+
+  text() {
+    const n = this.uint();
+    if (n > 4096 || this.at + n > this.buf.length) throw new Error('short');
+    const out = new TextDecoder().decode(this.buf.subarray(this.at, this.at + n));
+    this.at += n;
+    return out;
+  }
+}
+
+// ------------------------------------------------------------------------------------ columns
+// Positions: the residual against "keep going the way you were going" (2*a - b).
+function writeLinear(w, values) {
+  for (let i = 0; i < values.length; i++) {
+    const a = i >= 1 ? values[i - 1] : 0;
+    const b = i >= 2 ? values[i - 2] : a;
+    w.sint(values[i] - (2 * a - b));
+  }
+}
+
+function readLinear(r, n) {
+  const out = new Array(n);
+  for (let i = 0; i < n; i++) {
+    const a = i >= 1 ? out[i - 1] : 0;
+    const b = i >= 2 ? out[i - 2] : a;
+    out[i] = r.sint() + (2 * a - b);
+  }
+  return out;
+}
+
+// Angles live on a circle: the delta is taken the short way round so a spin never costs more than a turn.
+function writeAngles(w, values) {
+  const half = ANGLE_UNITS / 2;
+  let prev = 0;
+  for (let i = 0; i < values.length; i++) {
+    const v = ((values[i] % ANGLE_UNITS) + ANGLE_UNITS) % ANGLE_UNITS;
+    if (i === 0) w.uint(v);
+    else {
+      let d = (v - prev + ANGLE_UNITS * 1.5) % ANGLE_UNITS - half;
+      w.sint(d);
+    }
+    prev = v;
+  }
+}
+
+function readAngles(r, n) {
+  const out = new Array(n);
+  let prev = 0;
+  for (let i = 0; i < n; i++) {
+    if (i === 0) prev = r.uint() % ANGLE_UNITS;
+    else prev = ((prev + r.sint()) % ANGLE_UNITS + ANGLE_UNITS) % ANGLE_UNITS;
+    out[i] = prev;
+  }
+  return out;
+}
+
+// Steps, not curves: a count and a value per run.
+function writeRuns(w, values) {
+  const runs = [];
+  for (let i = 0; i < values.length; i++) {
+    const v = values[i] | 0;
+    const last = runs.length ? runs[runs.length - 1] : null;
+    if (last && last.v === v) last.n++;
+    else runs.push({ v, n: 1 });
+  }
+  w.uint(runs.length);
+  for (const run of runs) {
+    w.uint(run.n);
+    w.uint(run.v);
+  }
+}
+
+function readRuns(r, n) {
+  const out = new Array(n);
+  const count = r.uint();
+  if (count > n) throw new Error('bad runs');
+  let at = 0;
+  for (let i = 0; i < count; i++) {
+    const len = r.uint();
+    const v = r.uint();
+    for (let k = 0; k < len && at < n; k++) out[at++] = v;
+  }
+  while (at < n) out[at++] = 0;
+  return out;
+}
+
+// ------------------------------------------------------------------------------------ pack / unpack
+/** Ghost object -> bytes. */
+function packGhost(ghost) {
+  if (!isGhost(ghost)) throw new Error('That is not a ghost run.');
+  const n = ghost.x.length;
+  const rate = Math.max(1, Math.round(ghost.rate || GHOST_RATE));
+  const w = new Writer();
+  w.u8(GHOST_MAGIC >> 8).u8(GHOST_MAGIC & 0xff);
+  w.u8(GHOST_VERSION);
+  w.u8(rate);
+  w.uint(Math.round(ghost.time * 1000));
+  w.text(ghost.levelId || '');
+
+  const splits = Array.isArray(ghost.splits) ? ghost.splits.slice(0, MAX_SPLITS) : [];
+  w.uint(splits.length);
+  for (const s of splits) w.uint(Number.isFinite(s) && s >= 0 ? Math.round(s * 1000) + 1 : 0);
+
+  const anchors = Array.isArray(ghost.anchors) ? ghost.anchors.slice(0, MAX_ANCHORS) : [];
+  w.uint(anchors.length);
+  let px = 0;
+  let py = 0;
+  let pz = 0;
+  for (const a of anchors) {
+    w.sint((a[0] | 0) - px);
+    w.sint((a[1] | 0) - py);
+    w.sint((a[2] | 0) - pz);
+    px = a[0] | 0;
+    py = a[1] | 0;
+    pz = a[2] | 0;
+  }
+
+  w.uint(n);
+  writeLinear(w, ghost.x);
+  writeLinear(w, ghost.y);
+  writeLinear(w, ghost.z);
+  writeAngles(w, ghost.yaw);
+  writeAngles(w, ghost.pitch);
+  writeRuns(w, ghost.state);
+  writeRuns(w, ghost.rope);
+  return w.bytes();
+}
+
+/** Bytes -> ghost object. Throws an Error whose message is fit to show on screen. */
+function unpackGhost(bytes) {
+  const damaged = () => new Error('That ghost is damaged — the link looks cut off or partly retyped.');
+  if (!bytes || bytes.length < 8) throw damaged();
+  const r = new Reader(bytes);
+  try {
+    if (r.u8() !== (GHOST_MAGIC >> 8) || r.u8() !== (GHOST_MAGIC & 0xff)) {
+      throw new Error('That link does not carry a ghost run.');
+    }
+    const version = r.u8();
+    if (version !== GHOST_VERSION) {
+      throw new Error('That ghost was recorded by a different version of Vaultline and cannot be replayed here.');
+    }
+    const rate = Math.max(1, r.u8());
+    const time = r.uint() / 1000;
+    const levelId = r.text();
+
+    const splitCount = r.uint();
+    if (splitCount > MAX_SPLITS) throw damaged();
+    const splits = [];
+    for (let i = 0; i < splitCount; i++) {
+      const v = r.uint();
+      splits.push(v === 0 ? null : (v - 1) / 1000);
+    }
+
+    const anchorCount = r.uint();
+    if (anchorCount > MAX_ANCHORS) throw damaged();
+    const anchors = [];
+    let px = 0;
+    let py = 0;
+    let pz = 0;
+    for (let i = 0; i < anchorCount; i++) {
+      px += r.sint();
+      py += r.sint();
+      pz += r.sint();
+      anchors.push([px, py, pz]);
+    }
+
+    const n = r.uint();
+    if (n < MIN_GHOST_FRAMES || n > MAX_FRAMES) throw damaged();
+    const x = readLinear(r, n);
+    const y = readLinear(r, n);
+    const z = readLinear(r, n);
+    const yaw = readAngles(r, n);
+    const pitch = readAngles(r, n);
+    const state = readRuns(r, n);
+    const rope = readRuns(r, n);
+    for (let i = 0; i < n; i++) {
+      if (state[i] >= GHOST_STATES.length) state[i] = 1;
+      if (rope[i] > anchors.length) rope[i] = 0;
+    }
+    const ghost = { version, rate, time, levelId, splits, anchors, x, y, z, yaw, pitch, state, rope };
+    if (!isGhost(ghost)) throw damaged();
+    return ghost;
+  } catch (err) {
+    if (err && /Vaultline|ghost/.test(err.message)) throw err;
+    throw damaged();
+  }
+}
+
+/** Ghost -> payload string for the URL hash. */
+async function encodeGhost(ghost) {
+  return encodeBytes(packGhost(ghost));
+}
+
+/** Payload string -> ghost. Throws an Error whose message is fit to show on screen. */
+async function decodeGhost(payload) {
+  const raw = String(payload == null ? '' : payload).trim();
+  if (!raw) throw new Error('That link carries no ghost run.');
+  const bytes = await decodeBytes(raw);
+  return unpackGhost(bytes);
+}
+
+/** The hash for a level and (optionally) a ghost: "#lvl=..&gst=..". */
+function raceHashFor(levelPayload, ghostPayload) {
+  let hash = '#' + HASH_PARAM + '=' + levelPayload;
+  if (ghostPayload) hash += '&' + GHOST_PARAM + '=' + ghostPayload;
+  return hash;
+}
+
+/** The ghost payload in a hash, or '' when there is none. */
+function readGhostPayload(hash) {
+  return readHashParam(hash, GHOST_PARAM);
+}
+return Object.freeze({ GHOST_PARAM, GHOST_MAGIC, GHOST_WARN_LENGTH, LINK_MAX_LENGTH, packGhost, unpackGhost, encodeGhost, decodeGhost, raceHashFor, readGhostPayload });
+})();
+
+// ---- js/ghost-store.js ----
+const __vl$m41_js_ghost_store = (function () {
+
+// Where the best ghost of each level is kept: localStorage, bounded, and never able to break a run.
+//
+// One entry per level, keyed by the same content hash the personal best uses
+// ('vaultline.ghost.<level id>'), holding the link payload — the very string a shared link carries, so
+// keeping a ghost and sharing one are the same bytes.
+//
+// Two things matter here. Storage is never allowed to throw into the game: every access is wrapped, and
+// a browser that refuses (private mode, blocked storage, a full quota) simply means no ghost this
+// session. And storage is never allowed to grow without limit: an index at 'vaultline.ghosts' records
+// what is kept and when it was written, so a save over MAX_TOTAL_BYTES drops whole levels, oldest
+// first, until it fits. The index is used rather than walking the keys because a localStorage without
+// key()/length is still a working store.
+
+const GHOST_PREFIX = 'vaultline.ghost.';
+const GHOST_INDEX_KEY = 'vaultline.ghosts';
+const MAX_TOTAL_BYTES = 320000;    // ~5% of a 5 MB store, about 40 long ghosts
+const MAX_ONE_BYTES = 80000;       // one enormous run never evicts every other level
+const MAX_GHOSTS = 24;
+
+function store() {
+  try {
+    return typeof localStorage !== 'undefined' && localStorage ? localStorage : null;
+  } catch (err) {
+    return null;
+  }
+}
+
+function get(key) {
+  const s = store();
+  if (!s) return null;
+  try {
+    return s.getItem(key);
+  } catch (err) {
+    return null;
+  }
+}
+
+function set(key, value) {
+  const s = store();
+  if (!s) return false;
+  try {
+    s.setItem(key, value);
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+function drop(key) {
+  const s = store();
+  if (!s) return;
+  try {
+    s.removeItem(key);
+  } catch (err) {
+    // nothing to do: the entry stays until storage works again
+  }
+}
+
+function ghostKeyFor(id) {
+  return GHOST_PREFIX + (id || 'unknown');
+}
+
+/** The index: [{ id, at, bytes, time }], oldest first. Never throws, never returns junk. */
+function readIndex() {
+  const raw = get(GHOST_INDEX_KEY);
+  if (!raw) return [];
+  let parsed = null;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (err) {
+    return [];
+  }
+  if (!Array.isArray(parsed)) return [];
+  const out = [];
+  for (const item of parsed) {
+    if (!item || typeof item.id !== 'string' || !item.id) continue;
+    out.push({
+      id: item.id,
+      at: Number.isFinite(item.at) ? item.at : 0,
+      bytes: Number.isFinite(item.bytes) && item.bytes > 0 ? item.bytes : 0,
+      time: Number.isFinite(item.time) && item.time > 0 ? item.time : 0,
+    });
+  }
+  out.sort((a, b) => a.at - b.at);
+  return out;
+}
+
+function writeIndex(list) {
+  return set(GHOST_INDEX_KEY, JSON.stringify(list));
+}
+
+/** What is kept for one level: { payload, time, bytes, at } or null. */
+function loadGhost(id) {
+  if (!id) return null;
+  const payload = get(ghostKeyFor(id));
+  if (!payload) return null;
+  const entry = readIndex().find((e) => e.id === id);
+  return {
+    payload,
+    time: entry && entry.time > 0 ? entry.time : 0,
+    bytes: payload.length,
+    at: entry ? entry.at : 0,
+  };
+}
+
+/** The recorded time of the kept ghost for a level, or null. */
+function ghostTimeFor(id) {
+  const kept = loadGhost(id);
+  return kept && kept.time > 0 ? kept.time : null;
+}
+
+function evictFor(list, needBytes) {
+  const keep = list.slice();
+  let total = needBytes;
+  for (const e of keep) total += e.bytes;
+  while (keep.length && (total > MAX_TOTAL_BYTES || keep.length >= MAX_GHOSTS)) {
+    const oldest = keep.shift();
+    total -= oldest.bytes;
+    drop(ghostKeyFor(oldest.id));
+  }
+  return keep;
+}
+
+/**
+ * Keep `payload` as the ghost for a level. -> true when it was written.
+ * A payload larger than MAX_ONE_BYTES is refused rather than shoving every other level out.
+ */
+function saveGhost(id, payload, time) {
+  if (!id || typeof payload !== 'string' || !payload) return false;
+  if (payload.length > MAX_ONE_BYTES) return false;
+  const list = readIndex().filter((e) => e.id !== id);
+  const kept = evictFor(list, payload.length);
+  if (!set(ghostKeyFor(id), payload)) {
+    // A full quota: clear the oldest half and try once more before giving up.
+    const half = kept.slice(Math.ceil(kept.length / 2));
+    for (const e of kept.slice(0, Math.ceil(kept.length / 2))) drop(ghostKeyFor(e.id));
+    writeIndex(half);
+    if (!set(ghostKeyFor(id), payload)) return false;
+    kept.length = 0;
+    for (const e of half) kept.push(e);
+  }
+  kept.push({
+    id,
+    at: Date.now(),
+    bytes: payload.length,
+    time: Number.isFinite(time) && time > 0 ? time : 0,
+  });
+  writeIndex(kept);
+  return true;
+}
+
+/** Forget one level's ghost. */
+function removeGhost(id) {
+  if (!id) return;
+  drop(ghostKeyFor(id));
+  writeIndex(readIndex().filter((e) => e.id !== id));
+}
+
+/** Total bytes of every kept ghost (what MAX_TOTAL_BYTES bounds). */
+function storedBytes() {
+  let total = 0;
+  for (const e of readIndex()) total += e.bytes;
+  return total;
+}
+
+/** Forget every ghost. Used by the tests; there is no UI for it. */
+function clearGhosts() {
+  for (const e of readIndex()) drop(ghostKeyFor(e.id));
+  drop(GHOST_INDEX_KEY);
+}
+return Object.freeze({ GHOST_PREFIX, GHOST_INDEX_KEY, MAX_TOTAL_BYTES, MAX_ONE_BYTES, MAX_GHOSTS, ghostKeyFor, readIndex, loadGhost, ghostTimeFor, saveGhost, removeGhost, storedBytes, clearGhosts });
+})();
+
 // ---- js/main.js ----
-const __vl$m38_js_main = (function () {
+const __vl$m42_js_main = (function () {
 const { PHYS } = __vl$m0_js_config;
 const { LEVEL } = __vl$m9_js_level_data;
 const { World } = __vl$m10_js_world;
 const { Player } = __vl$m12_js_player;
 const { Input } = __vl$m13_js_input;
-const { Renderer } = __vl$m20_js_render;
-const { Sfx } = __vl$m22_js_audio;
-const { Hud } = __vl$m23_js_hud;
-const { Flyover } = __vl$m24_js_game_flyover;
-const { readPB, writePB, finishData, migratePB, pbKeyFor, bestFor } = __vl$m25_js_game_records;
-const { GraphicsControl } = __vl$m26_js_game_quality;
-const { levelId } = __vl$m27_js_level_codec;
-const { collectSources, campaignEntry, linkEntry } = __vl$m37_js_level_source;
+const { Renderer } = __vl$m21_js_render;
+const { Sfx } = __vl$m23_js_audio;
+const { Hud } = __vl$m24_js_hud;
+const { Flyover } = __vl$m25_js_game_flyover;
+const { readPB, writePB, finishData, migratePB, pbKeyFor, bestFor } = __vl$m26_js_game_records;
+const { GraphicsControl } = __vl$m27_js_game_quality;
+const { levelId, encodeLevel, LINK_WARN_LENGTH } = __vl$m28_js_level_codec;
+const { collectSources, campaignEntry, linkEntry } = __vl$m38_js_level_source;
+const { GhostRecorder, GhostTracker, samplePose, makePose, ghostSplit, isGhost } = __vl$m39_js_ghost;
+const { encodeGhost, decodeGhost, readGhostPayload, raceHashFor, LINK_MAX_LENGTH } = __vl$m40_js_ghost_codec;
+const { loadGhost, saveGhost, removeGhost, ghostTimeFor } = __vl$m41_js_ghost_store;
 // Vaultline boot + game loop: wires Renderer, World, Player, Input, Sfx, Hud.
 // States: 'title' -> 'playing' <-> 'paused' -> 'finished'. Fixed-step physics at PHYS.dt (max 8 steps/frame).
 //
@@ -11693,6 +13375,9 @@ const { collectSources, campaignEntry, linkEntry } = __vl$m37_js_level_source;
 // Player, Renderer and Input over to whichever one is picked in the Levels panel. The campaign is the
 // default and is never modified; anything else has to pass the editor's validator first, and a level
 // that fails is listed with the reason instead of being loaded.
+
+
+
 
 
 
@@ -11743,6 +13428,20 @@ let finishInfo = null;    // results for the finish screen, built by finishRun()
 const trigMin = [0, 0, 0];
 const trigMax = [0, 0, 0];
 
+// ---- ghost racing ---------------------------------------------------------------------------
+// recorder: this run, sampled at 20 Hz (observation only — nothing here is fed back to the Player).
+// ghost/tracker/ghostPose: the run being raced, and the live gap to it.
+let recorder = null;
+let ghost = null;            // the ghost being raced, or null
+let ghostSource = '';        // 'best' | 'imported'
+let tracker = null;
+const ghostPose = makePose();
+let storedGhost = null;      // this level's kept best, decoded
+let linkGhost = null;        // the ghost that came in with the URL, decoded (may be for another level)
+let linkGhostNote = '';
+let lastRun = null;          // the ghost just recorded, for "Copy ghost link"
+let ghostLinkToken = 0;      // so a slow link build cannot overwrite a newer finish screen
+
 // ------------------------------------------------------------------ run control
 
 function respawnPoint() {
@@ -11759,6 +13458,10 @@ function placePlayer(point) {
 
 function resetRun() {
   finishInfo = null;
+  recorder = active && active.id ? new GhostRecorder({ levelId: active.id }) : new GhostRecorder({});
+  if (tracker) tracker.reset();
+  if (renderer) renderer.resetGhost();
+  hud.setGhostDelta(null);
   simTime = 0;
   runTime = 0;
   timerRunning = false;
@@ -11850,9 +13553,185 @@ function finishRun() {
     finishInfo.best = pb ? pb.time : runTime;
     finishInfo.incomplete = true;
   }
+  // What the run was raced against, for the finish screen's comparison and its ± Ghost column.
+  if (ghost) {
+    finishInfo.ghost = {
+      time: ghost.time,
+      splits: Array.isArray(ghost.splits) ? ghost.splits.slice() : [],
+      beat: runTime < ghost.time,
+      source: ghostSource,
+    };
+  }
+  lastRun = recorder && counts ? recorder.finish(runTime) : null;
   sfx.play('finish');
   setState('finished');
   pb = record;
+  // Keeping the ghost and building the share link are both async: the screen is already up, and both
+  // only ever fill something in on it.
+  keepGhost(lastRun).then(() => buildGhostLink(lastRun), () => buildGhostLink(lastRun));
+}
+
+// ------------------------------------------------------------------ ghost racing
+
+/** The level's kept ghost, decoded. A stored ghost that no longer decodes is dropped, not shown. */
+async function readStoredGhost(id) {
+  const kept = id ? loadGhost(id) : null;
+  if (!kept) return null;
+  try {
+    const g = await decodeGhost(kept.payload);
+    return isGhost(g) ? g : null;
+  } catch (err) {
+    removeGhost(id);
+    return null;
+  }
+}
+
+/** The ghost in the URL hash ("#gst=..."), decoded once per hash. */
+async function readLinkGhost(hash) {
+  const payload = readGhostPayload(hash);
+  linkGhostNote = '';
+  if (!payload) return null;
+  try {
+    return await decodeGhost(payload);
+  } catch (err) {
+    linkGhostNote = 'That link\'s ghost could not be read: ' + (err && err.message ? err.message : 'it is damaged.');
+    return null;
+  }
+}
+
+/** The imported ghost, but only when it belongs to the level that is loaded. */
+function importedGhost() {
+  if (!linkGhost || !active) return null;
+  if (linkGhost.levelId && active.id && linkGhost.levelId !== active.id) return null;
+  return linkGhost;
+}
+
+/** Point the racing state at whichever ghost the toggle is set to. Safe to call any time. */
+function applyGhostChoice() {
+  const mode = hud.ghostMode;
+  const imported = importedGhost();
+  let next = null;
+  let source = '';
+  if (mode === 'best' && storedGhost) {
+    next = storedGhost;
+    source = 'best';
+  } else if (mode === 'imported' && imported) {
+    next = imported;
+    source = 'imported';
+  }
+  ghost = next;
+  ghostSource = source;
+  tracker = ghost ? new GhostTracker(ghost) : null;
+  hud.setGhostRacing(!!ghost, ghost ? { time: ghost.time } : null);
+  if (renderer) renderer.setGhostPose(null);
+  if (renderer) renderer.resetGhost();
+}
+
+/** Refresh what the toggle offers, then re-pick. */
+function refreshGhostUi() {
+  const imported = importedGhost();
+  let note = linkGhostNote;
+  if (!note && linkGhost && !imported) note = 'The ghost in this link was recorded on another level.';
+  hud.setGhostOptions({
+    best: storedGhost ? storedGhost.time : null,
+    imported: imported ? imported.time : null,
+    note,
+  });
+  applyGhostChoice();
+}
+
+/** Read this level's ghost (and the link's) and hand the result to the UI. */
+async function refreshGhosts(hash) {
+  const id = active ? active.id : null;
+  storedGhost = await readStoredGhost(id);
+  if (hash !== undefined) linkGhost = await readLinkGhost(hash);
+  // A link that carries a ghost for this level is what the player just clicked: race it.
+  if (importedGhost() && hud.ghostMode !== 'imported' && hud.ghostMode !== 'off') hud.setGhostMode('imported', false);
+  refreshGhostUi();
+}
+
+/** Keep `run` as the level's ghost when it is faster than what is stored. -> true when it was kept. */
+async function keepGhost(run) {
+  if (!run || !active || !active.id) return false;
+  const best = ghostTimeFor(active.id);
+  if (best !== null && run.time >= best) return false;
+  let payload = '';
+  try {
+    payload = await encodeGhost(run);
+  } catch (err) {
+    return false;
+  }
+  if (!saveGhost(active.id, payload, run.time)) return false;
+  storedGhost = run;
+  refreshGhostUi();
+  return true;
+}
+
+/** The page URL with no hash on it — what a share link is built from. */
+function pageBase() {
+  const href = window.location ? String(window.location.href) : '';
+  return href.split('#')[0];
+}
+
+/**
+ * Build the "play this level against this ghost" link for the finish screen and hand it to the Hud.
+ * A ghost that would make the link unusably long is dropped, with the level link offered instead —
+ * the rule is warn, never block, and never hand over a link that cannot travel.
+ */
+async function buildGhostLink(run) {
+  const token = ++ghostLinkToken;
+  const share = run || storedGhost;
+  if (!level) return;
+  let levelPayload = '';
+  try {
+    levelPayload = await encodeLevel(level);
+  } catch (err) {
+    hud.setGhostLink({ enabled: false, message: 'This level could not be packed into a link.' });
+    return;
+  }
+  const base = pageBase();
+  const levelOnly = base + raceHashFor(levelPayload, '');
+  if (!share) {
+    if (token !== ghostLinkToken) return;
+    hud.setGhostLink({
+      url: levelOnly,
+      label: 'Copy level link',
+      message: 'No ghost for this level yet — this link carries the course on its own.',
+      length: levelOnly.length,
+      warn: levelOnly.length > LINK_WARN_LENGTH,
+    });
+    return;
+  }
+  let ghostPayload = '';
+  try {
+    ghostPayload = await encodeGhost(share);
+  } catch (err) {
+    ghostPayload = '';
+  }
+  if (token !== ghostLinkToken) return;
+  const full = ghostPayload ? base + raceHashFor(levelPayload, ghostPayload) : '';
+  if (!full || full.length > LINK_MAX_LENGTH) {
+    hud.setGhostLink({
+      url: levelOnly,
+      label: 'Copy level link',
+      warn: true,
+      message: 'This ghost is too big for a link (' + (full ? full.length : 0) + ' characters, the limit is ' +
+        LINK_MAX_LENGTH + '). The level link is offered on its own instead.',
+      length: levelOnly.length,
+    });
+    return;
+  }
+  const warn = full.length > LINK_WARN_LENGTH;
+  hud.setGhostLink({
+    url: full,
+    label: 'Copy ghost link',
+    length: full.length,
+    warn,
+    message: warn
+      ? 'Level + ghost: ' + full.length + ' characters. Past about ' + LINK_WARN_LENGTH +
+        ' some chat apps cut links in half — it still works wherever it arrives whole.'
+      : 'Level + ghost: ' + full.length + ' characters. Whoever opens it plays this course against this run.',
+  });
 }
 
 // ------------------------------------------------------------------ levels
@@ -11942,8 +13821,15 @@ function mount(entry) {
   player = new Player(world, level.spawn);
   flyover = new Flyover(level);
   if (!mountView(level)) return false;
+  lastRun = null;
+  ghost = null;
+  tracker = null;
+  hud.setGhostRacing(false);
+  hud.setGhostLink(null);
   resetRun();
   setState('title');
+  // The ghosts are storage and codec work, so they land a tick later; the level is playable meanwhile.
+  refreshGhosts(window.location ? window.location.hash : '');
   return true;
 }
 
@@ -11961,6 +13847,7 @@ async function onHashChange() {
   if (!entry) {
     if (at >= 0) sources.splice(at, 1);
     refreshLevelTimes();
+    refreshGhosts(hash);
     return;
   }
   if (at >= 0) sources[at] = entry;
@@ -11973,6 +13860,7 @@ async function onHashChange() {
   if (active && active.id === entry.id) {
     active = entry;
     refreshLevelTimes();
+    refreshGhosts(hash);
     return;
   }
   hud.setLevelNote('');
@@ -12001,6 +13889,7 @@ hud.onSettings = (s) => {
   if (s && Number.isFinite(s.vol)) sfx.setVolume(s.vol);
 };
 hud.onLevelPick((key) => pickLevel(key));
+hud.onGhostModeChange(() => { sfx.unlock(); sfx.play('uiClick'); refreshGhostUi(); });
 
 window.addEventListener('pointerdown', () => sfx.unlock(), { passive: true });
 window.addEventListener('keydown', () => sfx.unlock(), { passive: true });
@@ -12015,6 +13904,10 @@ function stepGame(dt) {
   world.step(simTime, dt);
   const events = player.step(dt, inp);
   if (timerRunning) runTime += dt;
+
+  // The ghost recorder only ever READS the player, after its step: a race runs exactly like a run
+  // with no ghost in it.
+  if (recorder) recorder.sample(runTime, player);
 
   // F winch: sounds while the rope is live and the player is actually reeling. player.reeling is the
   // physics truth (it needs both a rope and F held), so it also stops the moment the reel pops the rope off.
@@ -12051,11 +13944,27 @@ function stepGame(dt) {
     splits[i] = runTime;
     const best = pb && Array.isArray(pb.splits) && Number.isFinite(pb.splits[i]) ? pb.splits[i] : null;
     const cp = checkpoints[i];
-    hud.checkpoint(i, cp && cp.name ? cp.name : 'Checkpoint ' + (i + 1), runTime, best);
+    if (recorder) recorder.mark(i, runTime);
+    hud.checkpoint(i, cp && cp.name ? cp.name : 'Checkpoint ' + (i + 1), runTime, best, ghost ? ghostSplit(ghost, i) : null);
     if (renderer) renderer.setCheckpointReached(i);
     sfx.play('checkpoint');
   }
   if (trig.finish) finishRun();
+}
+
+// Replay the ghost at this run time and show the gap. Drawing only: nothing here touches the sim.
+function syncGhost(dt) {
+  const racing = ghost && (state === 'playing' || state === 'paused');
+  if (!racing) {
+    if (renderer) renderer.setGhostPose(null);
+    return;
+  }
+  samplePose(ghost, runTime, ghostPose);
+  if (renderer) renderer.setGhostPose(ghostPose.ended && runTime > ghost.time + 1.5 ? null : ghostPose, dt);
+  if (state === 'playing' && tracker) {
+    const delta = timerRunning ? tracker.update(runTime, player.pos) : null;
+    hud.setGhostDelta(delta);
+  }
 }
 
 function frame(now) {
@@ -12087,6 +13996,7 @@ function frame(now) {
   renderer.syncMovers(world);
   renderer.update(dt, state === 'title' ? flyover.update(dt) : player);
   syncGrapple();   // after update(): the camera position is the rope's muzzle end
+  syncGhost(dt);   // same reason: the trail and the ghost's rope are sized against this camera
   renderer.render();
 }
 
@@ -12118,6 +14028,24 @@ window.__vaultline = {
   pickLevel,
   get state() { return state; },
   get runTime() { return runTime; },
+  /** Ghost racing, for the tests and the console. */
+  get ghosts() {
+    return {
+      mode: hud.ghostMode,
+      racing: !!ghost,
+      source: ghostSource,
+      time: ghost ? ghost.time : null,
+      frames: ghost ? ghost.x.length : 0,
+      delta: tracker ? tracker.delta : null,
+      distance: tracker ? tracker.distance : null,
+      stored: storedGhost ? storedGhost.time : null,
+      imported: importedGhost() ? importedGhost().time : null,
+      note: linkGhostNote,
+      recorded: recorder ? recorder.frames : 0,
+      pose: ghost ? { pos: ghostPose.pos.slice(), state: ghostPose.state, rope: !!ghostPose.rope } : null,
+    };
+  },
+  setGhostMode(mode) { hud.setGhostMode(mode); refreshGhostUi(); },
   get checkpoint() { return lastCp; },
   teleport,
   setState(name) {

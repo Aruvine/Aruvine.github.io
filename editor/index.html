@@ -9116,20 +9116,21 @@ function levelId(level) {
   return h1.toString(36) + '-' + h2.toString(36);
 }
 
-// ------------------------------------------------------------------------------------ encode / decode
-/** Level object -> payload string for the URL hash. Compressed where the browser can. */
-async function encodeLevel(level) {
-  const json = JSON.stringify(level);
-  const bytes = new TextEncoder().encode(json);
+// ------------------------------------------------------------------------------------ bytes <-> payload
+// The tag + base64url envelope on its own, so anything else that has to ride in a link (a ghost run,
+// js/ghost-codec.js) uses exactly the same compression and the same refusal messages.
+
+/** Bytes -> payload string. Compressed where the browser can, plain where it cannot. */
+async function encodeBytes(bytes) {
   const packed = await deflateRaw(bytes);
   if (packed && packed.length < bytes.length) return TAG_DEFLATE + bytesToBase64url(packed);
   return TAG_PLAIN + bytesToBase64url(bytes);
 }
 
-/** Payload string -> level object. Throws an Error whose message is fit to show on screen. */
-async function decodeLevel(payload) {
+/** Payload string -> bytes. Throws an Error whose message is fit to show on screen. */
+async function decodeBytes(payload) {
   const raw = String(payload == null ? '' : payload).trim();
-  if (!raw) throw new Error('The link carries no level.');
+  if (!raw) throw new Error('The link carries nothing.');
   const tag = raw.slice(0, 3);
   const body = raw.slice(3);
   if (tag !== TAG_DEFLATE && tag !== TAG_PLAIN) {
@@ -9146,8 +9147,31 @@ async function decodeLevel(payload) {
       bytes = await inflateRaw(bytes);
     } catch (err) {
       if (err && /newer browser/.test(err.message)) throw err;
+      throw new Error('The link is damaged — the compressed part could not be unpacked.');
+    }
+  }
+  return bytes;
+}
+
+// ------------------------------------------------------------------------------------ encode / decode
+/** Level object -> payload string for the URL hash. Compressed where the browser can. */
+async function encodeLevel(level) {
+  const json = JSON.stringify(level);
+  return encodeBytes(new TextEncoder().encode(json));
+}
+
+/** Payload string -> level object. Throws an Error whose message is fit to show on screen. */
+async function decodeLevel(payload) {
+  const raw = String(payload == null ? '' : payload).trim();
+  if (!raw) throw new Error('The link carries no level.');
+  let bytes = null;
+  try {
+    bytes = await decodeBytes(raw);
+  } catch (err) {
+    if (err && /compressed part/.test(err.message)) {
       throw new Error('The link is damaged — the compressed level could not be unpacked.');
     }
+    throw err;
   }
   let level = null;
   try {
@@ -9167,14 +9191,14 @@ function hashFor(payload) {
   return '#' + HASH_PARAM + '=' + payload;
 }
 
-/** The payload in "#lvl=..." (also accepts "#lvl=..&other=.."), or '' when there is none. */
-function readHashPayload(hash) {
+/** One "name=value" out of a hash ("#lvl=..&gst=.."), or '' when it is not in there. */
+function readHashParam(hash, name) {
   const raw = String(hash == null ? '' : hash).replace(/^#/, '');
   if (!raw) return '';
   for (const part of raw.split('&')) {
     const eq = part.indexOf('=');
     if (eq < 0) continue;
-    if (part.slice(0, eq) !== HASH_PARAM) continue;
+    if (part.slice(0, eq) !== name) continue;
     try {
       return decodeURIComponent(part.slice(eq + 1));
     } catch (err) {
@@ -9184,6 +9208,11 @@ function readHashPayload(hash) {
   return '';
 }
 
+/** The payload in "#lvl=..." (also accepts "#lvl=..&other=.."), or '' when there is none. */
+function readHashPayload(hash) {
+  return readHashParam(hash, HASH_PARAM);
+}
+
 /** How many blocks a level is made of (movers count: they are solid too). */
 function blockCount(level) {
   if (!level) return 0;
@@ -9191,7 +9220,7 @@ function blockCount(level) {
   const movers = Array.isArray(level.movers) ? level.movers.length : 0;
   return boxes + movers;
 }
-return Object.freeze({ CODEC_VERSION, TAG_DEFLATE, TAG_PLAIN, LINK_WARN_LENGTH, HASH_PARAM, canonicalText, levelId, encodeLevel, decodeLevel, hashFor, readHashPayload, blockCount });
+return Object.freeze({ CODEC_VERSION, TAG_DEFLATE, TAG_PLAIN, LINK_WARN_LENGTH, HASH_PARAM, canonicalText, levelId, encodeBytes, decodeBytes, encodeLevel, decodeLevel, hashFor, readHashParam, readHashPayload, blockCount });
 })();
 
 // ---- js/editor/ed-main.js ----
