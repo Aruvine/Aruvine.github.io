@@ -1066,6 +1066,7 @@
     <div class="btn-row">
       <button id="btn-resume" class="btn btn-primary" type="button">Resume</button>
       <button id="btn-restart" class="btn btn-ghost" type="button">Restart</button>
+      <button id="btn-pause-levels" class="btn btn-ghost" type="button">Levels</button>
     </div>
     <hr class="panel-divider">
     <div id="pause-settings-slot" class="settings-slot"></div>
@@ -1100,6 +1101,7 @@
         Run again
         <svg width="22" height="14" viewBox="0 0 22 14" aria-hidden="true" focusable="false"><path d="M0 7h18M13 1.5 19 7l-6 5.5" fill="none" stroke="#0F1B26" stroke-width="2.4"/></svg>
       </button>
+      <button id="btn-levels" class="btn btn-ghost btn-xl" type="button">Back to levels</button>
     </div>
   </div>
 </section>
@@ -8400,7 +8402,7 @@ const IDS = [
   'screen-pause', 'pause-body', 'pause-time', 'pause-split', 'pause-settings-slot',
   'screen-finish', 'finish-body', 'finish-time', 'finish-pb', 'finish-compare', 'finish-splits',
   'screen-error', 'error-body', 'error-message',
-  'btn-play', 'btn-resume', 'btn-restart', 'btn-again',
+  'btn-play', 'btn-resume', 'btn-restart', 'btn-again', 'btn-levels', 'btn-pause-levels',
 ];
 
 const LEVEL_TAGS = { campaign: 'Campaign', challenge: 'Challenge', stored: 'Saved here', link: 'From link' };
@@ -8942,7 +8944,10 @@ class Hud {
   }
 
   _initButtons() {
-    const map = { 'btn-play': 'onPlay', 'btn-resume': 'onResume', 'btn-restart': 'onRestart', 'btn-again': 'onAgain' };
+    const map = {
+      'btn-play': 'onPlay', 'btn-resume': 'onResume', 'btn-restart': 'onRestart', 'btn-again': 'onAgain',
+      'btn-levels': 'onLevels', 'btn-pause-levels': 'onLevels',
+    };
     for (const id of Object.keys(map)) {
       const btn = this.el[id];
       if (!btn) continue;
@@ -11988,6 +11993,7 @@ function pickLevel(key) {
 
 hud.onPlay = () => { sfx.unlock(); sfx.play('uiClick'); startRun(); };
 hud.onAgain = () => { sfx.unlock(); sfx.play('uiClick'); startRun(); };
+hud.onLevels = () => { sfx.unlock(); sfx.play('uiClick'); setState('title'); };
 hud.onRestart = () => { sfx.unlock(); sfx.play('uiClick'); startRun(); };
 hud.onResume = () => { sfx.unlock(); sfx.play('uiClick'); if (state === 'paused') setState('playing'); };
 hud.onSettings = (s) => {
