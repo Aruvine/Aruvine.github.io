@@ -1,5 +1,5 @@
 {
- "updated": "2026-09-19T11:53:07.173Z",
+ "updated": "2026-09-19T11:57:01.638Z",
  "levels": {
   "rjxfo-ypcflq": {
    "name": "SKYHOOK",
@@ -7,6 +7,14 @@
    "leader": {
     "user": "Aruvine",
     "time": 9.75
+   }
+  },
+  "12a2vum-ndygzf": {
+   "name": "THE GAUNTLET",
+   "runs": 1,
+   "leader": {
+    "user": "Aruvine",
+    "time": 17.408
    }
   }
  }
