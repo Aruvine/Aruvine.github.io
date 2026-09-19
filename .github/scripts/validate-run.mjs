@@ -1866,13 +1866,2203 @@ const LEVEL = {
 return Object.freeze({ LEVEL });
 })();
 
+// ---- js/levels/tut-move.js ----
+const __vl$m15_js_levels_tut_move = (function () {
+
+// TUTORIAL 1 — FIRST STEPS.  One skill: getting around on foot.  Walk and look, jump a small gap, sprint a
+// wide one, step up a curb, mantle a ledge. Nothing here can kill you: every gap has a floor a metre and a
+// half below it that you climb straight back out of, and the two wide jumps have a service deck with a shelf
+// on the take-off side, so a miss costs a retry and never a run.
+// Pure data: no imports, no DOM. Exactly the js/level-data.js LEVEL shape.
+//
+//   A  WALK      z    6 ..  -20   y 10          the start pad and a long straight: move, look, read a sign.
+//   B  JUMP      z  -20 ..  -56   y 10          gaps of 2.0, 2.5 and 3.0 m, all inside REACH.gapWalk (3.5),
+//                                               each with a catch floor 1.4 m down.          [checkpoint 0]
+//   C  SPRINT    z  -56 .. -112   y 10          4.2 m and 4.8 m: past a walking jump, inside REACH.gapSprint
+//                                               (5.0). A miss lands on a service deck 3 m down. [checkpoint 1]
+//   D  CLIMB     z -112 .. -146   y 10 -> 15.8  a 0.4 m curb you walk over, a 1.0 m ledge, then 2.0 m and
+//                                               2.4 m mantles (REACH.mantleFromJump).         [checkpoint 2]
+//
+// Glass rails run the length of both sides: the only way off the path is forward, into something soft.
+
+const ID = 'tut-move';
+const boxes = [];
+function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
+
+const KILL_Y = -10;
+const W = 5;                       // corridor half width
+const Y0 = 10;                     // the walking deck
+function gate(id, name, z, respawn) {
+  return { id, name, min: [-40, KILL_Y - 10, z - 2], max: [40, 60, z + 2], respawn };
+}
+const floor = (id, top, z0, z1, half = W) => add(id, 'floor', [-half, top - 1, z1], [half, top, z0]);
+// a catch floor 1.4 m under a small gap: a missed hop drops onto it and is climbed straight back out of
+// on either side (1.4 m is inside PHYS.mantleMaxHeight, so walking into the wall is enough).
+const catcher = (id, top, z0, z1, half = W) => add(id, 'floor', [-half, top - 2.4, z1], [half, top - 1.4, z0]);
+// A service deck under a wide gap: floor 3 m down (too deep to climb onto either deck) plus a shelf 1.5 m
+// down on the TAKE-OFF side. Two easy climbs put you back where you jumped from, with the run-up intact —
+// a miss is a retry, never a shortcut onto the landing deck.
+function service(id, top, z0, z1, half = W) {
+  add(id + '-floor', 'floor', [-half, top - 4, z1], [half, top - 3, z0]);
+  add(id + '-shelf', 'floor', [-half, top - 3, z0 - 1.5], [half, top - 1.5, z0]);
+}
+
+// ------------------------------------------------------------------------------- A  WALK
+add('pad-start', 'floor', [-W, Y0 - 1, -6], [W, Y0, 6]);
+floor('a-run', Y0, -6, -20);
+
+// ------------------------------------------------------------------------------- B  JUMP  (2.0 / 2.5 / 3.0)
+floor('b-1', Y0, -22, -30);
+floor('b-2', Y0, -32.5, -40);
+floor('b-3', Y0, -43, -56);
+catcher('b-catch1', Y0, -18.8, -23.2);
+catcher('b-catch2', Y0, -28.8, -33.7);
+catcher('b-catch3', Y0, -38.8, -44.2);
+
+// ------------------------------------------------------------------------------- C  SPRINT  (4.2 / 4.8)
+floor('c-run', Y0, -56, -76);
+floor('c-1', Y0, -80.2, -92);
+floor('c-2', Y0, -96.8, -112);
+service('c-svc1', Y0, -76, -81.2);
+service('c-svc2', Y0, -92, -97.8);
+
+// ------------------------------------------------------------------------------- D  CLIMB  (0.4 / 1.0 / 2.0 / 2.4)
+add('d-curb', 'floor', [-W, Y0 - 1, -116], [W, Y0 + 0.4, -112]);
+add('d-step', 'floor', [-W, Y0 - 1, -124], [W, Y0 + 1.4, -116]);
+add('d-ledge', 'floor', [-W, Y0 - 1, -136], [W, Y0 + 3.4, -124]);
+add('d-top', 'floor', [-W, Y0 - 1, -146], [W, Y0 + 5.8, -136]);
+add('d-back', 'wall', [-W, Y0 + 5.8, -147], [W, Y0 + 9.8, -146]);
+
+// ------------------------------------------------------------------------------- rails
+add('rail-l-1', 'glass', [-W - 0.3, Y0, -112], [-W, Y0 + 3, 6]);
+add('rail-r-1', 'glass', [W, Y0, -112], [W + 0.3, Y0 + 3, 6]);
+add('rail-l-2', 'glass', [-W - 0.3, Y0 + 0.4, -146], [-W, Y0 + 8.8, -112]);
+add('rail-r-2', 'glass', [W, Y0 + 0.4, -146], [W + 0.3, Y0 + 8.8, -112]);
+
+// ------------------------------------------------------------------------------- deco
+add('deco-1', 'deco', [-W, -60, -20], [W, Y0 - 1, 6]);
+add('deco-2', 'deco', [-W, -60, -56], [W, Y0 - 2.4, -22]);
+add('deco-3', 'deco', [-W, -60, -112], [W, Y0 - 4, -56]);
+add('deco-4', 'deco', [-W, -60, -146], [W, Y0 - 1, -112]);
+add('deco-sky-l1', 'deco', [-30, -60, -60], [-12, 16, -10]);
+add('deco-sky-r1', 'deco', [12, -60, -100], [28, 13, -40]);
+add('deco-sky-l2', 'deco', [-26, -60, -144], [-11, 19, -80]);
+add('deco-sky-r2', 'deco', [13, -60, -154], [30, 22, -110]);
+
+const LEVEL = {
+  name: 'LESSON 1 — FIRST STEPS',
+  spawn: { pos: [0, Y0 + 0.01, 0], yaw: 0 },
+  killY: KILL_Y,
+  boxes,
+  movers: [],
+  anchors: [],
+  checkpoints: [
+    gate(ID + '-cp0', 'SMALL JUMPS', -50, { pos: [0, Y0 + 0.01, -54], yaw: 0 }),
+    gate(ID + '-cp1', 'SPRINT', -104, { pos: [0, Y0 + 0.01, -108], yaw: 0 }),
+    gate(ID + '-cp2', 'CLIMB', -126, { pos: [0, Y0 + 3.41, -128.5], yaw: 0 }),
+  ],
+  finish: { min: [-40, Y0 + 4.8, -146], max: [40, Y0 + 44.8, -136] },
+  signs: [
+    { pos: [0, Y0 + 2.6, -5.5], yaw: 0, text: 'LESSON 1 — FIRST STEPS\nW A S D MOVE, MOUSE LOOKS' },
+    { pos: [-3.6, Y0 + 1.4, -12], yaw: 0, text: 'THE COURSE ALWAYS\nRUNS STRAIGHT AHEAD' },
+    { pos: [3.6, Y0 + 1.4, -18], yaw: 0, text: 'SPACE — JUMP\nSMALL GAPS ONLY' },
+    { pos: [-3.6, Y0 + 1.2, -26], yaw: 0, text: 'MISSED IT?\nWALK AT THE WALL TO CLIMB OUT' },
+    { pos: [3.6, Y0 + 1.4, -37], yaw: 0, text: 'ONE MORE, A LITTLE WIDER' },
+    { pos: [-3.6, Y0 + 2.4, -52], yaw: 0, text: 'CHECKPOINT\nT RESPAWNS YOU HERE' },
+    { pos: [3.6, Y0 + 2.4, -60], yaw: 0, text: 'SHIFT — SPRINT\nHOLD IT DOWN THE STRAIGHT' },
+    { pos: [-3.6, Y0 + 1.4, -72], yaw: 0, text: 'SPRINT MAKES THIS EASY.\nJUMP LATE, AT THE EDGE' },
+    { pos: [3.6, Y0 + 1.4, -88], yaw: 0, text: 'AGAIN, WIDER' },
+    { pos: [-3.6, Y0 + 2.4, -108], yaw: 0, text: 'NOW THE CLIMBING' },
+    { pos: [3.6, Y0 + 1.8, -114], yaw: 0, text: 'A LOW CURB —\nJUST WALK UP IT' },
+    { pos: [-3.6, Y0 + 2.8, -119], yaw: 0, text: 'WAIST HIGH — WALK IN\nAND YOU PULL YOURSELF UP' },
+    { pos: [3.6, Y0 + 4.8, -130], yaw: 0, text: 'HEAD HIGH — JUMP FIRST,\nTHEN HOLD W TO MANTLE' },
+    { pos: [-3.6, Y0 + 7.2, -140], yaw: 0, text: '2.4 M IS THE HIGHEST\nANYONE CAN CLIMB' },
+  ],
+};
+return Object.freeze({ LEVEL });
+})();
+
+// ---- js/levels/tut-slide.js ----
+const __vl$m16_js_levels_tut_slide = (function () {
+
+// TUTORIAL 2 — GET LOW.  One skill: the crouch-slide.  Sprint, tap C, and you drop onto your back with a
+// 3.5 m/s boost that carries you under a ceiling no standing runner fits through — and off the far lip
+// further than any standing jump reaches. The first duct is on flat ground with nothing to fall into: miss
+// the slide and you simply bump the roof and walk back. Only the last two gaps are over open air, and each
+// has a checkpoint in front of it with a full run-up.
+// Pure data: no imports, no DOM. Exactly the js/level-data.js LEVEL shape.
+//
+//   A  THE DUCT     z    6 ..  -44   y 10   one duct with REACH.slideClearance (1.1 m) of headroom, flat
+//                                           ground either side. Practise here.            [checkpoint 0]
+//   B  SLIDE-JUMP   z  -44 ..  -96   y 10   duct, lip, 3.5 m gap; duct, lip, 4.5 m gap. Catch floors 1.4 m
+//                                           below both, so a mistimed jump is a climb, not a death. [cp 1]
+//   C  THE LIP      z  -96 .. -136   y 10   the real thing: 8.0 m of open air, past the 7.6 m a standing
+//                                           sprint jump can manage. Only the slide boost crosses it.  [cp 2]
+//   D  THE LAST ONE z -136 .. -176   y 10   8.5 m, the widest in the pack, onto a 15 m finish deck.
+//
+// Every roof block rises 4.5 m above its floor, far out of jump + mantle reach: no duct can be climbed over.
+
+const ID = 'tut-slide';
+const boxes = [];
+function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
+
+const KILL_Y = -10;
+const W = 5;                       // corridor half width
+const Y0 = 10;                     // the running deck
+const CLEAR = 1.1;                 // REACH.slideClearance
+function gate(id, name, z, respawn) {
+  return { id, name, min: [-40, KILL_Y - 10, z - 2], max: [40, 60, z + 2], respawn };
+}
+const floor = (id, top, z0, z1, half = W) => add(id, 'floor', [-half, top - 1, z1], [half, top, z0]);
+// a duct on floor top `fy` from z0 (entrance) to z1 (exit): a full-width slab with 1.1 m under it
+const duct = (id, fy, z0, z1, half = W) => add(id, 'wall', [-half, fy + CLEAR, z1], [half, fy + 4.5, z0]);
+// a catch floor 1.4 m under a gap: a missed slide-jump lands on it and is climbed out of on either side
+const catcher = (id, top, z0, z1, half = W) => add(id, 'floor', [-half, top - 2.4, z1], [half, top - 1.4, z0]);
+
+// ------------------------------------------------------------------------------- A  THE DUCT
+add('pad-start', 'floor', [-W, Y0 - 1, -6], [W, Y0, 6]);
+floor('a-run', Y0, -6, -44);
+duct('a-duct', Y0, -18, -23);
+
+// ------------------------------------------------------------------------------- B  SLIDE-JUMP  (3.5 / 4.5)
+floor('b-1', Y0, -44, -58);
+duct('b-duct1', Y0, -50, -55);
+floor('b-2', Y0, -61.5, -76);
+duct('b-duct2', Y0, -66, -71);
+floor('b-3', Y0, -80.5, -96);
+catcher('b-catch1', Y0, -57.5, -62);
+catcher('b-catch2', Y0, -75.5, -81);
+
+// ------------------------------------------------------------------------------- C  THE LIP  (8.0 over the void)
+floor('c-1', Y0, -96, -112);
+duct('c-duct', Y0, -102, -108);
+floor('c-2', Y0, -120, -136);
+
+// ------------------------------------------------------------------------------- D  THE LAST ONE  (8.5)
+floor('d-1', Y0, -136, -152);
+duct('d-duct', Y0, -142, -147);
+floor('d-fin', Y0, -160.5, -176);
+add('d-back', 'wall', [-W, Y0, -177], [W, Y0 + 4, -176]);
+
+// ------------------------------------------------------------------------------- rails
+add('rail-l', 'glass', [-W - 0.3, Y0, -176], [-W, Y0 + 3, 6]);
+add('rail-r', 'glass', [W, Y0, -176], [W + 0.3, Y0 + 3, 6]);
+
+// ------------------------------------------------------------------------------- deco
+add('deco-1', 'deco', [-W, -60, -44], [W, Y0 - 1, 6]);
+add('deco-2', 'deco', [-W, -60, -96], [W, Y0 - 2.4, -44]);
+add('deco-3', 'deco', [-W, -60, -136], [W, Y0 - 1, -96]);
+add('deco-4', 'deco', [-W, -60, -176], [W, Y0 - 1, -136]);
+add('deco-sky-l1', 'deco', [-30, -60, -70], [-12, 17, -10]);
+add('deco-sky-r1', 'deco', [12, -60, -120], [29, 14, -50]);
+add('deco-sky-l2', 'deco', [-28, -60, -180], [-11, 20, -110]);
+add('deco-sky-r2', 'deco', [13, -60, -190], [31, 23, -140]);
+
+const LEVEL = {
+  name: 'LESSON 2 — GET LOW',
+  spawn: { pos: [0, Y0 + 0.01, 0], yaw: 0 },
+  killY: KILL_Y,
+  boxes,
+  movers: [],
+  anchors: [],
+  checkpoints: [
+    gate(ID + '-cp0', 'THE DUCT', -34, { pos: [0, Y0 + 0.01, -38], yaw: 0 }),
+    gate(ID + '-cp1', 'SLIDE-JUMP', -90, { pos: [0, Y0 + 0.01, -94], yaw: 0 }),
+    gate(ID + '-cp2', 'THE LIP', -130, { pos: [0, Y0 + 0.01, -134], yaw: 0 }),
+  ],
+  finish: { min: [-40, Y0 - 1, -176], max: [40, Y0 + 39, -160.5] },
+  signs: [
+    { pos: [0, Y0 + 2.6, -5.5], yaw: 0, text: 'LESSON 2 — GET LOW\nSHIFT TO SPRINT, THEN TAP C' },
+    { pos: [-3.6, Y0 + 1.4, -12], yaw: 0, text: 'C — SLIDE\nIT ONLY BOOSTS FROM A SPRINT' },
+    { pos: [3.6, Y0 + 1.4, -16], yaw: 0, text: '1.1 M OF ROOF\nNOBODY WALKS UNDER THAT' },
+    { pos: [-3.6, Y0 + 1.4, -26], yaw: 0, text: 'BUMPED THE ROOF?\nWALK BACK AND TRY AGAIN' },
+    { pos: [3.6, Y0 + 2.4, -36], yaw: 0, text: 'NOW A LIP AND A GAP' },
+    { pos: [-3.6, Y0 + 1.4, -47], yaw: 0, text: 'KEEP C HELD\nSPACE ON THE LIP' },
+    { pos: [3.6, Y0 + 1.4, -59], yaw: 0, text: 'LANDING AT SPEED\nSTILL CROUCHED = A NEW SLIDE' },
+    { pos: [-3.6, Y0 + 1.4, -78], yaw: 0, text: 'THAT FLOOR BELOW\nIS THERE TO CATCH YOU' },
+    { pos: [3.6, Y0 + 2.4, -92], yaw: 0, text: 'NO FLOOR FROM HERE ON' },
+    { pos: [-3.6, Y0 + 1.4, -99], yaw: 0, text: '8 M OF AIR AFTER THIS ONE\nSPRINT, C, THEN SPACE' },
+    { pos: [3.6, Y0 + 2.4, -122], yaw: 0, text: 'THAT IS THE MOVE' },
+    { pos: [-3.6, Y0 + 1.4, -139], yaw: 0, text: 'LAST DUCT, WIDEST GAP\n8.5 M' },
+  ],
+};
+return Object.freeze({ LEVEL });
+})();
+
+// ---- js/levels/tut-wall.js ----
+const __vl$m17_js_levels_tut_wall = (function () {
+
+// TUTORIAL 3 — OFF THE WALL.  One skill: the yellow walls.  Sprint at one, jump into it and hold W and you
+// run along it; press SPACE again and you kick off it. The first wall stands beside ordinary ground with
+// nothing to fall into, so the feel is learned before anything is asked of it. Then one 10 m crossing, then
+// the kick from a right wall to a left one, and last the chimney — two walls 3.2 m apart, climbed by
+// alternating kicks, with the shaft floor underneath to catch every miss.
+// Pure data: no imports, no DOM. Exactly the js/level-data.js LEVEL shape.
+//
+//   A  THE FEEL   z    5 ..  -46   y 12   a 14 m yellow wall beside a solid deck. Run it, drop off it, run
+//                                         it again — a miss costs nothing at all.             [checkpoint 0]
+//   B  CROSSING   z  -46 ..  -78   y 12   11 m of open air — past even a 14.5 m/s slide-jump — spanned by a
+//                                         yellow wall reaching 4 m past the landing edge, onto a 21 m deck
+//                                         1.5 m HIGHER — the run lifts you, a slide-jump cannot.      [cp 1]
+//   C  THE KICK   z  -78 .. -117   y 12   19 m of void: ride the right wall, SPACE across onto the left
+//                                         wall, ride that one in. Two runs, one kick.         [checkpoint 2]
+//   D  THE SHAFT  z -117 .. -152   y 12 -> 18   through the door into a 3.2 m chimney and 6 m up on
+//                                         alternating kicks; a missed kick lands on the shaft floor. [cp 3]
+//
+// Every yellow wall is flush with the grey that joins it, so a runner hugging the plane never meets an
+// exposed wall end — but the grey breaks the run, so each wall has to be caught on its own.
+
+const ID = 'tut-wall';
+const boxes = [];
+function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
+
+const KILL_Y = -12;
+const Y0 = 12;                     // the running deck
+const LX = 2.5, WT = 0.5;          // lane half width, wall thickness
+const WB = -8, WTP = 30;           // walls hang below the lane and tower over it
+const CH = 1.6;                    // chimney half width: faces 3.2 m apart (REACH.chimneyWidth)
+function gate(id, name, z, respawn) {
+  return { id, name, min: [-40, KILL_Y - 10, z - 2], max: [40, 60, z + 2], respawn };
+}
+const floor = (id, top, z0, z1, half = LX) => add(id, 'floor', [-half, top - 1, z1], [half, top, z0]);
+// a full-height wall on `side` (+1 right, -1 left): yellow (runnable) or grey (a joint that breaks the run)
+function side(id, kind, s, z0, z1) {
+  add(id, kind, [s > 0 ? LX : -LX - WT, WB, z1], [s > 0 ? LX + WT : -LX, WTP, z0]);
+}
+// a glass parapet flush with the wall plane, where no wall guards the edge. 3 m tall: a wall-run ends with
+// the body above the deck and still drifting outward, so a waist-high rail would be sailed over.
+const rail = (id, s, top, z0, z1) =>
+  add(id, 'glass', [s > 0 ? LX : -LX - WT, top, z1], [s > 0 ? LX + WT : -LX, top + 3, z0]);
+
+// ------------------------------------------------------------------------------- A  THE FEEL
+add('pad-start', 'floor', [-LX, Y0 - 1, -5], [LX, Y0, 5]);
+floor('a-run', Y0, -5, -30);
+rail('rail-r-a', 1, Y0, 5, -10);
+side('a-wall', 'wallrun', 1, -10, -24);     // 14 m of practice wall over solid ground
+side('a-joint', 'wall', 1, -24, -30);       // grey: the practice run always ends back on the deck
+
+// ------------------------------------------------------------------------------- B  CROSSING  (11 m)
+floor('b-take', Y0, -30, -46);
+side('b-wall', 'wallrun', 1, -30, -61);     // spans the gap -46 .. -57 and dies 4 m onto the deck
+floor('b-land', Y0 + 1.5, -57, -78);
+side('b-joint', 'wall', 1, -61, -74);
+
+// ------------------------------------------------------------------------------- C  THE KICK  (19 m of void)
+side('c-wall1', 'wallrun', 1, -74, -87);    // right: starts 4 m before the edge, reaches 9 m out
+add('c-wall2', 'wallrun', [-2, WB, -97], [-1.5, WTP, -84]);   // the far wall stands 1.5 m inside the lane,
+// so the kick across is the ~3.3 m of sideways travel a wall-jump really carries, not the full 5 m lane
+floor('c-land', Y0, -97, -117);
+
+// ------------------------------------------------------------------------------- D  THE SHAFT  (12 -> 18)
+floor('d-floor', Y0, -117, -133);
+add('d-door-l', 'wall', [-LX, Y0, -125], [-CH, WTP, -117]);
+add('d-door-r', 'wall', [CH, Y0, -125], [LX, WTP, -117]);
+add('d-chim-l', 'wallrun', [-LX, Y0, -133], [-CH, WTP, -125]);
+add('d-chim-r', 'wallrun', [CH, Y0, -133], [LX, WTP, -125]);
+add('d-chim-back', 'floor', [-CH, Y0, -135], [CH, Y0 + 6, -133]);   // its top is the ledge you climb out onto
+floor('d-fin', Y0 + 6, -135, -152);
+add('d-back', 'wall', [-LX, Y0 + 6, -153], [LX, Y0 + 10, -152]);
+
+// ------------------------------------------------------------------------------- rails
+rail('rail-l-1', -1, Y0, 5, -46);
+rail('rail-l-2', -1, Y0 + 1.5, -46, -78);
+rail('rail-l-3', -1, Y0, -78, -117);
+rail('rail-r-c', 1, Y0, -87, -117);
+rail('rail-l-d', -1, Y0 + 6, -135, -152);
+rail('rail-r-d', 1, Y0 + 6, -135, -152);
+
+// ------------------------------------------------------------------------------- deco
+add('deco-1', 'deco', [-LX, -60, -30], [LX, Y0 - 1, 5]);
+add('deco-2', 'deco', [-LX, -60, -46], [LX, Y0 - 1, -30]);
+add('deco-3', 'deco', [-LX, -60, -78], [LX, Y0 + 0.5, -57]);
+add('deco-4', 'deco', [-LX, -60, -133], [LX, Y0 - 1, -97]);
+add('deco-5', 'deco', [-LX, -60, -152], [LX, Y0 + 5, -135]);
+add('deco-sky-l1', 'deco', [-32, -60, -60], [-14, 20, -10]);
+add('deco-sky-r1', 'deco', [14, -60, -110], [31, 26, -50]);
+add('deco-sky-l2', 'deco', [-30, -60, -160], [-13, 24, -100]);
+add('deco-sky-r2', 'deco', [15, -60, -170], [33, 29, -130]);
+
+const LEVEL = {
+  name: 'LESSON 3 — OFF THE WALL',
+  spawn: { pos: [0, Y0 + 0.01, 0], yaw: 0 },
+  killY: KILL_Y,
+  boxes,
+  movers: [],
+  anchors: [],
+  checkpoints: [
+    gate(ID + '-cp0', 'THE FEEL', -34, { pos: [0, Y0 + 0.01, -37], yaw: 0 }),
+    gate(ID + '-cp1', 'CROSSING', -64, { pos: [0, Y0 + 1.51, -67], yaw: 0 }),
+    gate(ID + '-cp2', 'THE KICK', -105, { pos: [0, Y0 + 0.01, -108], yaw: 0 }),
+    gate(ID + '-cp3', 'THE SHAFT', -120, { pos: [0, Y0 + 0.01, -122.5], yaw: 0 }),
+  ],
+  finish: { min: [-40, Y0 + 5, -152], max: [40, Y0 + 45, -135] },
+  signs: [
+    { pos: [-1.4, Y0 + 2.6, -4.5], yaw: 0, text: 'LESSON 3 — OFF THE WALL\nYELLOW MEANS RUNNABLE' },
+    { pos: [-1.4, Y0 + 1.6, -12], yaw: 0, text: 'SPRINT AT THE YELLOW,\nJUMP INTO IT, HOLD W' },
+    { pos: [-1.4, Y0 + 1.6, -22], yaw: 0, text: 'DROP OFF, RUN IT AGAIN.\nTHERE IS NOTHING TO FALL INTO' },
+    { pos: [-1.4, Y0 + 2.4, -36], yaw: 0, text: 'NOW A REAL GAP' },
+    { pos: [-1.4, Y0 + 1.6, -44], yaw: 0, text: 'JUMP AT THE EDGE\nAND KEEP HOLDING W' },
+    { pos: [-1.4, Y0 + 3.9, -62], yaw: 0, text: 'THE WALL RUNS OUT\n4 M PAST THE LANDING' },
+    { pos: [-1.4, Y0 + 2.9, -72], yaw: 0, text: 'THIS ONE IS TOO LONG\nFOR ONE WALL' },
+    { pos: [-1.4, Y0 + 4.1, -76], yaw: 0, text: 'RIGHT WALL, THEN SPACE\nTO KICK ONTO THE LEFT ONE' },
+    { pos: [-1.4, Y0 + 2.4, -102], yaw: 0, text: 'THAT WAS A WALL-JUMP' },
+    { pos: [-1.4, Y0 + 1.6, -115], yaw: 0, text: 'LAST ONE: A SHAFT\nTWO WALLS, 3.2 M APART' },
+    { pos: [1.35, Y0 + 2.6, -124.9], yaw: 0, text: 'A AND D BETWEEN KICKS\nMISS AND YOU LAND SAFE' },
+  ],
+};
+return Object.freeze({ LEVEL });
+})();
+
+// ---- js/levels/tut-swing.js ----
+const __vl$m18_js_levels_tut_swing = (function () {
+
+// TUTORIAL 4 — ON THE ROPE.  One skill: E.  E throws a rope at a green anchor and the rope HOLDS for as long
+// as E is held — look away, spin around, it stays. It never pulls: it is a pure constraint, so you fall
+// around the anchor and keep every metre per second you arrived with. Let go at the bottom and you go down;
+// let go near the top of the swing and you are thrown forward onto the next deck.
+// Pure data: no imports, no DOM. Exactly the js/level-data.js LEVEL shape.
+//
+//   A  THE FEEL   z    6 ..  -26   y 25         one anchor over a 32 m deck. Rope it standing still, swing,
+//                                               let go, land on the same deck. Nothing to fall into. [cp 0]
+//   B  FIRST GAP  z  -26 ..  -62   y 25 -> 23   18 m of open air with the anchor 9 m up and 9 m out — the
+//                                               same shape the campaign uses, onto an 18 m deck.     [cp 1]
+//   C  THE LONG   z  -62 .. -102   y 23 -> 21   20 m. Same move, held a beat longer.                 [cp 2]
+//   D  TWO IN A ROW z -102 .. -178 y 21 -> 17   land off one swing and rope the next straight away.  [cp 3]
+//
+// Every anchor hangs 9.5 m above the deck it is thrown from and 10 m out over the gap, well inside
+// GRAPPLE.range (28 m), and every deck is 12 m wide and 16 m deep or more: after a 20 m flight you want a
+// landing you cannot miss. Every swing loses 2 m of height, because a rope alone never buys any.
+
+const ID = 'tut-swing';
+const boxes = [];
+function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
+
+const KILL_Y = -5;
+const AH = 0.35;                                  // anchors are 0.7 m cubes
+function anchor(id, x, y, z, approach) {
+  add(id, 'grapple', [x - AH, y - AH, z - AH], [x + AH, y + AH, z + AH]);
+  boxes[boxes.length - 1].approach = approach;    // the spot the anchor was designed to be thrown from
+}
+// A gate spans the whole corridor and rises to y 150: a swing can throw a body high over a deck, and a
+// checkpoint you sail over is a checkpoint skipped.
+function gate(id, name, z, respawn) {
+  return { id, name, min: [-60, KILL_Y - 10, z - 2], max: [60, 150, z + 2], respawn };
+}
+const deck = (id, top, z0, z1, half = 6) => add(id, 'floor', [-half, top - 1, z1], [half, top, z0]);
+
+// ------------------------------------------------------------------------------- A  THE FEEL
+deck('deck-a', 25, 6, -26);
+anchor('g1', 0, 34, -14, [0, 25, -6]);
+
+// ------------------------------------------------------------------------------- B  FIRST GAP  (18 m)
+anchor('g2', 0, 34.5, -35, [0, 25, -23]);
+deck('deck-b', 23, -44, -62);
+
+// ------------------------------------------------------------------------------- C  THE LONG  (20 m)
+anchor('g3', 0, 32.5, -72, [0, 23, -59]);
+deck('deck-c', 21, -82, -102);
+
+// ------------------------------------------------------------------------------- D  TWO IN A ROW
+anchor('g4', 0, 30.5, -112, [0, 21, -99]);
+deck('deck-d', 19, -122, -138);
+anchor('g5', 0, 28.5, -148, [0, 19, -135]);
+deck('deck-fin', 17, -156, -178);
+add('deck-fin-back', 'wall', [-6, 17, -179], [6, 21, -178]);
+
+// ------------------------------------------------------------------------------- deco
+add('deco-a', 'deco', [-6, -60, -26], [6, 24, 6]);
+add('deco-b', 'deco', [-6, -60, -62], [6, 22, -44]);
+add('deco-c', 'deco', [-6, -60, -102], [6, 20, -82]);
+add('deco-d', 'deco', [-6, -60, -138], [6, 18, -122]);
+add('deco-f', 'deco', [-6, -60, -178], [6, 16, -156]);
+add('deco-sky-l1', 'deco', [-38, -60, -50], [-18, 30, 10]);
+add('deco-sky-r1', 'deco', [18, -60, -90], [40, 26, -30]);
+add('deco-sky-l2', 'deco', [-40, -60, -140], [-20, 34, -80]);
+add('deco-sky-r2', 'deco', [20, -60, -190], [42, 30, -120]);
+
+const LEVEL = {
+  name: 'LESSON 4 — ON THE ROPE',
+  spawn: { pos: [0, 25.01, 0], yaw: 0 },
+  killY: KILL_Y,
+  boxes,
+  movers: [],
+  anchors: boxes.filter((b) => b.kind === 'grapple')
+    .map((b) => ({ id: b.id, point: [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2) })),
+  checkpoints: [
+    gate(ID + '-cp0', 'THE FEEL', -20, { pos: [0, 25.01, -23], yaw: 0 }),
+    gate(ID + '-cp1', 'FIRST GAP', -52, { pos: [0, 23.01, -55], yaw: 0 }),
+    gate(ID + '-cp2', 'THE LONG', -92, { pos: [0, 21.01, -95], yaw: 0 }),
+    gate(ID + '-cp3', 'TWO IN A ROW', -128, { pos: [0, 19.01, -131], yaw: 0 }),
+  ],
+  finish: { min: [-60, 16, -178], max: [60, 116, -156] },
+  signs: [
+    { pos: [0, 27.6, 5.5], yaw: Math.PI, text: 'LESSON 4 — ON THE ROPE' },
+    { pos: [-4.4, 26.4, -3], yaw: 0, text: 'E — ROPE\nAIM AT THE GREEN AND HOLD E' },
+    { pos: [4.4, 26.4, -10], yaw: 0, text: 'IT NEVER PULLS YOU.\nYOU JUST FALL AROUND IT' },
+    { pos: [-4.4, 26.4, -17], yaw: 0, text: 'LOOK AWAY — IT STILL HOLDS.\nLET E GO AND IT DROPS' },
+    { pos: [4.4, 26.4, -24], yaw: 0, text: 'NOW A GAP.\nTHROW IT FROM THE EDGE' },
+    { pos: [-4.4, 24.4, -46], yaw: 0, text: 'LET GO NEAR THE TOP\nOF THE SWING, NOT THE BOTTOM' },
+    { pos: [4.4, 24.4, -60], yaw: 0, text: 'SAME AGAIN, A LITTLE LONGER' },
+    { pos: [-4.4, 22.4, -84], yaw: 0, text: 'YOU KEEP THE SPEED\nYOU ARRIVED WITH' },
+    { pos: [4.4, 22.4, -100], yaw: 0, text: 'TWO IN A ROW NOW' },
+    { pos: [-4.4, 20.4, -124], yaw: 0, text: 'LAND, RUN, THROW AGAIN' },
+    { pos: [4.4, 20.4, -136], yaw: 0, text: 'LAST ONE — FINISH DECK' },
+  ],
+};
+return Object.freeze({ LEVEL });
+})();
+
+// ---- js/levels/tut-shoot.js ----
+const __vl$m19_js_levels_tut_shoot = (function () {
+
+// TUTORIAL 5 — THE REEL.  One skill: F.  Throw the rope with E, then hold F and the rope stops being a
+// constraint and becomes an engine: it hauls you at the anchor and winds itself in, and when it runs out of
+// rope with speed still on you it lets go and you shoot straight past. That is how you gain height — a rope
+// on its own never can. The first shot is straight up over a 46 m deck you cannot miss on the way down.
+// Pure data: no imports, no DOM. Exactly the js/level-data.js LEVEL shape.
+//
+//   A  STRAIGHT UP z    6 ..  -40   y 15         one anchor 15 m over a long deck. E, then hold F, and ride
+//                                                it up. You come down on the same deck.        [checkpoint 0]
+//   B  FIRST SHOT  z  -40 ..  -74   y 15 -> 26   16 m across and 11 m UP, which no swing and no jump can do.
+//                                                Anchor 17 m up, 10 m out.                     [checkpoint 1]
+//   C  SECOND      z  -74 .. -108   y 26 -> 37   the same shot again, one storey higher.       [checkpoint 2]
+//   D  CHAIN       z -108 .. -174   y 37 -> 59   two shots back to back onto the finish deck.  [checkpoint 3]
+//
+// Every anchor is 20.1 m from the eye of the deck it is shot from — inside GRAPPLE.range (28 m) with 8 m to
+// spare — and every landing deck is 12 m wide and 16 m deep or more.
+
+const ID = 'tut-shoot';
+const boxes = [];
+function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
+
+const KILL_Y = -5;
+const AH = 0.35;                                  // anchors are 0.7 m cubes
+function anchor(id, x, y, z, approach) {
+  add(id, 'grapple', [x - AH, y - AH, z - AH], [x + AH, y + AH, z + AH]);
+  boxes[boxes.length - 1].approach = approach;
+}
+// A gate spans the whole corridor and rises to y 150: an F reel throws a body a long way over a deck, and a
+// checkpoint you sail over is a checkpoint skipped.
+function gate(id, name, z, respawn) {
+  return { id, name, min: [-60, KILL_Y - 10, z - 2], max: [60, 150, z + 2], respawn };
+}
+const deck = (id, top, z0, z1, half = 6) => add(id, 'floor', [-half, top - 1, z1], [half, top, z0]);
+
+// ------------------------------------------------------------------------------- A  STRAIGHT UP
+deck('deck-a', 15, 6, -40);
+anchor('g1', 0, 30, -16, [0, 15, -6]);
+
+// ------------------------------------------------------------------------------- B  FIRST SHOT  (16 m, +11)
+anchor('g2', 0, 32, -50, [0, 15, -37]);
+deck('deck-b', 26, -56, -74);
+
+// ------------------------------------------------------------------------------- C  SECOND SHOT  (16 m, +11)
+anchor('g3', 0, 43, -84, [0, 26, -71]);
+deck('deck-c', 37, -90, -108);
+
+// ------------------------------------------------------------------------------- D  CHAIN  (two shots)
+anchor('g4', 0, 54, -118, [0, 37, -105]);
+deck('deck-d', 48, -124, -140);
+anchor('g5', 0, 65, -150, [0, 48, -137]);
+deck('deck-fin', 59, -156, -174);
+add('deck-fin-back', 'wall', [-6, 59, -175], [6, 63, -174]);
+
+// ------------------------------------------------------------------------------- deco
+add('deco-a', 'deco', [-6, -60, -40], [6, 14, 6]);
+add('deco-b', 'deco', [-6, -60, -74], [6, 25, -56]);
+add('deco-c', 'deco', [-6, -60, -108], [6, 36, -90]);
+add('deco-d', 'deco', [-6, -60, -140], [6, 47, -124]);
+add('deco-f', 'deco', [-6, -60, -174], [6, 58, -156]);
+add('deco-sky-l1', 'deco', [-38, -60, -60], [-18, 26, 10]);
+add('deco-sky-r1', 'deco', [18, -60, -100], [40, 34, -40]);
+add('deco-sky-l2', 'deco', [-40, -60, -150], [-20, 46, -90]);
+add('deco-sky-r2', 'deco', [20, -60, -190], [42, 56, -130]);
+
+const LEVEL = {
+  name: 'LESSON 5 — THE REEL',
+  spawn: { pos: [0, 15.01, 0], yaw: 0 },
+  killY: KILL_Y,
+  boxes,
+  movers: [],
+  anchors: boxes.filter((b) => b.kind === 'grapple')
+    .map((b) => ({ id: b.id, point: [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2) })),
+  checkpoints: [
+    gate(ID + '-cp0', 'STRAIGHT UP', -34, { pos: [0, 15.01, -37], yaw: 0 }),
+    gate(ID + '-cp1', 'FIRST SHOT', -66, { pos: [0, 26.01, -69], yaw: 0 }),
+    gate(ID + '-cp2', 'SECOND SHOT', -100, { pos: [0, 37.01, -103], yaw: 0 }),
+    gate(ID + '-cp3', 'CHAIN', -132, { pos: [0, 48.01, -135], yaw: 0 }),
+  ],
+  finish: { min: [-60, 58, -174], max: [60, 158, -156] },
+  signs: [
+    { pos: [0, 17.6, 5.5], yaw: Math.PI, text: 'LESSON 5 — THE REEL' },
+    { pos: [-4.4, 16.4, -3], yaw: 0, text: 'E THROWS THE ROPE.\nF WINDS IT IN — HARD' },
+    { pos: [4.4, 16.4, -11], yaw: 0, text: 'HOLD BOTH.\nRIDE IT ALL THE WAY UP' },
+    { pos: [-4.4, 16.4, -20], yaw: 0, text: 'THE ROPE RUNS OUT AND\nLETS GO. YOU SHOOT PAST' },
+    { pos: [4.4, 16.4, -32], yaw: 0, text: 'THE DECK BELOW IS 46 M LONG.\nTRY IT A FEW TIMES' },
+    { pos: [-4.4, 16.4, -38], yaw: 0, text: 'NOW UPWARDS FOR REAL:\n11 M OF CLIMB' },
+    { pos: [4.4, 27.4, -58], yaw: 0, text: 'NO JUMP AND NO SWING\nGETS YOU UP HERE' },
+    { pos: [-4.4, 27.4, -72], yaw: 0, text: 'AGAIN — ONE MORE STOREY' },
+    { pos: [4.4, 38.4, -92], yaw: 0, text: 'AIM GREEN, E, THEN F' },
+    { pos: [-4.4, 38.4, -106], yaw: 0, text: 'TWO IN A ROW NOW.\nLAND AND SHOOT AGAIN' },
+    { pos: [4.4, 49.4, -126], yaw: 0, text: 'LAST SHOT — THE FINISH DECK' },
+  ],
+};
+return Object.freeze({ LEVEL });
+})();
+
+// ---- js/levels/tut-final.js ----
+const __vl$m20_js_levels_tut_final = (function () {
+
+// TUTORIAL 6 — GRADUATION.  Every lesson in the pack, once each, in the order they were taught: a sprint gap
+// and a 2.4 m mantle, a duct and a slide-jump, a yellow wall over 10 m of air, a rope swing, and one reel
+// shot onto the finish tower. Nothing new is introduced and nothing is asked twice; there is a checkpoint in
+// front of every move and the landings are the widest in the pack.
+// Pure data: no imports, no DOM. Exactly the js/level-data.js LEVEL shape.
+//
+//   1  FOOTWORK  z    6 ..  -56   y 12 -> 14.4   4.5 m sprint gap (catch floor 1.4 m down), 2.4 m mantle. [cp0]
+//   2  THE DUCT  z  -56 ..  -96   y 14.4         1.1 m of headroom, then 8.0 m of open air off the lip. [cp1]
+//   3  THE WALL  z  -96 .. -140   y 14.4         11 m crossing on the yellow wall.                     [cp2]
+//   4  THE ROPE  z -140 .. -176   y 14.4 -> 12.4 18 m swing on E alone, onto a 12 x 18 m deck.          [cp3]
+//   5  THE REEL  z -176 .. -210   y 12.4 -> 23.4 E then F: 16 m across and 11 m up onto the finish.
+//
+// The anchors sit at exactly the distances lessons 4 and 5 used (15.2 m and 20.1 m from the eye), so the two
+// throws that end the pack are the two throws that were practised.
+
+const ID = 'tut-final';
+const boxes = [];
+function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
+
+const KILL_Y = -8;
+const XL = -6, XR = 2.5;           // the lane: wide to the left, the wall plane on the right
+const WT = 0.5;
+const Y1 = 12, Y2 = 14.4, Y3 = 12.4, Y4 = 23.4;
+const AH = 0.35;
+function anchor(id, x, y, z, approach) {
+  add(id, 'grapple', [x - AH, y - AH, z - AH], [x + AH, y + AH, z + AH]);
+  boxes[boxes.length - 1].approach = approach;
+}
+function gate(id, name, z, respawn) {
+  return { id, name, min: [-60, KILL_Y - 10, z - 2], max: [60, 150, z + 2], respawn };
+}
+const floor = (id, top, z0, z1, x0 = XL, x1 = XR) => add(id, 'floor', [x0, top - 1, z1], [x1, top, z0]);
+const rails = (id, top, z0, z1) => {
+  add(id + '-l', 'glass', [XL - WT, top, z1], [XL, top + 3, z0]);
+  add(id + '-r', 'glass', [XR, top, z1], [XR + WT, top + 3, z0]);
+};
+
+// ------------------------------------------------------------------------------- 1  FOOTWORK
+add('pad-start', 'floor', [XL, Y1 - 1, -6], [XR, Y1, 6]);
+floor('s1-run', Y1, -6, -26);
+add('s1-catch', 'floor', [XL, Y1 - 2.4, -32], [XR, Y1 - 1.4, -25]);   // catches the 4.5 m sprint gap
+floor('s1-land', Y1, -30.5, -42);
+add('s1-ledge', 'floor', [XL, Y1 - 1, -56], [XR, Y2, -42]);           // the 2.4 m mantle
+rails('rail-1', Y1, 6, -42);
+rails('rail-2', Y2, -42, -96);
+
+// ------------------------------------------------------------------------------- 2  THE DUCT
+floor('s2-run', Y2, -56, -72);
+add('s2-duct', 'wall', [XL, Y2 + 1.1, -67], [XR, Y2 + 4.5, -62]);
+floor('s2-land', Y2, -80, -96);
+
+// ------------------------------------------------------------------------------- 3  THE WALL
+floor('s3-take', Y2, -96, -112);
+add('s3-wall', 'wallrun', [XR, 4, -127], [XR + WT, 32, -96]);         // spans the gap and dies 4 m onto the deck
+floor('s3-land', Y2, -123, -140);
+add('rail-3-l', 'glass', [XL - WT, Y2, -140], [XL, Y2 + 3, -96]);
+add('rail-3-r', 'glass', [XR, Y2, -140], [XR + WT, Y2 + 3, -127]);
+
+// ------------------------------------------------------------------------------- 4  THE ROPE
+anchor('g1', 0, Y2 + 9.5, -150, [0, Y2, -137]);
+floor('s4-land', Y3, -158, -176, -6, 6);
+
+// ------------------------------------------------------------------------------- 5  THE REEL
+anchor('g2', 0, Y3 + 17, -186, [0, Y3, -173]);
+floor('s5-fin', Y4, -192, -210, -6, 6);
+add('s5-back', 'wall', [-6, Y4, -211], [6, Y4 + 4, -210]);
+
+// ------------------------------------------------------------------------------- deco
+add('deco-1', 'deco', [XL, -60, -26], [XR, Y1 - 1, 6]);
+add('deco-2', 'deco', [XL, -60, -42], [XR, Y1 - 2.4, -30.5]);
+add('deco-3', 'deco', [XL, -60, -72], [XR, Y2 - 1, -42]);
+add('deco-4', 'deco', [XL, -60, -112], [XR, Y2 - 1, -80]);
+add('deco-5', 'deco', [XL, -60, -140], [XR, Y2 - 1, -123]);
+add('deco-6', 'deco', [-6, -60, -176], [6, Y3 - 1, -158]);
+add('deco-7', 'deco', [-6, -60, -210], [6, Y4 - 1, -192]);
+add('deco-sky-l1', 'deco', [-36, -60, -70], [-16, 22, -10]);
+add('deco-sky-r1', 'deco', [16, -60, -120], [34, 27, -50]);
+add('deco-sky-l2', 'deco', [-38, -60, -180], [-18, 30, -110]);
+add('deco-sky-r2', 'deco', [17, -60, -220], [36, 34, -160]);
+
+const LEVEL = {
+  name: 'LESSON 6 — GRADUATION',
+  spawn: { pos: [0, Y1 + 0.01, 0], yaw: 0 },
+  killY: KILL_Y,
+  boxes,
+  movers: [],
+  anchors: boxes.filter((b) => b.kind === 'grapple')
+    .map((b) => ({ id: b.id, point: [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2) })),
+  checkpoints: [
+    gate(ID + '-cp0', 'FOOTWORK', -50, { pos: [0, Y2 + 0.01, -53], yaw: 0 }),
+    gate(ID + '-cp1', 'THE DUCT', -90, { pos: [0, Y2 + 0.01, -93], yaw: 0 }),
+    gate(ID + '-cp2', 'THE WALL', -134, { pos: [0, Y2 + 0.01, -137], yaw: 0 }),
+    gate(ID + '-cp3', 'THE ROPE', -168, { pos: [0, Y3 + 0.01, -171], yaw: 0 }),
+  ],
+  finish: { min: [-60, Y4 - 1, -210], max: [60, Y4 + 99, -192] },
+  signs: [
+    { pos: [0, Y1 + 2.6, -5.5], yaw: 0, text: 'LESSON 6 — GRADUATION\nALL FIVE, ONE EACH' },
+    { pos: [-4.6, Y1 + 1.4, -18], yaw: 0, text: 'SHIFT AND SPACE:\n4.5 M' },
+    { pos: [1.6, Y1 + 1.4, -36], yaw: 0, text: 'AND 2.4 M OF CLIMB —\nJUMP, THEN HOLD W' },
+    { pos: [-4.6, Y2 + 2.4, -52], yaw: 0, text: 'DUCT NEXT: SPRINT, C,\nSPACE ON THE LIP' },
+    { pos: [1.6, Y2 + 1.4, -70], yaw: 0, text: '8 M OF AIR\nKEEP C HELD' },
+    { pos: [-4.6, Y2 + 2.4, -92], yaw: 0, text: 'YELLOW WALL, 11 M' },
+    { pos: [-4.6, Y2 + 1.4, -110], yaw: 0, text: 'LEAN RIGHT, JUMP AT THE EDGE,\nHOLD W' },
+    { pos: [-4.6, Y2 + 2.4, -132], yaw: 0, text: 'NOW THE ROPE: E AT THE GREEN,\nLET GO NEAR THE TOP' },
+    { pos: [-4.4, Y3 + 2.4, -162], yaw: 0, text: 'ONE LEFT — THE REEL' },
+    { pos: [4.4, Y3 + 2.4, -174], yaw: 0, text: 'E, THEN HOLD F.\n11 M UP TO THE FINISH' },
+  ],
+};
+return Object.freeze({ LEVEL });
+})();
+
+// ---- js/levels/pack-tutorials.js ----
+const __vl$m21_js_levels_pack_tutorials = (function () {
+const { LEVEL: MOVE } = __vl$m15_js_levels_tut_move;
+const { LEVEL: SLIDE } = __vl$m16_js_levels_tut_slide;
+const { LEVEL: WALL } = __vl$m17_js_levels_tut_wall;
+const { LEVEL: SWING } = __vl$m18_js_levels_tut_swing;
+const { LEVEL: SHOOT } = __vl$m19_js_levels_tut_shoot;
+const { LEVEL: FINAL } = __vl$m20_js_levels_tut_final;
+// The TUTORIALS pack: six short lessons, one skill each, for a player who has never played.
+// Pure data + imports: no DOM, no side effects. A level-select screen can read this directly —
+// `level` is the LEVEL object itself, in exactly the js/level-data.js shape, ready for `new World(level)`.
+// The shape matches js/levels/catalog.js entry for entry, plus a `category`, so the same row renderer works.
+//
+//   id          the module name under js/levels/ (also the prefix of every box id in that level)
+//   name        the level's own LEVEL.name, as it should appear on the card
+//   blurb       one line: the single skill the lesson teaches
+//   difficulty  1 throughout — these are the on-ramp, not a ladder
+//   category    'tutorial'
+//   level       the LEVEL data
+//
+// Play order is lesson order: each level only asks for moves the ones before it taught, every move is
+// practised somewhere harmless before it is demanded, and GRADUATION asks for all five once each.
+
+
+
+
+
+
+
+
+const TUTORIALS_PACK = [
+  {
+    id: 'tut-move',
+    name: MOVE.name,
+    blurb: 'Walking, looking, jumping, sprinting and pulling yourself up a ledge. Nothing here can kill you.',
+    difficulty: 1,
+    category: 'tutorial',
+    level: MOVE,
+  },
+  {
+    id: 'tut-slide',
+    name: SLIDE.name,
+    blurb: 'The crouch-slide: under a 1.1 m roof, off the lip, and over gaps no standing jump reaches.',
+    difficulty: 1,
+    category: 'tutorial',
+    level: SLIDE,
+  },
+  {
+    id: 'tut-wall',
+    name: WALL.name,
+    blurb: 'The yellow walls: run along one, kick off it onto the next, and climb a chimney between two.',
+    difficulty: 1,
+    category: 'tutorial',
+    level: WALL,
+  },
+  {
+    id: 'tut-swing',
+    name: SWING.name,
+    blurb: 'E ropes a green anchor and holds while E is held. Swing the gap and let go near the top.',
+    difficulty: 1,
+    category: 'tutorial',
+    level: SWING,
+  },
+  {
+    id: 'tut-shoot',
+    name: SHOOT.name,
+    blurb: 'F winds the rope in hard and slings you past the anchor. The only way to gain height.',
+    difficulty: 1,
+    category: 'tutorial',
+    level: SHOOT,
+  },
+  {
+    id: 'tut-final',
+    name: FINAL.name,
+    blurb: 'The graduation: a sprint gap, a mantle, a duct, a wall-run, a swing and a reel shot, once each.',
+    difficulty: 1,
+    category: 'tutorial',
+    level: FINAL,
+  },
+];
+return Object.freeze({ TUTORIALS_PACK });
+})();
+
+// ---- js/levels/skyline.js ----
+const __vl$m22_js_levels_skyline = (function () {
+
+// PACK LEVEL 1 — SKYLINE MILE.  A long, flowing rooftop sprint: nothing here is hard on its own, the whole
+// level is about holding 11 m/s for 588 m. Every jump is 3.5 .. 4.5 m against REACH.gapSprint 5.0, the steps
+// up are 1.0 m against REACH.stepUpJump 1.2, the one mantle is 2.0 m against REACH.mantleFromJump 2.4 and the
+// bounce lifts 4.5 m against REACH.bounceApex 5.0. Nothing asks for a move the level has not already shown you.
+// Pure data: no imports, no DOM. Exactly the js/level-data.js LEVEL shape.
+//
+//   1  THE RUN        z    -6 .. -172   y 20 -> 21   six roofs, gaps 3.5 .. 4.5, a 1.0 m step up, one back
+//                                                    down and one up again: the level teaches its own rhythm.
+//   2  BILLBOARDS     z  -172 .. -308   y 21         four roofs, each with a billboard 1.1 m off the deck —
+//                                                    C at speed or you stop dead.
+//   3  THE DROP       z  -308 .. -476   y 19 -> 13   four roofs falling 2 m each, then a teal pad across the
+//                                                    full width throws you 4.5 m back up onto the high roof.
+//   4  HOME STRETCH   z  -476 .. -588   y 17.5 -> 19.5  four roofs and a 2.0 m mantle mid-sprint.
+//
+// Three green anchors hang over the route (sections 2, 3 and 4) for runners who want them. None is needed —
+// every gap under them is a jump — but an F-shot crosses two roofs at once. None can skip anything: every
+// checkpoint volume spans the whole corridor and stands 150 m tall.
+//
+// Falls: every gap is a hole in the city with nothing under it, so a miss ends below killY.
+
+const ID = 'skyline';
+const boxes = [];
+function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
+
+const KILL_Y = -25;
+const W = 6;                                  // roof half width
+const AH = 0.35;                              // anchor half size (0.7 m cube)
+// a roof: `top` is its surface, 1.2 m thick, from z0 (near edge) to z1 (far edge)
+const roof = (id, top, z0, z1, half = W) => add(id, 'floor', [-half, top - 1.2, z1], [half, top, z0]);
+// a billboard across a roof: REACH.slideClearance (1.1 m) of air under it and 4.5 m of panel above that,
+// far out of jump + mantle reach, so it is slid under or not passed at all
+const board = (id, fy, z0, z1, half = W) => add(id, 'wall', [-half, fy + 1.1, z1], [half, fy + 4.5, z0]);
+// glass parapet along one side of a roof, where a runner drifting wide would otherwise walk off
+function rail(id, side, top, z0, z1, half = W) {
+  const x0 = side > 0 ? half : -half - 0.3, x1 = side > 0 ? half + 0.3 : -half;
+  add(id, 'glass', [x0, top, z1], [x1, top + 1.4, z0]);
+}
+function anchor(id, x, y, z, approach) {
+  add(id, 'grapple', [x - AH, y - AH, z - AH], [x + AH, y + AH, z + AH]);
+  boxes[boxes.length - 1].approach = approach;
+}
+// A checkpoint gate spans the whole corridor and rises to y 150: an F reel can throw a body 20 m over a
+// roof, and a checkpoint you sail over is a checkpoint skipped.
+function gate(id, name, z, respawn) {
+  return { id, name, min: [-40, KILL_Y - 10, z - 2], max: [40, 150, z + 2], respawn };
+}
+
+// ------------------------------------------------------------------------------- 1  THE RUN
+add('pad-start', 'floor', [-W, 18.8, -6], [W, 20, 6]);
+roof('roof-1', 20, -9.5, -30);                // gap 3.5
+roof('roof-2', 21, -34, -56);                 // gap 4.0, step up 1.0
+roof('roof-3', 21, -60.5, -84);               // gap 4.5
+roof('roof-4', 20, -88, -110);                // gap 4.0, step down 1.0
+roof('roof-5', 20, -114, -136);               // gap 4.0
+roof('roof-6', 21, -140.5, -172);             // gap 4.5, step up 1.0 — checkpoint 0 deck
+rail('rail-1', -1, 20, -9.5, -30);
+rail('rail-2', 1, 21, -60.5, -84);
+rail('rail-3', -1, 20, -114, -136);
+rail('rail-4', 1, 21, -140.5, -172);
+
+// ------------------------------------------------------------------------------- 2  BILLBOARDS
+roof('roof-7', 21, -176.5, -202);             // gap 4.5
+board('board-1', 21, -184, -189);
+roof('roof-8', 21, -206.5, -232);             // gap 4.5
+board('board-2', 21, -214, -219);
+roof('roof-9', 21, -236.5, -262);             // gap 4.5
+board('board-3', 21, -244, -249);
+roof('roof-10', 21, -266.5, -308);            // gap 4.5 — checkpoint 1 deck
+board('board-4', 21, -274, -279);
+rail('rail-5', 1, 21, -176.5, -202);
+rail('rail-6', -1, 21, -236.5, -262);
+anchor('g1', 0, 32, -216, [0, 21, -198]);     // optional: shoot the billboard row two roofs at a time
+
+// ------------------------------------------------------------------------------- 3  THE DROP
+roof('roof-11', 19, -312.5, -338);            // gap 4.5, down 2.0
+roof('roof-12', 17, -342.5, -368);            // gap 4.5, down 2.0
+roof('roof-13', 15, -372.5, -398);            // gap 4.5, down 2.0
+roof('roof-14', 13, -402.5, -424);            // gap 4.5, down 2.0
+add('pad-bounce', 'bounce', [-W, 11.8, -429], [W, 13, -424]);   // the whole width: this one cannot be missed
+roof('roof-15', 17.5, -433, -476);            // gap 4.0 and 4.5 m up: only the pad gets you here — cp 2 deck
+rail('rail-7', -1, 19, -312.5, -338);
+rail('rail-8', 1, 17, -342.5, -368);
+rail('rail-9', 1, 17.5, -433, -476);
+anchor('g2', 0, 26, -356, [0, 19, -336]);     // optional: over the drop, two roofs in one shot
+
+// ------------------------------------------------------------------------------- 4  HOME STRETCH
+roof('roof-16', 17.5, -480.5, -504);          // gap 4.5
+roof('roof-17', 19.5, -508, -530);            // gap 4.0 and 2.0 m up: the jump runs into a mantle
+roof('roof-18', 19.5, -534.5, -560);          // gap 4.5
+roof('deck-fin', 19.5, -564.5, -588);         // gap 4.5
+add('deck-fin-back', 'wall', [-W, 19.5, -588], [W, 23.5, -587]);   // backstop behind the finish
+rail('rail-10', -1, 17.5, -480.5, -504);
+rail('rail-11', 1, 19.5, -534.5, -560);
+anchor('g3', 0, 28, -516, [0, 17.5, -502]);   // optional: the mantle roof, taken from the air
+
+// ------------------------------------------------------------------------------- deco
+// Blocks under every roof and towers either side, so the gaps read as streets in a city.
+const under = (id, top, z0, z1, half = W) => add(id, 'deco', [-half, -60, z1], [half, top - 1.2, z0]);
+under('deco-1', 20, 6, -30);
+under('deco-2', 21, -34, -56);
+under('deco-3', 21, -60.5, -84);
+under('deco-4', 20, -88, -110);
+under('deco-5', 20, -114, -136);
+under('deco-6', 21, -140.5, -172);
+under('deco-7', 21, -176.5, -202);
+under('deco-8', 21, -206.5, -232);
+under('deco-9', 21, -236.5, -262);
+under('deco-10', 21, -266.5, -308);
+under('deco-11', 19, -312.5, -338);
+under('deco-12', 17, -342.5, -368);
+under('deco-13', 15, -372.5, -398);
+under('deco-14', 13, -402.5, -429);
+under('deco-15', 17.5, -433, -476);
+under('deco-16', 17.5, -480.5, -504);
+under('deco-17', 19.5, -508, -530);
+under('deco-18', 19.5, -534.5, -560);
+under('deco-19', 19.5, -564.5, -588);
+add('deco-sky-1', 'deco', [-34, -60, -70], [-14, 30, -14]);
+add('deco-sky-2', 'deco', [15, -60, -130], [33, 27, -60]);
+add('deco-sky-3', 'deco', [-36, -60, -210], [-16, 34, -150]);
+add('deco-sky-4', 'deco', [16, -60, -300], [36, 29, -230]);
+add('deco-sky-5', 'deco', [-33, -60, -380], [-15, 27, -320]);
+add('deco-sky-6', 'deco', [17, -60, -470], [37, 24, -400]);
+add('deco-sky-7', 'deco', [-35, -60, -540], [-15, 30, -480]);
+add('deco-sky-8', 'deco', [16, -60, -584], [36, 33, -530]);
+
+const LEVEL = {
+  name: 'SKYLINE MILE',
+  spawn: { pos: [0, 20.01, 0], yaw: 0 },
+  killY: KILL_Y,
+  boxes,
+  movers: [],
+  anchors: boxes.filter((b) => b.kind === 'grapple')
+    .map((b) => ({ id: b.id, point: [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2) })),
+  checkpoints: [
+    gate(ID + '-cp0', 'THE RUN', -152, { pos: [0, 21.01, -156], yaw: 0 }),
+    gate(ID + '-cp1', 'BILLBOARDS', -288, { pos: [0, 21.01, -292], yaw: 0 }),
+    gate(ID + '-cp2', 'THE DROP', -454, { pos: [0, 17.51, -458], yaw: 0 }),
+  ],
+  finish: { min: [-40, 19.5, -588], max: [40, 119.5, -564.5] },
+  signs: [
+    { pos: [0, 22.6, -7], yaw: 0, text: 'SKYLINE MILE\nJUST KEEP THE SPEED' },
+    { pos: [-4.6, 21.4, -28], yaw: 0, text: 'SHIFT — SPRINT' },
+    { pos: [4.6, 22.4, -58], yaw: 0, text: 'STEP UP, KEEP GOING' },
+    { pos: [-4.6, 22.4, -174], yaw: 0, text: 'C — SLIDE UNDER' },
+    { pos: [4.6, 22.4, -204], yaw: 0, text: 'STAY DOWN, STAY FAST' },
+    { pos: [-4.6, 22.4, -264], yaw: 0, text: 'GREEN OVERHEAD IS\nOPTIONAL' },
+    { pos: [4.6, 20.4, -310], yaw: 0, text: 'DOWNHILL: TWO METRES\nEACH TIME' },
+    { pos: [-4.6, 14.4, -404], yaw: 0, text: 'TEAL PAD AHEAD' },
+    { pos: [4.6, 18.9, -478], yaw: 0, text: 'HOME STRETCH' },
+    { pos: [-4.6, 18.9, -506], yaw: 0, text: 'JUMP, THEN CLIMB 2 M' },
+    { pos: [4.6, 20.9, -562], yaw: 0, text: 'LAST GAP' },
+  ],
+};
+return Object.freeze({ LEVEL });
+})();
+
+// ---- js/levels/floodway.js ----
+const __vl$m23_js_levels_floodway = (function () {
+
+// PACK LEVEL 2 — THE FLOODWAY.  A storm channel run on your back: bays of concrete with a 1.1 m ceiling over
+// them (REACH.slideClearance), spillway holes between the bays, and a roof that stops covering the whole
+// channel halfway through, so from there on the line you take is a choice.
+// Pure data: no imports, no DOM. Exactly the js/level-data.js LEVEL shape.
+//
+//   1  THE INTAKE    z    -6 .. -157   y 12         six bays. The first is 24 m of dry run-up with the first
+//                                                   ceiling in it; then the spillways open: 6.0 .. 6.5 m of
+//                                                   nothing under every lip.                          [cp 0]
+//   2  THE STEPS     z  -157 .. -285   y 12 -> 6    the same chain going downhill: three of the spillways
+//                                                   also drop 2 m, so the slide is handed back at the bottom.
+//                                                                                                     [cp 1]
+//   3  THE SPLIT     z  -285 .. -430   y 6          the ceiling now covers only the left two thirds of the
+//                                                   channel. Slide the covered side (fast: the 4 m spillways
+//                                                   arrive while the boost is still alive) or run the open
+//                                                   right-hand strip on your feet (slower, and you can see). [cp 2]
+//   4  THE OUTFALL   z  -430 .. -520   y 6 -> 4     two more ceilings, the longest duct in the level, the
+//                                                   widest spillway (7 m), and the outfall deck.
+//
+// Numbers this is built against, all measured on the real Player: a sprint jump carries 9.5 m and a
+// slide-jump 11.5 m, so every spillway (4.0 .. 7.0 m) is inside both with metres to spare — the slide is
+// what the ceiling asks for, not what the gap demands. Every ceiling block stands 3.4 m tall on top of its
+// 1.1 m of clearance, far past jump + mantle (about 3.0 m), so no duct is climbed over. Two green anchors
+// hang where the roof has stopped: optional, and unable to skip anything. A miss ends below killY.
+
+const ID = 'floodway';
+const boxes = [];
+function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
+
+const KILL_Y = -12;
+const W = 5;                                  // channel half width
+const CLEAR = 1.1;                            // REACH.slideClearance
+const AH = 0.35;
+
+// ---------------------------------------------------------------- the channel, bay by bay
+// A bay is a slab of channel floor. `gap` is the spillway in front of it, `drop` how far it falls, `depth`
+// how long it is, `duct` where its ceiling starts (metres into the bay) and `roofHalf` how far across the
+// channel that ceiling reaches. The cursor walks -Z as the bays are declared, so the layout below reads in
+// the order it is run, and every checkpoint, wall, sign and anchor is placed off the bays rather than by
+// hand: adding a bay moves everything after it.
+let z = -6;                                   // far edge of the last thing placed
+let y = 12;                                   // channel floor top
+const bays = [];
+function bay(id, { gap = 0, depth, drop = 0, duct, ductLen = 5, roofHalf = W }) {
+  z -= gap; y -= drop;
+  const z0 = z, z1 = z - depth;
+  add(id, 'floor', [-W, y - 1.2, z1], [W, y, z0]);
+  if (duct !== undefined) add(id + '-roof', 'wall', [-W, y + CLEAR, z0 - duct - ductLen], [roofHalf, y + 4.5, z0 - duct]);
+  bays.push({ id, z0, z1, y, gap });
+  z = z1;
+}
+const bayOf = (id) => bays.find((b) => b.id === id);
+const at = (id, into) => bayOf(id).z0 - into;             // world z, `into` metres into that bay
+
+add('pad-start', 'floor', [-W, 10.8, -6], [W, 12, 6]);
+
+// ------------------------------------------------------------------------------- 1  THE INTAKE (y 12)
+bay('f1', { depth: 24, duct: 12 });           // 12 m of dry run-up, then the first ceiling
+bay('f2', { gap: 6.0, depth: 16, duct: 4 });
+bay('f3', { gap: 6.0, depth: 16, duct: 4 });
+bay('f4', { gap: 6.0, depth: 16, duct: 4 });
+bay('f5', { gap: 6.5, depth: 16, duct: 4 });
+bay('f6', { gap: 6.5, depth: 32, duct: 20 }); // checkpoint 0 bay
+
+// ------------------------------------------------------------------------------- 2  THE STEPS (12 -> 6)
+bay('f7', { gap: 6.5, drop: 2, depth: 22, duct: 6 });
+bay('f8', { gap: 6.5, drop: 2, depth: 22, duct: 6 });
+bay('f9', { gap: 6.5, depth: 22, duct: 6 });
+bay('f10', { gap: 6.5, drop: 2, depth: 36, duct: 24 });   // checkpoint 1 bay
+
+// ------------------------------------------------------------------------------- 3  THE SPLIT (y 6)
+// Same bays, but the ceiling stops at x +1: slide the covered left, or run the open right-hand strip.
+bay('s1', { gap: 6.5, depth: 18, duct: 2, ductLen: 14, roofHalf: 1 });
+bay('s2', { gap: 4.0, depth: 16, duct: 2, ductLen: 12, roofHalf: 1 });
+bay('s3', { gap: 4.0, depth: 16, duct: 2, ductLen: 12, roofHalf: 1 });
+bay('s4', { gap: 4.0, depth: 16, duct: 2, ductLen: 12, roofHalf: 1 });
+bay('s5', { gap: 4.0, depth: 16, duct: 2, ductLen: 12, roofHalf: 1 });
+bay('f11', { gap: 4.0, depth: 36, duct: 20 });            // checkpoint 2 bay
+
+// ------------------------------------------------------------------------------- 4  THE OUTFALL (6 -> 4)
+bay('f12', { gap: 6.5, depth: 22, duct: 6 });
+bay('f13', { gap: 6.5, drop: 2, depth: 26, duct: 8, ductLen: 9 });
+bay('deck-fin', { gap: 7.0, depth: 22 });
+const FIN = bayOf('deck-fin');
+add('deck-fin-back', 'wall', [-W, FIN.y, FIN.z1], [W, FIN.y + 4, FIN.z1 + 1]);   // backstop behind the finish
+
+// ---------------------------------------------------------------- the two channel walls
+// Grey, unbroken from the spawn to the finish, in one run per height the channel settles at: nothing ever
+// leaves the channel sideways, and every fall is into a spillway.
+{
+  let z0 = 6, level = 12, n = 0;
+  const run = (zA, zB, top) => {
+    n++;
+    add('wall-l' + n, 'wall', [-W - 0.5, top - 6, zB], [-W, top + 8, zA]);
+    add('wall-r' + n, 'wall', [W, top - 6, zB], [W + 0.5, top + 8, zA]);
+  };
+  for (const b of bays) {
+    if (b.y === level) continue;
+    run(z0, b.z0, level);
+    z0 = b.z0; level = b.y;
+  }
+  run(z0, FIN.z1, level);
+}
+
+// ---------------------------------------------------------------- green, and optional
+// Both anchors hang over open sky where the ceiling has stopped. Neither is needed — every spillway under
+// them is a jump — and neither can skip anything: every checkpoint volume spans the whole channel and
+// stands 120 m tall.
+function anchor(id, x, yy, zz, approach) {
+  add(id, 'grapple', [x - AH, yy - AH, zz - AH], [x + AH, yy + AH, zz + AH]);
+  boxes[boxes.length - 1].approach = approach;
+}
+anchor('g1', 0, bayOf('f6').y + 10, at('f6', 49), [0, bayOf('f6').y, at('f6', 29)]);
+anchor('g2', 3, bayOf('s3').y + 9, at('s3', 20), [3, bayOf('s3').y, at('s3', 2)]);
+
+// ---------------------------------------------------------------- triggers
+// A checkpoint gate spans the whole channel and rises to y 120: the grapple can throw a body well over the
+// channel, and a checkpoint you sail over is a checkpoint skipped. The respawn stands 4 m past its own gate,
+// facing the next ceiling with room to get back to sprint.
+function gate(name, bayId, into) {
+  const b = bayOf(bayId), zz = at(bayId, into);
+  return { id: ID + '-cp' + gate.n++, name, min: [-40, KILL_Y - 10, zz - 2], max: [40, 120, zz + 2],
+    respawn: { pos: [0, b.y + 0.01, zz - 4], yaw: 0 } };
+}
+gate.n = 0;
+
+// ------------------------------------------------------------------------------- deco
+for (const b of bays) add('deco-' + b.id, 'deco', [-W, -40, b.z1], [W, b.y - 1.2, b.z0]);
+add('deco-sky-1', 'deco', [-30, -40, -70], [-12, 24, -10]);
+add('deco-sky-2', 'deco', [12, -40, -170], [30, 21, -90]);
+add('deco-sky-3', 'deco', [-32, -40, -280], [-14, 19, -190]);
+add('deco-sky-4', 'deco', [12, -40, -400], [32, 17, -310]);
+add('deco-sky-5', 'deco', [-30, -40, -500], [-12, 16, -420]);
+add('deco-sky-6', 'deco', [13, -40, -544], [33, 18, -470]);
+
+const LEVEL = {
+  name: 'THE FLOODWAY',
+  spawn: { pos: [0, 12.01, 0], yaw: 0 },
+  killY: KILL_Y,
+  boxes,
+  movers: [],
+  anchors: boxes.filter((b) => b.kind === 'grapple')
+    .map((b) => ({ id: b.id, point: [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2) })),
+  checkpoints: [
+    gate('THE INTAKE', 'f6', 10),
+    gate('THE STEPS', 'f10', 12),
+    gate('THE SPLIT', 'f11', 10),
+  ],
+  finish: { min: [-40, FIN.y, FIN.z1], max: [40, FIN.y + 100, FIN.z0] },
+  signs: [
+    { pos: [0, 14.6, -7], yaw: 0, text: 'THE FLOODWAY\nSHIFT, THEN C' },
+    { pos: [-3.6, 13.0, at('f1', 10)], yaw: 0, text: 'LOW CEILING\nSTAY DOWN' },
+    { pos: [3.6, 13.0, at('f2', 1)], yaw: 0, text: 'SPACE ON THE LIP,\nKEEP C HELD' },
+    { pos: [-3.6, 13.0, at('f4', 1)], yaw: 0, text: 'THE LANDING SLIDES\nFOR YOU' },
+    { pos: [3.6, 13.0, at('f6', 26)], yaw: 0, text: 'GREEN IS OPTIONAL' },
+    { pos: [-3.6, 11.0, at('f7', 1)], yaw: 0, text: 'DOWNHILL NOW' },
+    { pos: [3.6, 7.4, at('s1', 1)], yaw: 0, text: 'ROOF ON THE LEFT ONLY' },
+    { pos: [-3.6, 7.4, at('s2', 1)], yaw: 0, text: 'SLIDE LEFT — FAST\nRUN RIGHT — SAFE' },
+    { pos: [3.6, 7.4, at('s5', 1)], yaw: 0, text: 'SPILLWAYS COME QUICKER' },
+    { pos: [-3.6, 7.4, at('f12', 1)], yaw: 0, text: 'LONGEST DUCT,\nWIDEST SPILLWAY' },
+  ],
+};
+return Object.freeze({ LEVEL });
+})();
+
+// ---- js/levels/freight.js ----
+const __vl$m24_js_levels_freight = (function () {
+
+// PACK LEVEL 3 — FREIGHT YARD.  Almost every metre forward is taken standing on something that is moving:
+// forward ferries, sideways ferries that hand you across to each other, and two gantry lifts that carry you
+// 12 m up the yard. Nothing here needs a hard move — every dock gap is 1.5 m, a hop — the level is timing.
+// Pure data: no imports, no DOM. Exactly the js/level-data.js LEVEL shape.
+//
+//   1  THE YARD       z   -6 ..  -82   y 12          a forward ferry up the line, then a sideways one that
+//                                                    carries you 12 m across to the east island.      [cp 0]
+//   2  THE GANTRY     z  -82 .. -134   y 12 -> 24    two lifts, 6 m each, with a deck between them.   [cp 1]
+//   3  THE CROSSING   z -134 .. -172   y 24          two sideways ferries on opposite phases: they meet in
+//                                                    the middle of the yard, and that is when you swap.[cp 2]
+//   4  THE MAINLINE   z -172 .. -229   y 24          one long ferry, 24 m of rail, to the finish deck.
+//
+// Every walkable top inside a section is the same height, exactly as the campaign's MOVING FREIGHT does it,
+// so a mover can never push or crush a rider and there are no step seams. Every ferry ping-pongs for ever
+// with a cosine ease, so it rests at each end: standing still and waiting is always the safe answer, and
+// the level never punishes a runner for letting one go by. A miss falls past killY.
+//
+// One green anchor hangs over the two crossing ferries, for runners who would rather not wait for them —
+// it is the only shortcut in the level, and it cannot skip a gate: every gate spans the whole yard.
+
+const ID = 'freight';
+const boxes = [];
+const movers = [];
+function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
+
+const KILL_Y = -14;
+const MT = 0.5;                               // mover slab thickness
+const AH = 0.35;
+// a deck: `top` is its surface, 1.2 m thick, x0..x1 wide, z0 (near) to z1 (far)
+const deck = (id, top, x0, x1, z0, z1) => add(id, 'floor', [x0, top - 1.2, z1], [x1, top, z0]);
+// a mover whose TOP is `top` when it is at a: size sx x sz, centre travelling a -> b
+function mover(id, top, sx, sz, a, b, period, phase) {
+  movers.push({ id: ID + '-' + id, size: [sx, MT, sz], a: [a[0], top - MT / 2, a[1]],
+    b: [b[0], top - MT / 2 + (b[2] || 0), b[1]], period, phase, kind: 'mover' });
+}
+function anchor(id, x, y, z, approach) {
+  add(id, 'grapple', [x - AH, y - AH, z - AH], [x + AH, y + AH, z + AH]);
+  boxes[boxes.length - 1].approach = approach;
+}
+// A checkpoint gate spans the whole yard and rises to y 140: a ferry (or the hook) must never carry anybody
+// past a gate without tripping it.
+function gate(id, name, z, respawn) {
+  return { id, name, min: [-40, KILL_Y - 10, z - 2], max: [40, 140, z + 2], respawn };
+}
+// glass wind screen along an island edge that faces nothing: 3.5 m, above jump + mantle, so it cannot be
+// climbed and cannot be sailed over by a rider stepping off a ferry
+const screen = (id, top, x0, x1, z0, z1) => add(id, 'glass', [x0, top, z1], [x1, top + 3.5, z0]);
+
+// ------------------------------------------------------------------------------- 1  THE YARD (y 12)
+add('pad-start', 'floor', [-6, 10.8, -6], [6, 12, 6]);
+mover('m1', 12, 8, 8, [0, -11.5], [0, -33.5], 8, 0);        // forward ferry: rests at the pad, then at i1
+deck('i1', 12, -6, 6, -39, -55);
+mover('m2', 12, 8, 9, [0, -60.5], [12, -60.5], 7, 0);       // sideways ferry: i1 (x 0) <-> i2 (x 12)
+deck('i2', 12, 6, 18, -66.5, -82);                          // checkpoint 0 island
+screen('i1-screen-l', 12, -6.2, -6, -39, -50);
+screen('i2-screen-r', 12, 18, 18.2, -66.5, -78);
+
+// ------------------------------------------------------------------------------- 2  THE GANTRY (12 -> 24)
+mover('m3', 12, 8, 8, [12, -87.5], [12, -87.5, 6], 8, 0);   // lift: 12 -> 18, straight up
+deck('d1', 18, 6, 18, -93, -107);
+mover('m4', 18, 8, 8, [12, -112.5], [12, -112.5, 6], 8, 0); // lift: 18 -> 24
+deck('d2', 24, 6, 18, -118, -134);                          // checkpoint 1 deck
+screen('d1-screen-r', 18, 18, 18.2, -93, -103);
+screen('d2-screen-r', 24, 18, 18.2, -118, -130);
+
+// ------------------------------------------------------------------------------- 3  THE CROSSING (y 24)
+mover('m5', 24, 8, 9, [12, -139.5], [0, -139.5], 6, 0);     // rests at d2 (x 12) and in the middle (x 0)
+mover('m6', 24, 8, 9, [0, -150], [-12, -150], 6, 0.5);    // opposite phase: it is at x 0 when m5 arrives
+deck('i3', 24, -18, -6, -156, -171.5);                      // checkpoint 2 island
+screen('i3-screen-l', 24, -18.2, -18, -156, -168);
+
+// ------------------------------------------------------------------------------- 4  THE MAINLINE (y 24)
+mover('m7', 24, 10, 10, [-12, -178], [-12, -202], 10, 0);
+deck('deck-fin', 24, -18, -6, -208.5, -228.5);
+add('deck-fin-back', 'wall', [-18, 24, -228.5], [-6, 28, -227.5]);   // backstop behind the finish
+anchor('g1', 0, 34, -150, [8, 24, -132]);                   // the one shortcut: over both crossing ferries
+
+// ------------------------------------------------------------------------------- deco
+// Yard towers and the pylons that carry every island, well clear of the rails the ferries run on.
+const pylon = (id, x0, x1, z0, z1, top) => add(id, 'deco', [x0, -50, z1], [x1, top, z0]);
+pylon('deco-pad', -6, 6, 6, -6, 10.8);
+pylon('deco-i1', -5, 5, -40, -54, 10.8);
+pylon('deco-i2', 7, 17, -67.5, -81, 10.8);
+pylon('deco-d1', 7, 17, -94, -106, 16.8);
+pylon('deco-d2', 7, 17, -119, -133, 22.8);
+pylon('deco-i3', -17, -7, -157, -170.5, 22.8);
+pylon('deco-fin', -17, -7, -209.5, -227.5, 22.8);
+add('deco-yard-1', 'deco', [-34, -50, -60], [-20, 26, -10]);
+add('deco-yard-2', 'deco', [22, -50, -120], [36, 30, -50]);
+add('deco-yard-3', 'deco', [-36, -50, -150], [-22, 34, -90]);
+add('deco-yard-4', 'deco', [20, -50, -226], [34, 32, -150]);
+add('deco-yard-5', 'deco', [-32, -50, -228], [-22, 30, -180]);
+
+const LEVEL = {
+  name: 'FREIGHT YARD',
+  spawn: { pos: [0, 12.01, 0], yaw: 0 },
+  killY: KILL_Y,
+  boxes,
+  movers,
+  anchors: boxes.filter((b) => b.kind === 'grapple')
+    .map((b) => ({ id: b.id, point: [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2) })),
+  checkpoints: [
+    gate(ID + '-cp0', 'THE YARD', -74, { pos: [12, 12.01, -78], yaw: 0 }),
+    gate(ID + '-cp1', 'THE GANTRY', -126, { pos: [12, 24.01, -130], yaw: 0 }),
+    gate(ID + '-cp2', 'THE CROSSING', -164, { pos: [-12, 24.01, -168], yaw: 0 }),
+  ],
+  finish: { min: [-40, 24, -228.5], max: [40, 124, -208.5] },
+  signs: [
+    { pos: [0, 14.6, -7], yaw: 0, text: 'FREIGHT YARD\nWAITING IS SAFE' },
+    { pos: [-4.6, 13.4, -38], yaw: 0, text: 'STEP ON WHEN IT STOPS' },
+    { pos: [-4.6, 13.4, -56], yaw: 0, text: 'THIS ONE GOES ACROSS' },
+    { pos: [7.4, 13.4, -83], yaw: 0, text: 'LIFTS FROM HERE UP' },
+    { pos: [7.4, 19.4, -108], yaw: 0, text: 'ONE MORE LIFT' },
+    { pos: [7.4, 25.4, -135], yaw: 0, text: 'TWO FERRIES\nTHEY MEET IN THE MIDDLE' },
+    { pos: [-4.6, 25.4, -146], yaw: 0, text: 'SWAP WHEN THEY MEET' },
+    { pos: [-16.6, 25.4, -172.5], yaw: 0, text: 'THE MAINLINE' },
+    { pos: [-7.4, 25.4, -206.5], yaw: 0, text: 'LAST HOP' },
+  ],
+};
+return Object.freeze({ LEVEL });
+})();
+
+// ---- js/levels/canyon.js ----
+const __vl$m25_js_levels_canyon = (function () {
+
+// PACK LEVEL 4 — HOOK CANYON.  Fifteen ledges cut into the two walls of a canyon, and nothing between them
+// but green anchors and 16 .. 18 m of air — more than twice the 9.5 m a sprint jump carries, so every one of
+// them is taken on the hook. E ropes and you swing on gravity; where the next ledge is higher than the one
+// you left, the swing has to be helped with a tap of F, because E never pulls.
+// Pure data: no imports, no DOM. Exactly the js/level-data.js LEVEL shape.
+//
+//   1  THE MOUTH    z   -8 .. -152   y 30 -> 28   four hops straight down the canyon: a plain swing, one
+//                                                 that climbs 4 m on a tap of F, then the line turns east. [cp 0]
+//   2  THE NARROWS  z -152 .. -296   y 28 -> 26   four more, working back across to the west wall.     [cp 1]
+//   3  THE STAIRS   z -296 .. -438   y 26 -> 37   a swing, then the big one: 11 m straight up on a held F,
+//                                                 then two to bring you back down and across.         [cp 2]
+//   4  THE TAILRACE z -438 .. -548   y 37 -> 37   two more and one last long swing onto the finish ledge.
+//
+// Every anchor hangs 11.5 .. 17 m above the ledge it is fired from and 9 m out over the void, which puts it
+// 15 .. 20 m from the firing eye — comfortably inside GRAPPLE.range (28 m) and far outside its 2.5 m minimum.
+// That 9 m matters: an anchor hung further out drags a swing down into the river instead of across it.
+// Every ledge is 16 m wide and 18 m deep: after a 20 m flight you want a landing you cannot miss. The canyon
+// walls are deco, so nothing can ever cut a rope line. A miss falls into the river, below killY.
+
+const ID = 'canyon';
+const boxes = [];
+function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
+
+const KILL_Y = 0;
+const AH = 0.35;
+const HALF = 8;                               // ledge half width
+// A checkpoint gate stands in the middle of a ledge, spans the whole canyon and rises to y 150: an F reel
+// can throw a body 20 m over a ledge, and a checkpoint you sail over is a checkpoint skipped. The respawn
+// stands 4 m behind the gate, facing the anchor the ledge is there to fire at.
+function gateOn(id, name, ledgeId) {
+  const l = ledgeOf(ledgeId), zz = (l.z0 + l.z1) / 2 + 4;
+  return { id: ID + '-' + id, name, min: [-40, KILL_Y - 10, zz - 2], max: [40, 150, zz + 2],
+    respawn: { pos: [l.cx, l.y + 0.01, zz - 4], yaw: 0 } };
+}
+
+// ---------------------------------------------------------------- the canyon, hop by hop
+// The cursor is the ledge you are standing on: its far edge `z`, its top `y` and its centre `cx`. A hop
+// hangs an anchor out over the void and puts the next ledge down the canyon behind it, so the layout below
+// reads exactly as it is run, and no number in it is written twice.
+let z = -8, y = 30, cx = 0;
+const ledges = [{ id: 'l0', z0: 6, z1: -8, y: 30, cx: 0 }];
+function hop(id, { gap = 18, depth = 18, rise = -2, nx = 0, up = 11.5, ahead = 9, ledgeId }) {
+  const ax = Math.round((cx + (nx - cx) * 0.7) * 10) / 10, az = z - ahead, ay = y + up;
+  add(id, 'grapple', [ax - AH, ay - AH, az - AH], [ax + AH, ay + AH, az + AH]);
+  boxes[boxes.length - 1].approach = [cx, y, z + 2];        // the last 2 m of the ledge you fire from
+  const z0 = z - gap, z1 = z0 - depth, ny = y + rise;
+  add(ledgeId, 'floor', [nx - HALF, ny - 1.5, z1], [nx + HALF, ny, z0]);
+  ledges.push({ id: ledgeId, z0, z1, y: ny, cx: nx });
+  z = z1; y = ny; cx = nx;
+}
+const ledgeOf = (id) => ledges.find((l) => l.id === id);
+// a sign standing `into` metres onto a ledge, `dx` off its centre line
+const sign = (ledgeId, into, dx, text) => {
+  const l = ledgeOf(ledgeId);
+  return { pos: [l.cx + dx, l.y + 2.4, l.z0 - into], yaw: 0, text };
+};
+
+add('l0', 'floor', [-HALF, 28.5, -8], [HALF, 30, 6]);       // the launch ledge
+
+// ------------------------------------------------------------------------------- 1  THE MOUTH
+hop('g1', { ledgeId: 'l1', nx: 0 });                        // plain swing, anchor dead ahead, 2 m down
+hop('g2', { ledgeId: 'l2', nx: 0, rise: 4, up: 13 });       // this one climbs: tap F on the way through
+hop('g3', { ledgeId: 'l3', nx: 8 });                        // the line turns east
+hop('g4', { ledgeId: 'l4', nx: 10 });                       // checkpoint 0 ledge
+
+// ------------------------------------------------------------------------------- 2  THE NARROWS
+hop('g5', { ledgeId: 'l5', nx: 4 });
+hop('g6', { ledgeId: 'l6', nx: -4, rise: 4, up: 13 });
+hop('g7', { ledgeId: 'l7', nx: -10 });
+hop('g8', { ledgeId: 'l8', nx: -6 });                       // checkpoint 1 ledge
+
+// ------------------------------------------------------------------------------- 3  THE STAIRS
+hop('g9', { ledgeId: 'l9', nx: 2 });
+hop('g10', { ledgeId: 'l10', nx: 8, rise: 11, gap: 16, up: 17, ahead: 10 });   // hold F: 11 m up the wall
+hop('g11', { ledgeId: 'l11', nx: 4 });
+hop('g12', { ledgeId: 'l12', nx: -4, rise: 4, up: 13 });    // checkpoint 2 ledge
+
+// ------------------------------------------------------------------------------- 4  THE TAILRACE
+hop('g13', { ledgeId: 'l13', nx: -10 });
+hop('g14', { ledgeId: 'l14', nx: -4, rise: 4, up: 13 });
+hop('g15', { ledgeId: 'deck-fin', nx: 2, depth: 20 });
+const FIN = ledgeOf('deck-fin');
+add('deck-fin-back', 'wall', [FIN.cx - HALF, FIN.y, FIN.z1], [FIN.cx + HALF, FIN.y + 4, FIN.z1 + 1]);
+
+// ------------------------------------------------------------------------------- deco
+// The two canyon walls and the buttresses under every ledge. All deco: nothing here is collidable, so no
+// rope line can ever be cut by the scenery and no ledge has a back wall to be pinned against.
+for (const l of ledges) add('deco-' + l.id, 'deco', [l.cx - HALF + 1, -40, l.z1], [l.cx + HALF - 1, l.y - 1.5, l.z0]);
+for (let i = 0; i < 9; i++) {
+  const z0 = 10 - i * 46;
+  add('deco-wall-w' + i, 'deco', [-44, -40, z0 - 44], [-22, 46 + (i % 3) * 8, z0]);
+  add('deco-wall-e' + i, 'deco', [22, -40, z0 - 44], [44, 44 + ((i + 1) % 3) * 9, z0]);
+}
+
+const LEVEL = {
+  name: 'HOOK CANYON',
+  spawn: { pos: [0, 30.01, 0], yaw: 0 },
+  killY: KILL_Y,
+  boxes,
+  movers: [],
+  anchors: boxes.filter((b) => b.kind === 'grapple')
+    .map((b) => ({ id: b.id, point: [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2) })),
+  checkpoints: [
+    gateOn('cp0', 'THE MOUTH', 'l4'),
+    gateOn('cp1', 'THE NARROWS', 'l8'),
+    gateOn('cp2', 'THE STAIRS', 'l12'),
+  ],
+  finish: { min: [-40, FIN.y, FIN.z1], max: [40, FIN.y + 100, FIN.z0] },
+  signs: [
+    { pos: [0, 32.6, -7], yaw: 0, text: 'HOOK CANYON\nE ROPES, F REELS' },
+    sign('l0', 4, -6.4, 'AIM GREEN, HOLD E,\nLET GO LATE'),
+    sign('l1', 4, 6.4, 'THIS ONE CLIMBS:\nTAP F'),
+    sign('l2', 4, -6.4, 'THE CANYON TURNS EAST'),
+    sign('l4', 4, 6.4, 'THE NARROWS'),
+    sign('l6', 4, -6.4, 'BACK TO THE WEST WALL'),
+    sign('l8', 4, 6.4, 'THE STAIRS'),
+    sign('l9', 4, -6.4, 'HOLD F ALL THE WAY UP'),
+    sign('l10', 4, 6.4, 'AND BACK DOWN'),
+    sign('l12', 4, -6.4, 'TWO TO GO'),
+    sign('l14', 4, 6.4, 'LAST SWING\nLET GO LATE'),
+  ],
+};
+return Object.freeze({ LEVEL });
+})();
+
+// ---- js/levels/ascent.js ----
+const __vl$m26_js_levels_ascent = (function () {
+
+// PACK LEVEL 5 — THE ASCENT.  A tower under scaffolding, climbed from y 10 to y 76.5 without ever turning
+// back: every unit of this level gains height and gives up as little ground as it can. Four things carry you
+// up, and the level teaches each one before it stacks them: a 2.0 m ledge taken with a jump into a mantle
+// (REACH.mantleFromJump 2.4), a 3.2 m shaft climbed on alternating wall-jumps (REACH.chimneyWidth 2.4 .. 3.6),
+// a teal pad worth 4.5 m (REACH.bounceApex 5.0) and a 10 m wall-run across an open corner (REACH.wallrunGap 12).
+// Pure data: no imports, no DOM. Exactly the js/level-data.js LEVEL shape.
+//
+//   1  THE FOOTINGS  y 10 -> 20    two 2 m ledges, then the first shaft: in through the doorway, kick left,
+//                                  right, left and mantle out on top.                              [cp 0]
+//   2  THE PADS      y 20 -> 37.5  three teal pads with a ledge between each pair.                 [cp 1]
+//   3  THE SHAFTS    y 37.5 -> 55.5 three more shafts, each followed by a 10 m wall-run across an open
+//                                  corner — right, left, right around the tower.                   [cp 2]
+//   4  THE CROWN     y 55.5 -> 76.5 two pads, three ledges, and the last shaft onto the roof.
+//
+// Nothing in the level is a pit: every shaft has its own floor, so a missed climb drops you back where the
+// climb started and you simply go again, and every pad court is walled. The falls that do kill are off the
+// open edges, and they are all far below killY. Two green anchors hang beside the tower where the scaffold
+// opens out; both are optional, neither can reach past a checkpoint gate, and every gate spans the whole
+// tower and stands 150 m tall.
+
+const ID = 'ascent';
+const boxes = [];
+function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
+
+const KILL_Y = -20;
+const W = 4;                                  // lane half width
+const CH = 1.6;                               // shaft half width: the two yellow faces are 3.2 m apart
+const AH = 0.35;
+
+// ---------------------------------------------------------------- the climb, unit by unit
+// The cursor is the front edge `z` of what has been built and the top `y` of the deck you are standing on.
+// Every unit below advances -Z and gains height, so the route never doubles back: each checkpoint volume is
+// crossed exactly once, whatever line a runner takes through it.
+let z = -6, y = 10;
+const marks = [];                             // { id, z0, z1, y } for every walkable top, in order
+function slab(id, depth, top, kind = 'floor', half = W) {
+  add(id, kind, [-half, top - 1.2, z - depth], [half, top, z]);
+  marks.push({ id, z0: z, z1: z - depth, y: top });
+  z -= depth;
+  y = top;
+}
+const markOf = (id) => marks.find((m) => m.id === id);
+// a plain run of deck
+const deck = (id, depth) => slab(id, depth, y);
+// a ledge 2.0 m up, flush against the deck you are on: a sprint jump puts your feet at 1.42 m and the mantle
+// takes the rest. `tread` is how much deck the next move gets.
+const step = (id, tread, rise = 2) => slab(id, tread, y + rise);
+// a teal pad at the front of the deck, then `gap` of nothing, then a landing `rise` higher. The pad is the
+// full width of the lane: it cannot be missed, and nothing but the pad reaches the landing.
+function pad(id, gap, rise, depth) {
+  add(id + '-pad', 'bounce', [-W, y - 1.2, z - 5], [W, y, z]);
+  marks.push({ id: id + '-pad', z0: z, z1: z - 5, y });
+  z -= 5 + gap;
+  slab(id + '-land', depth, y + rise);
+}
+// a shaft: a doorway that narrows the lane to 3.2 m, two yellow faces to kick off, a floor under the whole
+// thing (a missed climb lands back on it) and a back wall whose top is the ledge you mantle out onto.
+function shaft(id, rise, run = 8, door = 6) {
+  const total = door + run + 2;
+  const base = y;
+  add(id + '-floor', 'floor', [-W, base - 1.2, z - total], [W, base, z]);
+  marks.push({ id: id + '-floor', z0: z, z1: z - total, y: base });
+  add(id + '-door-l', 'wall', [-W, base, z - door], [-CH, base + rise + 8, z]);
+  add(id + '-door-r', 'wall', [CH, base, z - door], [W, base + rise + 8, z]);
+  add(id + '-wall-l', 'wallrun', [-W, base, z - door - run], [-CH, base + rise + 8, z - door]);
+  add(id + '-wall-r', 'wallrun', [CH, base, z - door - run], [W, base + rise + 8, z - door]);
+  z -= total;
+  add(id + '-top', 'floor', [-W, base, z], [W, base + rise, z + 2]);   // the block you mantle out onto
+  marks.push({ id: id + '-top', z0: z + 2, z1: z, y: base + rise });
+  y = base + rise;
+}
+// an open corner: the deck stops, a yellow wall runs on past it, and the landing is `gap` m on. Only a
+// wall-run crosses it. The wall covers the whole gap and 5 m of the landing, and a see-through pane stands
+// across the lane 2 m short of the landing with a 0.9 m slot open along the yellow: a wall-runner is held in
+// that slot, while a 14.5 m/s slide-jump down the middle — which would otherwise poach the landing — hits
+// the glass. (The campaign's WALLRUN ALLEY trick, and YELLOW LINE's.)
+function bridge(id, gap, side, depth) {
+  const x0 = side > 0 ? W : -W - 0.5, x1 = side > 0 ? W + 0.5 : -W;
+  add(id + '-wall', 'wallrun', [x0, y - 14, z - gap - 5], [x1, y + 14, z + 6]);
+  const px0 = side > 0 ? -W : -(W - 0.9), px1 = side > 0 ? W - 0.9 : W;
+  add(id + '-pane', 'glass', [px0, y - 5, z - gap + 1.5], [px1, y + 14, z - gap + 2]);
+  z -= gap;
+  slab(id + '-land', depth, y);
+}
+// glass parapet where a deck has an open side and a runner could drift off it
+function rail(id, side, top, z0, z1) {
+  const x0 = side > 0 ? W : -W - 0.3, x1 = side > 0 ? W + 0.3 : -W;
+  add(id, 'glass', [x0, top, z1], [x1, top + 1.6, z0]);
+}
+function anchor(id, x, yy, zz, approach) {
+  add(id, 'grapple', [x - AH, yy - AH, zz - AH], [x + AH, yy + AH, zz + AH]);
+  boxes[boxes.length - 1].approach = approach;
+}
+function gateOn(id, name, markId, into) {
+  const m = markOf(markId), zz = m.z0 - into;
+  return { id: ID + '-' + id, name, min: [-40, KILL_Y - 10, zz - 2], max: [40, 150, zz + 2],
+    respawn: { pos: [0, m.y + 0.01, zz - 4], yaw: 0 } };
+}
+
+add('pad-start', 'floor', [-W, 8.8, -6], [W, 10, 6]);
+marks.push({ id: 'pad-start', z0: 6, z1: -6, y: 10 });
+
+// ------------------------------------------------------------------------------- 1  THE FOOTINGS (10 -> 20)
+deck('d1', 14);                               // the run-up, and the first thing you see is the 2 m ledge
+step('s1', 12);                               // 12
+step('s2', 14);                               // 14
+shaft('sh1', 6);                              // 20: doorway, three kicks, mantle out
+deck('d2', 20);                               // checkpoint 0 deck
+rail('rail-1', -1, 10, -6, -20);
+rail('rail-2', 1, 14, -32, -46);
+
+// ------------------------------------------------------------------------------- 2  THE PADS (20 -> 37.5)
+pad('p1', 5, 4.5, 14);                        // 24.5
+step('s3', 12);                               // 26.5
+pad('p2', 5, 4.5, 14);                        // 31
+step('s4', 12);                               // 33
+pad('p2b', 5, 4.5, 20);                       // 37.5 — checkpoint 1 deck
+
+// ------------------------------------------------------------------------------- 3  THE SHAFTS (37.5 -> 49.5)
+shaft('sh2', 6);                              // 43.5
+deck('d3', 12);
+bridge('b1', 10, 1, 18);                      // an open corner: 10 m of wall-run, no height
+shaft('sh3', 6);                              // 49.5
+deck('d3b', 12);
+bridge('b2', 10, -1, 12);                     // and one on the other side
+shaft('sh3b', 6);                             // 55.5
+deck('d3c', 12);
+bridge('b3', 10, 1, 22);                      // the last corner — checkpoint 2 deck
+
+// ------------------------------------------------------------------------------- 4  THE CROWN (55.5 -> 70)
+pad('p3', 5, 4.5, 14);                        // 60
+step('s5', 12);                               // 62
+pad('p3b', 5, 4.5, 14);                       // 66.5
+step('s6', 12);                               // 68.5
+step('s6b', 14);                              // 70.5
+shaft('sh4', 6);                              // 76.5
+slab('deck-fin', 20, y);                      // the roof
+add('deck-fin-back', 'wall', [-W, y, z], [W, y + 4, z + 1]);
+
+const FIN = markOf('deck-fin');
+// Two anchors, both out over the open side of the scaffold where nothing can cut the line.
+// g1 hangs straight up the open slot of the second shaft, so an F-shot up it skips that climb; g2 hangs over
+// the crown's pad. Both lines run up the middle of the lane, where the level has no geometry at all.
+anchor('g1', 0, markOf('sh2-top').y + 10, markOf('sh2-top').z0, [0, markOf('p2b-land').y, markOf('p2b-land').z1 + 2]);
+anchor('g2', 0, markOf('p3-land').y + 10, markOf('p3-land').z0 - 4, [0, markOf('b3-land').y, markOf('b3-land').z1 + 2]);
+
+// ------------------------------------------------------------------------------- deco
+// The tower under the route, and scaffolding either side of it.
+for (const m of marks) add('deco-' + m.id, 'deco', [-W, -60, m.z1], [W, m.y - 1.3, m.z0]);
+for (let i = 0; i < 8; i++) {
+  const z0 = 4 - i * 40;
+  add('deco-scaffold-l' + i, 'deco', [-22, -60, z0 - 36], [-9, 18 + i * 7, z0]);
+  add('deco-scaffold-r' + i, 'deco', [9, -60, z0 - 36], [22, 14 + i * 7, z0]);
+}
+
+const LEVEL = {
+  name: 'THE ASCENT',
+  spawn: { pos: [0, 10.01, 0], yaw: 0 },
+  killY: KILL_Y,
+  boxes,
+  movers: [],
+  anchors: boxes.filter((b) => b.kind === 'grapple')
+    .map((b) => ({ id: b.id, point: [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2) })),
+  checkpoints: [
+    gateOn('cp0', 'THE FOOTINGS', 'd2', 8),
+    gateOn('cp1', 'THE PADS', 'p2b-land', 8),
+    gateOn('cp2', 'THE SHAFTS', 'b3-land', 8),
+  ],
+  finish: { min: [-40, FIN.y, FIN.z1], max: [40, FIN.y + 100, FIN.z0] },
+  signs: [
+    { pos: [0, 12.6, -7], yaw: 0, text: 'THE ASCENT\nEVERYTHING GOES UP' },
+    { pos: [-3.2, 11.4, -18], yaw: 0, text: 'JUMP INTO THE LEDGE\nAND CLIMB IT' },
+    { pos: [3.2, 15.4, -46], yaw: 0, text: 'INTO THE SHAFT\nA + D BETWEEN KICKS' },
+    { pos: [-3.2, markOf('p1-land').y + 1.4, markOf('p1-land').z0 - 4], yaw: 0, text: 'TEAL PAD: 4.5 M' },
+    { pos: [3.2, markOf('p2-land').y + 1.4, markOf('p2-land').z0 - 4], yaw: 0, text: 'PAD, LEDGE, PAD' },
+    { pos: [-3.2, markOf('p2b-land').y + 1.4, markOf('p2b-land').z0 - 4], yaw: 0, text: 'TWO MORE SHAFTS' },
+    { pos: [3.2, markOf('d3').y + 1.4, markOf('d3').z0 - 2], yaw: 0, text: 'RUN THE YELLOW\nACROSS THE CORNER' },
+    { pos: [-3.2, markOf('d3b').y + 1.4, markOf('d3b').z0 - 2], yaw: 0, text: 'NOW THE LEFT-HAND ONE' },
+    { pos: [3.2, markOf('d3c').y + 1.4, markOf('d3c').z0 - 2], yaw: 0, text: 'ONE MORE CORNER' },
+    { pos: [3.2, markOf('b3-land').y + 1.4, markOf('b3-land').z0 - 6], yaw: 0, text: 'THE CROWN' },
+    { pos: [-3.2, markOf('s6b').y + 1.4, markOf('s6b').z0 - 4], yaw: 0, text: 'LAST SHAFT, THEN THE ROOF' },
+  ],
+};
+return Object.freeze({ LEVEL });
+})();
+
+// ---- js/levels/crosstown.js ----
+const __vl$m27_js_levels_crosstown = (function () {
+
+// PACK LEVEL 6 — CROSSTOWN.  Every move in the pack, in the order the pack taught them, with the city built
+// so that there is nearly always more than one way through: a duct beside an open stair, an anchor over a
+// ferry you could simply wait for, a shaft you can either climb or shoot straight up. Nothing here is new —
+// what is new is that the level stops telling you which line to take.
+// Pure data: no imports, no DOM. Exactly the js/level-data.js LEVEL shape.
+//
+//   1  THE AVENUE   z   -6 .. -137   y 20         rooftops and 4.0 / 4.5 m gaps, a billboard to slide under,
+//                                                 and a 10 m wall-run across an open corner.        [cp 0]
+//   2  THE CROSSING z -137 .. -253   y 20 -> 24   the hook, taught on a 14 m swing, then a ferry across the
+//                                                 yard and a lift up the side of it.                 [cp 1]
+//   3  THE STACK    z -253 .. -315   y 24 -> 34   a teal pad and a 3.2 m shaft kicked up on alternating
+//                                                 walls.                                            [cp 2]
+//   4  THE RUN-IN   z -315 .. -449   y 34 -> 32   an 18 m swing the level has already shown you, then the
+//                                                 split — slide the covered left or take the open stair on
+//                                                 the right — and three roofs to the finish.
+//
+// Every required move is one this level or the pack has already made you do, and every one of them is inside
+// REACH with margin: gaps 4.0 .. 4.5 m (gapSprint 5.0), ledges 2.0 m (mantleFromJump 2.4), the shaft 3.2 m
+// wide (chimneyWidth 2.4 .. 3.6), the corner 10 m (wallrunGap 12), the pad 4.5 m (bounceApex 5.0), the ducts
+// 1.1 m (slideClearance), the ferry docks 1.5 m. The two swings are 14 and 18 m, where nothing else reaches.
+// Four green anchors: g1 and g4 are the two swings the level asks for, g2 and g3 are pure shortcut — one
+// hangs over the ferry and one up the shaft, and an F-shot at either takes that unit out of the run. None of
+// them can skip a checkpoint: every gate spans the whole street and stands 150 m tall.
+
+const ID = 'crosstown';
+const boxes = [];
+const movers = [];
+function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
+
+const KILL_Y = -18;
+const W = 4;                                  // lane half width
+const CH = 1.6;                               // shaft half width
+const MT = 0.5;                               // mover slab thickness
+const CLEAR = 1.1;                            // REACH.slideClearance
+const AH = 0.35;
+
+// ---------------------------------------------------------------- the city, unit by unit
+// The cursor is the front edge `z` of what has been built and the top `y` of the surface you are standing
+// on. Every unit advances -Z, so the route is crossed once and only once, whatever line is taken.
+let z = -6, y = 20;
+const marks = [];
+function slab(id, depth, top, kind = 'floor', half = W) {
+  add(id, kind, [-half, top - 1.2, z - depth], [half, top, z]);
+  marks.push({ id, z0: z, z1: z - depth, y: top });
+  z -= depth;
+  y = top;
+}
+const markOf = (id) => marks.find((m) => m.id === id);
+const deck = (id, depth) => slab(id, depth, y);
+// a jump: `gap` of nothing, then a roof `rise` higher
+function gapTo(id, gap, depth, rise = 0) { z -= gap; slab(id, depth, y + rise); }
+// a billboard across the lane of the deck just laid, REACH.slideClearance off it and 3.4 m of panel above
+function board(id, into, len) {
+  const m = marks[marks.length - 1];
+  add(id, 'wall', [-W, m.y + CLEAR, m.z0 - into - len], [W, m.y + 4.5, m.z0 - into]);
+}
+// a teal pad at the front of the deck, `gap` of nothing, then a landing `rise` higher
+function pad(id, gap, rise, depth) {
+  add(id + '-pad', 'bounce', [-W, y - 1.2, z - 5], [W, y, z]);
+  marks.push({ id: id + '-pad', z0: z, z1: z - 5, y });
+  z -= 5 + gap;
+  slab(id + '-land', depth, y + rise);
+}
+// a shaft: doorway, two yellow faces 3.2 m apart, its own floor under the climb, and the block you mantle
+// out onto. A missed kick lands back on the floor and you go again.
+function shaft(id, rise, run = 8, door = 6) {
+  const base = y, total = door + run + 2;
+  add(id + '-floor', 'floor', [-W, base - 1.2, z - total], [W, base, z]);
+  marks.push({ id: id + '-floor', z0: z, z1: z - total, y: base });
+  add(id + '-door-l', 'wall', [-W, base, z - door], [-CH, base + rise + 8, z]);
+  add(id + '-door-r', 'wall', [CH, base, z - door], [W, base + rise + 8, z]);
+  add(id + '-wall-l', 'wallrun', [-W, base, z - door - run], [-CH, base + rise + 8, z - door]);
+  add(id + '-wall-r', 'wallrun', [CH, base, z - door - run], [W, base + rise + 8, z - door]);
+  z -= total;
+  add(id + '-top', 'floor', [-W, base, z], [W, base + rise, z + 2]);
+  marks.push({ id: id + '-top', z0: z + 2, z1: z, y: base + rise });
+  y = base + rise;
+}
+// an open corner: a yellow wall past the end of the deck, a landing `gap` on, and a pane across the lane
+// with a 0.9 m slot along the yellow — so the crossing is the wall-run and nothing else.
+function bridge(id, gap, side, depth) {
+  const x0 = side > 0 ? W : -W - 0.5, x1 = side > 0 ? W + 0.5 : -W;
+  add(id + '-wall', 'wallrun', [x0, y - 14, z - gap - 5], [x1, y + 14, z + 6]);
+  const px0 = side > 0 ? -W : -(W - 0.9), px1 = side > 0 ? W - 0.9 : W;
+  add(id + '-pane', 'glass', [px0, y - 5, z - gap + 1.5], [px1, y + 14, z - gap + 2]);
+  z -= gap;
+  slab(id + '-land', depth, y);
+}
+// a mover whose top is `top` at a, travelling a -> b (b as [x, z, dy])
+function mover(id, top, sx, sz, a, b, period, phase) {
+  movers.push({ id: ID + '-' + id, size: [sx, MT, sz], a: [a[0], top - MT / 2, a[1]],
+    b: [b[0], top - MT / 2 + (b[2] || 0), b[1]], period, phase, kind: 'mover' });
+}
+// a forward ferry with 1.5 m dock gaps either end, then the island it delivers you to
+function ferry(id, travel, depth, period) {
+  const near = z - 1.5, sz = 8;
+  mover(id, y, 8, sz, [0, near - sz / 2], [0, near - sz / 2 - travel], period, 0);
+  z = near - sz / 2 - travel - sz / 2 - 1.5;
+  slab(id + '-land', depth, y);
+}
+// a lift: it rests level with the deck you are on, and again level with the deck above
+function lift(id, rise, depth, period) {
+  const near = z - 1.5, sz = 8;
+  mover(id, y, 8, sz, [0, near - sz / 2], [0, near - sz / 2, rise], period, 0);
+  z = near - sz - 1.5;
+  slab(id + '-land', depth, y + rise);
+}
+// an anchor hung `up` above and `ahead` of the front edge, fired from the last `2` m of the deck behind it
+function anchor(id, up, ahead, x = 0) {
+  const ay = y + up, az = z - ahead;
+  add(id, 'grapple', [x - AH, ay - AH, az - AH], [x + AH, ay + AH, az + AH]);
+  boxes[boxes.length - 1].approach = [0, y, z + 2];
+}
+function rail(id, side, top, z0, z1) {
+  const x0 = side > 0 ? W : -W - 0.3, x1 = side > 0 ? W + 0.3 : -W;
+  add(id, 'glass', [x0, top, z1], [x1, top + 1.6, z0]);
+}
+function gateOn(id, name, markId, into) {
+  const m = markOf(markId), zz = m.z0 - into;
+  return { id: ID + '-' + id, name, min: [-40, KILL_Y - 10, zz - 2], max: [40, 150, zz + 2],
+    respawn: { pos: [0, m.y + 0.01, zz - 4], yaw: 0 } };
+}
+
+add('pad-start', 'floor', [-W, 18.8, -6], [W, 20, 6]);
+marks.push({ id: 'pad-start', z0: 6, z1: -6, y: 20 });
+
+// ------------------------------------------------------------------------------- 1  THE AVENUE (y 20)
+deck('a1', 18);
+gapTo('a2', 4.0, 20);                         // the first jump: 4.0 m
+gapTo('a3', 4.5, 24);                         // 4.5 m, and a billboard on the far side of it
+board('a3-board', 10, 5);
+gapTo('a4', 4.5, 12);
+bridge('c1', 10, 1, 16);                      // the open corner: 10 m on the yellow
+deck('a5', 18);                               // checkpoint 0 deck
+rail('rail-1', -1, 20, -6, -24);
+rail('rail-2', 1, 20, -52.5, -76.5);
+
+// ------------------------------------------------------------------------------- 2  THE CROSSING (20 -> 26)
+anchor('g1', 11.5, 8);                        // the taught swing: 14 m of nothing under it
+gapTo('b1', 14, 20, -2);                     // the landing is 2 m down: a swing spends height
+anchor('g2', 12, 18);                         // hangs over the ferry: an F-shot crosses the yard without it
+ferry('m1', 20, 18, 8);                       // the yard ferry
+lift('m2', 6, 22, 8);                         // the lift up the side — checkpoint 1 deck
+
+// ------------------------------------------------------------------------------- 3  THE STACK (26 -> 36)
+pad('s1', 5, 4.5, 16);                        // 30.5
+anchor('g3', 13, 16);                         // over the shaft: an F-shot up it skips the climb
+shaft('sh1', 5.5, 8, 6);                      // 36
+deck('c2', 20);                               // checkpoint 2 deck
+
+// ------------------------------------------------------------------------------- 4  THE RUN-IN (y 36)
+anchor('g4', 11.5, 9);                        // the long swing: 18 m
+gapTo('d1', 18, 16, -2);
+// THE SPLIT: the ceiling covers the left two thirds; the right-hand strip is open but climbs two ledges and
+// drops back down, so the covered line is faster and the open one asks nothing of you but jumps.
+add('sp-roof', 'wall', [-W, y + CLEAR, z - 18], [1, y + 4.5, z - 4]);
+add('sp-step-1', 'floor', [1, y, z - 8], [W, y + 2, z - 4]);
+add('sp-step-2', 'floor', [1, y + 2, z - 14], [W, y + 4, z - 8]);
+add('sp-step-3', 'floor', [1, y, z - 18], [W, y + 2, z - 14]);
+deck('sp', 30);
+gapTo('e1', 4.5, 18);
+gapTo('e2', 4.5, 18);
+gapTo('deck-fin', 4.5, 20);
+const FIN = markOf('deck-fin');
+add('deck-fin-back', 'wall', [-W, FIN.y, FIN.z1], [W, FIN.y + 4, FIN.z1 + 1]);
+rail('rail-3', 1, FIN.y, FIN.z0, FIN.z1);
+
+// ------------------------------------------------------------------------------- deco
+for (const m of marks) add('deco-' + m.id, 'deco', [-W, -60, m.z1], [W, m.y - 1.3, m.z0]);
+for (let i = 0; i < 11; i++) {
+  const z0 = 6 - i * 50;
+  add('deco-block-l' + i, 'deco', [-26, -60, z0 - 44], [-9, 24 + (i % 4) * 9, z0]);
+  add('deco-block-r' + i, 'deco', [9, -60, z0 - 44], [26, 20 + ((i + 2) % 4) * 10, z0]);
+}
+
+const LEVEL = {
+  name: 'CROSSTOWN',
+  spawn: { pos: [0, 20.01, 0], yaw: 0 },
+  killY: KILL_Y,
+  boxes,
+  movers,
+  anchors: boxes.filter((b) => b.kind === 'grapple')
+    .map((b) => ({ id: b.id, point: [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2) })),
+  checkpoints: [
+    gateOn('cp0', 'THE AVENUE', 'a5', 8),
+    gateOn('cp1', 'THE CROSSING', 'm2-land', 8),
+    gateOn('cp2', 'THE STACK', 'c2', 8),
+  ],
+  finish: { min: [-40, FIN.y, FIN.z1], max: [40, FIN.y + 100, FIN.z0] },
+  signs: [
+    { pos: [0, 22.6, -7], yaw: 0, text: 'CROSSTOWN\nALL OF IT, YOUR WAY' },
+    { pos: [-3.2, 21.4, markOf('a2').z0 - 2], yaw: 0, text: 'ROOFTOPS FIRST' },
+    { pos: [3.2, 21.4, markOf('a3').z0 - 2], yaw: 0, text: 'C UNDER THE BOARD' },
+    { pos: [-3.2, 21.4, markOf('a4').z0 - 2], yaw: 0, text: 'THEN RUN THE YELLOW' },
+    { pos: [3.2, 21.4, markOf('a5').z0 - 12], yaw: 0, text: 'GREEN AHEAD:\nHOLD E, LET GO LATE' },
+    { pos: [-3.2, 21.4, markOf('b1').z0 - 2], yaw: 0, text: 'FERRY, OR HOOK OVER IT' },
+    { pos: [3.2, 27.4, markOf('m2-land').z0 - 12], yaw: 0, text: 'PAD, THEN THE SHAFT' },
+    { pos: [-3.2, 37.4, markOf('c2').z0 - 12], yaw: 0, text: 'ONE LONG SWING LEFT' },
+    { pos: [3.2, 35.4, markOf('d1').z0 - 2], yaw: 0, text: 'SLIDE LEFT — FAST\nCLIMB RIGHT — SAFE' },
+    { pos: [-3.2, 35.4, markOf('sp').z0 - 2], yaw: 0, text: 'THREE ROOFS HOME' },
+  ],
+};
+return Object.freeze({ LEVEL });
+})();
+
+// ---- js/levels/pack-levels.js ----
+const __vl$m28_js_levels_pack_levels = (function () {
+const { LEVEL: SKYLINE } = __vl$m22_js_levels_skyline;
+const { LEVEL: FLOODWAY } = __vl$m23_js_levels_floodway;
+const { LEVEL: FREIGHT } = __vl$m24_js_levels_freight;
+const { LEVEL: CANYON } = __vl$m25_js_levels_canyon;
+const { LEVEL: ASCENT } = __vl$m26_js_levels_ascent;
+const { LEVEL: CROSSTOWN } = __vl$m27_js_levels_crosstown;
+// The six-level pack, in intended play order. Pure data + imports: no DOM, no side effects.
+// Same shape as js/levels/catalog.js, so a level-select screen can read either list:
+//
+//   id          the module name under js/levels/ (also the prefix of every box id in that level)
+//   name        the level's own LEVEL.name
+//   blurb       one line: what the level is about
+//   difficulty  2 .. 4 (this pack is the medium band)
+//   category    'level'
+//   level       the LEVEL data, ready for `new World(level)`
+
+
+
+
+
+
+
+
+const LEVELS_PACK = [
+  {
+    id: 'skyline',
+    name: SKYLINE.name,
+    blurb: 'A rooftop mile at full sprint: small gaps, billboards to slide under, and one long teal launch.',
+    difficulty: 2,
+    category: 'level',
+    level: SKYLINE,
+  },
+  {
+    id: 'floodway',
+    name: FLOODWAY.name,
+    blurb: 'A storm channel taken on your back: 1.1 m ceilings, spillway holes, and a roof that covers only half the channel.',
+    difficulty: 3,
+    category: 'level',
+    level: FLOODWAY,
+  },
+  {
+    id: 'freight',
+    name: FREIGHT.name,
+    blurb: 'A yard of moving platforms: forward ferries, two gantry lifts and a pair that meet in the middle.',
+    difficulty: 3,
+    category: 'level',
+    level: FREIGHT,
+  },
+  {
+    id: 'canyon',
+    name: CANYON.name,
+    blurb: 'Fifteen ledges in a canyon wall with nothing between them but green anchors and 18 m of air.',
+    difficulty: 3,
+    category: 'level',
+    level: CANYON,
+  },
+  {
+    id: 'ascent',
+    name: ASCENT.name,
+    blurb: 'A tower climbed without ever turning back: ledges, shafts kicked up on alternating walls, and teal pads.',
+    difficulty: 4,
+    category: 'level',
+    level: ASCENT,
+  },
+  {
+    id: 'crosstown',
+    name: CROSSTOWN.name,
+    blurb: 'Every move in the pack across one city, with a second line through most of it for anyone who looks.',
+    difficulty: 4,
+    category: 'level',
+    level: CROSSTOWN,
+  },
+];
+return Object.freeze({ LEVELS_PACK });
+})();
+
+// ---- js/levels/razor.js ----
+const __vl$m29_js_levels_razor = (function () {
+
+// EXTREME LEVEL 1 — RAZOR EDGE.  Flat rooftops, nothing to hold on to, and every gap cut to within a few
+// tenths of what the physics can actually do. Pure data: no imports, no DOM.
+//
+// The numbers this is built against are MEASURED, not REACH (tests/pack-extreme.mjs re-measures them and
+// prints the margin for every move):
+//   sprint jump, take-off on the lip            9.20 m   (7.57 m is the limit for a CLEAN clear;
+//                                                         past that you finish the leap on the far lip)
+//   slide-jump, take-off on the lip            11.60 m
+//   jump + mantle, ledge height                 2.98 m
+//   bounce pad apex                             5.49 m
+//
+//   A  TWO EDGES       z   -6 ..  -76   y 20    -> 22.85  an 8.6 m sprint gap, then a 2.85 m climb   [cp 0]
+//   B  DUCT AND PAD    z  -76 .. -156   y 22.85 -> 28.55  a duct that ends on the lip and a 10.2 m
+//                                                         slide-jump, then a 5.7 m bounce            [cp 1]
+//   C  THE LONG PAIR   z -156 .. -218   y 28.55           an 8.8 m sprint gap and an 11.2 m slide-
+//                                                         jump with no duct to set it up             [cp 2]
+//   D  LAST TWO        z -218 .. -266   y 28.55 -> 31.4   one more 2.85 m climb, then 9.0 m: the
+//                                                         tightest gap in the pack
+//
+// Every fall is into the void below killY except the bounce court, where a short launch drops you back on
+// the pad and you simply go again.
+
+const ID = 'razor';
+const boxes = [];
+function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
+
+const KILL_Y = -12;
+const CLEAR = 1.1;                            // REACH.slideClearance: a duct you can only pass sliding
+const LANE = 2.2;                             // duct mouth half width
+
+const floor = (id, top, z0, z1, half = 5) => add(id, 'floor', [-half, top - 1, z1], [half, top, z0]);
+function duct(id, fy, z0, z1, half = 5) {
+  add(id + '-roof', 'wall', [-half, fy + CLEAR, z1], [half, fy + 4.5, z0]);
+  add(id + '-cheek-l', 'wall', [-half, fy, z1], [-LANE, fy + CLEAR, z0]);
+  add(id + '-cheek-r', 'wall', [LANE, fy, z1], [half, fy + CLEAR, z0]);
+}
+function gate(id, name, z, respawn) {
+  return { id, name, min: [-40, KILL_Y - 10, z - 2], max: [40, 110, z + 2], respawn };
+}
+
+// ------------------------------------------------------------------------------- A  TWO EDGES
+add('pad-start', 'floor', [-6, 19, -6], [6, 20, 6]);
+floor('a-f1', 20, -6, -26);                   // 20 m of run-up: the sprint has to be at full speed
+floor('a-f2', 20, -34.6, -52);                // gap 8.60 m
+floor('a-f3', 22.85, -54.2, -76);             // gap 2.20 m and a 2.85 m face: jump + mantle at the limit
+
+// ------------------------------------------------------------------------------- B  DUCT AND PAD
+floor('b-f1', 22.85, -76, -102);
+duct('b-d1', 22.85, -96, -101.5);             // the duct ends half a metre short of the lip: you come out
+floor('b-f2', 22.85, -112.2, -126);           // of it already sliding and jump. gap 10.20 m
+// the pad is listed before the court it sits flush with: the ground test takes the first box
+add('b-pad', 'bounce', [-3.5, 21.85, -132], [3.5, 22.85, -126]);
+add('b-court-l', 'floor', [-5, 21.85, -132], [-3.5, 22.85, -126]);
+add('b-court-r', 'floor', [3.5, 21.85, -132], [5, 22.85, -126]);
+floor('c-led1', 28.55, -136, -156);           // +5.70 m and 4 m out: the bounce apex alone is 5.49,
+                                              // so the ledge has to be caught and mantled
+
+// ------------------------------------------------------------------------------- C  THE LONG PAIR
+floor('c-f2', 28.55, -164.8, -188);           // gap 8.80 m
+floor('c-f3', 28.55, -199.2, -218);           // gap 11.20 m, no duct: the crouch tap happens on the lip
+
+// ------------------------------------------------------------------------------- D  LAST TWO
+floor('d-f1', 31.4, -220.2, -242);            // gap 2.20 m, face 2.85 m
+add('deck-fin', 'floor', [-6, 30.4, -266], [6, 31.4, -251]);     // gap 9.00 m: the tightest in the pack
+add('deck-fin-back', 'wall', [-6, 31.4, -266], [6, 35.4, -265]);
+
+// ------------------------------------------------------------------------------- deco
+add('deco-a1', 'deco', [-6, -60, -6], [6, 19, 6]);
+add('deco-a2', 'deco', [-5, -60, -26], [5, 19, -6]);
+add('deco-a3', 'deco', [-5, -60, -52], [5, 19, -34.6]);
+add('deco-a4', 'deco', [-5, -60, -76], [5, 21.85, -54.2]);
+add('deco-b1', 'deco', [-5, -60, -102], [5, 21.85, -76]);
+add('deco-b2', 'deco', [-5, -60, -132], [5, 21.85, -112.2]);
+add('deco-c1', 'deco', [-5, -60, -156], [5, 27.55, -136]);
+add('deco-c2', 'deco', [-5, -60, -188], [5, 27.55, -164.8]);
+add('deco-c3', 'deco', [-5, -60, -218], [5, 27.55, -199.2]);
+add('deco-d1', 'deco', [-5, -60, -242], [5, 30.4, -220.2]);
+add('deco-d2', 'deco', [-6, -60, -266], [6, 30.4, -251]);
+add('deco-sky-1', 'deco', [-34, -60, -58], [-16, 26, -12]);
+add('deco-sky-2', 'deco', [16, -60, -104], [36, 30, -44]);
+add('deco-sky-3', 'deco', [-36, -60, -176], [-18, 34, -116]);
+add('deco-sky-4', 'deco', [17, -60, -238], [37, 32, -172]);
+add('deco-sky-5', 'deco', [-32, -60, -264], [-14, 36, -206]);
+
+const LEVEL = {
+  name: 'RAZOR EDGE',
+  spawn: { pos: [0, 20.01, 0], yaw: 0 },
+  killY: KILL_Y,
+  boxes,
+  movers: [],
+  anchors: [],
+  checkpoints: [
+    gate(ID + '-cp0', 'TWO EDGES', -70, { pos: [0, 22.86, -72.5], yaw: 0 }),
+    gate(ID + '-cp1', 'DUCT AND PAD', -150, { pos: [0, 28.56, -152.5], yaw: 0 }),
+    gate(ID + '-cp2', 'THE LONG PAIR', -212, { pos: [0, 28.56, -214.5], yaw: 0 }),
+  ],
+  finish: { min: [-40, 31.4, -266], max: [40, 111.4, -251] },
+  signs: [
+    { pos: [0, 22.6, -7], yaw: 0, text: 'RAZOR EDGE\nEVERY GAP AT THE LIMIT' },
+    { pos: [-3.6, 21.0, -22], yaw: 0, text: '8.6 M — TAKE OFF ON THE LIP' },
+    { pos: [-3.6, 21.0, -48], yaw: 0, text: 'THEN CLIMB 2.85 M' },
+    { pos: [-3.6, 23.9, -86], yaw: 0, text: 'C — SLIDE THE DUCT\nJUMP AS YOU LEAVE IT' },
+    { pos: [-3.6, 23.9, -122], yaw: 0, text: 'TEAL PAD — 5.7 M UP\nCATCH THE LEDGE' },
+    { pos: [-3.6, 29.6, -160], yaw: 0, text: '8.8 M, THEN TAP C ON THE LIP' },
+    { pos: [-3.6, 29.6, -215], yaw: 0, text: 'CLIMB, THEN THE LAST 9 M' },
+  ],
+};
+return Object.freeze({ LEVEL });
+})();
+
+// ---- js/levels/spine.js ----
+const __vl$m30_js_levels_spine = (function () {
+
+// EXTREME LEVEL 2 — THE SPINE.  One yellow line down the length of a trench: wall-runs near the longest
+// the physics allows, a wall-jump ladder that climbs while it crosses, and two machines you have to read
+// before you commit. Pure data: no imports, no DOM.
+//
+// Measured limits this is built against (tests/pack-extreme.mjs re-measures them and prints every margin):
+//   wall-run gap, flat                          22.5 m    (REACH.wallrunGap is 12)
+//   wall-run gap onto a +1.5 m ledge            20.6 m
+//   wall-run + wall-jump trench, wall 5 m short 25.0 m
+//   wall-jump climb                             ~1.23 m of height per kick in a 3.4 m lane
+//   jump + mantle, ledge height                  2.98 m
+//
+//   A  TWO LONG RUNS   z   -6 .. -100.5  y 34   -> 35.5   20 m on the right wall, then 18.4 m on the
+//                                                         left one, onto a ledge 1.5 m higher     [cp 0]
+//   B  LADDER, TRENCH  z -100.5 .. -198  y 35.5 -> 44.5   an 18 m lane walled on both sides that has
+//                                                         to be climbed 9 m by wall-jumps, then a
+//                                                         26 m trench whose wall stops 5 m short   [cp 1]
+//   C  FERRY AND LIFT  z -198 .. -275.5  y 44.5 -> 53.25  a ferry that is only inside a jump for part
+//                                                         of its 6 s cycle, then a lift you have to
+//                                                         leave at the very top of its stroke     [cp 2]
+//   D  THE LAST WALL   z -275.5 .. -324.5 y 53.25         20 m of wall-run into the finish
+//
+// Everything that is not a deck is open trench: a miss falls past killY. The ladder walls run from well
+// below the lane to far above it, so there is no lip anywhere you can land on and be stuck.
+
+const ID = 'spine';
+const boxes = [];
+function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
+
+const KILL_Y = -14;
+const LX = 2.2, WT = 0.5;                     // lane half width, wall thickness
+const WB = 22, WTP = 70;                      // the yellow walls hang below the lane and tower over it
+const CH = 1.7;                               // ladder half width: a 3.4 m chimney, inside the 4.0 m max
+
+const floor = (id, top, z0, z1, half = LX) => add(id, 'floor', [-half, top - 1, z1], [half, top, z0]);
+function wall(id, z0, z1, kind = 'wallrun') { add(id, kind, [LX, WB, z1], [LX + WT, WTP, z0]); }
+// the mirror of it: a wall-run that times out leaves its whole PLANE unusable until you land again, so
+// two long runs in a row have to be on opposite sides of the lane
+function wallL(id, z0, z1, kind = 'wallrun') { add(id, kind, [-LX - WT, WB, z1], [-LX, WTP, z0]); }
+function gate(id, name, z, respawn) {
+  return { id, name, min: [-40, KILL_Y - 10, z - 2], max: [40, 110, z + 2], respawn };
+}
+
+// ------------------------------------------------------------------------------- A  TWO LONG RUNS
+add('pad-start', 'floor', [-6, 33, -6], [6, 34, 6]);
+floor('a-f1', 34, -6, -26);
+wall('a-w1', -6, -50);                        // covers the 20.0 m gap -26 .. -46 and 4 m of the landing
+floor('a-f2', 34, -46, -63.5);
+wallL('a-w2', -54.5, -85.9);                  // the second run is on the LEFT wall: the first one times
+                                              // out, and a timed-out plane is dead until you land again.
+                                              // covers the 18.4 m gap -63.5 .. -81.9
+floor('a-ledge', 35.5, -81.9, -100.5);        // and the landing is 1.5 m above the take-off
+
+// ------------------------------------------------------------------------------- B  LADDER AND TRENCH
+floor('b-f1', 35.5, -100.5, -116.5);
+add('b-wl', 'wallrun', [-CH - WT, WB, -134.5], [-CH, WTP, -116.5]);   // the ladder: 18 m of open lane
+add('b-wr', 'wallrun', [CH, WB, -134.5], [CH + WT, WTP, -116.5]);     // with a yellow wall each side
+add('b-ledge1', 'floor', [-4, 38.5, -154.5], [4, 44.5, -134.5]);      // 9 m up: kicks at ~1.23 m each
+wall('c-w1', -154.5, -175.5);                 // stops 5 m short of the landing across a 26 m trench
+add('b-ledge2', 'floor', [-5, 38.5, -198], [5, 44.5, -180.5]);
+
+// ------------------------------------------------------------------------------- C  FERRY AND LIFT
+add('c-f1', 'floor', [-5, 43.5, -210], [5, 44.5, -198]);
+// the movers cross the 24 m void and climb the last 6 m — see LEVEL.movers
+add('c-f2', 'floor', [-5, 43.5, -246], [5, 44.5, -234]);
+add('c-led3', 'floor', [-5, 52.25, -275.5], [5, 53.25, -255.5]);      // 2.75 m above the lift's high point
+
+// ------------------------------------------------------------------------------- D  THE LAST WALL
+floor('d-f1', 53.25, -275.5, -289.5);
+wall('d-w1', -275.5, -313.5);                 // covers the 20.0 m gap -289.5 .. -309.5
+add('deck-fin', 'floor', [-6, 52.25, -324.5], [LX, 53.25, -309.5]);
+add('deck-fin-back', 'wall', [-6, 53.25, -324.5], [LX, 57.25, -323.5]);
+
+// ------------------------------------------------------------------------------- deco
+add('deco-a1', 'deco', [-6, -60, -6], [6, 33, 6]);
+add('deco-a2', 'deco', [-LX, -60, -26], [LX, 33, -6]);
+add('deco-a3', 'deco', [-LX, -60, -63.5], [LX, 33, -46]);
+add('deco-a4', 'deco', [-LX, -60, -100.5], [LX, 34.5, -81.9]);
+add('deco-b1', 'deco', [-LX, -60, -116.5], [LX, 34.5, -100.5]);
+add('deco-b2', 'deco', [-4, -60, -154.5], [4, 38.5, -134.5]);
+add('deco-b3', 'deco', [-5, -60, -198], [5, 38.5, -180.5]);
+add('deco-c1', 'deco', [-5, -60, -210], [5, 43.5, -198]);
+add('deco-c2', 'deco', [-5, -60, -246], [5, 43.5, -234]);
+add('deco-c3', 'deco', [-5, -60, -275.5], [5, 52.25, -255.5]);
+add('deco-d1', 'deco', [-LX, -60, -289.5], [LX, 52.25, -275.5]);
+add('deco-d2', 'deco', [-6, -60, -324.5], [LX, 52.25, -309.5]);
+add('deco-sky-1', 'deco', [-36, -60, -74], [-18, 40, -16]);
+add('deco-sky-2', 'deco', [18, -60, -134], [38, 44, -62]);
+add('deco-sky-3', 'deco', [-38, -60, -212], [-20, 48, -144]);
+add('deco-sky-4', 'deco', [18, -60, -282], [38, 54, -214]);
+add('deco-sky-5', 'deco', [-34, -60, -322], [-16, 58, -252]);
+
+const LEVEL = {
+  name: 'THE SPINE',
+  spawn: { pos: [0, 34.01, 0], yaw: 0 },
+  killY: KILL_Y,
+  boxes,
+  movers: [
+    // the ferry: 12 m of travel, 6 s there and back, across a 24 m void. Its near edge is inside a sprint
+    // jump of the lip for part of every cycle and nowhere near it for the rest.
+    { id: ID + '-ferry', size: [6, 0.6, 6], a: [0, 44.2, -220], b: [0, 44.2, -232], period: 6, phase: 0, kind: 'mover' },
+    // the lift: 6 m of stroke, 5 s. The ledge above it sits 2.75 m over the TOP of the stroke, so the
+    // jump + mantle only reaches from the last few tenths of the climb; from the bottom it is 8.75 m up.
+    { id: ID + '-lift', size: [5, 0.6, 5], a: [0, 44.2, -250.5], b: [0, 50.2, -250.5], period: 5, phase: 0, kind: 'mover' },
+  ],
+  anchors: [],
+  checkpoints: [
+    gate(ID + '-cp0', 'TWO LONG RUNS', -94, { pos: [0, 35.51, -96.5], yaw: 0 }),
+    gate(ID + '-cp1', 'LADDER AND TRENCH', -192, { pos: [0, 44.51, -194.5], yaw: 0 }),
+    gate(ID + '-cp2', 'FERRY AND LIFT', -267, { pos: [0, 53.26, -269.5], yaw: 0 }),
+  ],
+  finish: { min: [-40, 53.25, -324.5], max: [40, 133.25, -309.5] },
+  signs: [
+    { pos: [0, 36.6, -7], yaw: 0, text: 'THE SPINE\nSTAY ON THE YELLOW' },
+    { pos: [-1.4, 35.0, -22], yaw: 0, text: '20 M ON THE WALL' },
+    { pos: [1.4, 35.0, -60], yaw: 0, text: 'OTHER SIDE NOW — 18.4 M' },
+    { pos: [-1.4, 36.5, -113], yaw: 0, text: 'WALLS BOTH SIDES\nKICK UP AS YOU GO' },
+    { pos: [-3.4, 45.5, -150], yaw: 0, text: 'THE WALL STOPS SHORT\nKICK OFF THE END OF IT' },
+    { pos: [-3.4, 45.5, -204], yaw: 0, text: 'WAIT FOR THE FERRY\nAND LEAVE IT LATE' },
+    { pos: [-3.4, 45.5, -240], yaw: 0, text: 'JUMP AS THE LIFT TOPS OUT' },
+    { pos: [-3.4, 54.2, -278], yaw: 0, text: 'LAST WALL — 20 M' },
+  ],
+};
+return Object.freeze({ LEVEL });
+})();
+
+// ---- js/levels/lastlight.js ----
+const __vl$m31_js_levels_lastlight = (function () {
+
+// EXTREME LEVEL 3 — LAST LIGHT.  Grapple only, and every anchor is hung at the far end of the hook's
+// useful range: five hops over a canyon with nothing under them. Pure data: no imports, no DOM.
+//
+// Real numbers this is built against (tests/pack-extreme.mjs re-measures them and prints every margin):
+//   GRAPPLE.range is 28 m; the level tests refuse any anchor past 0.85 x range = 23.8 m from its
+//   approach. Every anchor here is 22.1 .. 23.4 m out — 93..98% of what the tests allow.
+//   E is a pure constraint, so a long rope swings you DOWN before it swings you up: hops 1 and 3 drop
+//   13 m across 34 m of open air and are landed by letting go late. F is the engine: hop 2 and hop 5
+//   shoot you 14 m up the far wall and the rope pops off at minRopeLen, so how long you hold F is what
+//   decides where you come down.
+//
+//   hop 1  E, hold late       deck 60 -> 47   34 m across, 13 m down                      [start]
+//   hop 2  F, let go on time  deck 47 -> 61   18 m across, 14 m up                        [cp 0 before]
+//   hop 3  E, hold late       deck 61 -> 48   34 m across, 13 m down                      [cp 1 before]
+//   hop 4  E + a tap of F     deck 48 -> 44   36 m across, nearly flat                    [cp 2 before]
+//   hop 5  F, let go on time  deck 44 -> 58   20 m across, 14 m up, into the finish
+//
+// Every deck is 14 .. 18 m deep and 12 .. 14 m wide: after a 36 m flight you want a landing you cannot
+// miss by a metre. Everything else is open air below killY.
+
+const ID = 'lastlight';
+const boxes = [];
+function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
+
+const KILL_Y = 4;
+const AH = 0.35;
+function anchor(id, x, y, z, approach) {
+  add(id, 'grapple', [x - AH, y - AH, z - AH], [x + AH, y + AH, z + AH]);
+  boxes[boxes.length - 1].approach = approach;
+}
+// a deck: `top` is its surface, 1 m thick, from z0 (near edge) to z1 (far edge)
+function deck(id, top, z0, z1, half = 7) { add(id, 'floor', [-half, top - 1, z1], [half, top, z0]); }
+// a gate spans the whole canyon and rises to y 160: an F shot throws a body 20 m over a deck, and a
+// checkpoint you sail over is a checkpoint skipped.
+function gate(id, name, z, respawn) {
+  return { id, name, min: [-60, KILL_Y - 10, z - 2], max: [60, 160, z + 2], respawn };
+}
+
+deck('deck-0', 60, 10, -8, 6);
+anchor('g1', 0, 70, -28, [0, 60, -7.5]);         // 22.1 m from the approach eye
+deck('deck-1', 47, -42, -58);
+anchor('g2', 0, 67, -70, [0, 47, -57.5]);        // 22.2 m
+deck('deck-2', 61, -76, -92);
+anchor('g3', 0, 71, -112, [0, 61, -91.5]);       // 22.1 m
+deck('deck-3', 48, -126, -142);
+anchor('g4', 0, 61, -162, [0, 48, -141.5]);      // 23.4 m: the longest shot in the pack
+deck('deck-4', 44, -178, -192);
+anchor('g5', 0, 64, -206, [0, 44, -191.5]);      // 22.2 m
+deck('deck-fin', 58, -212, -228);
+add('deck-fin-back', 'wall', [-7, 58, -228], [7, 62, -227]);
+
+// ------------------------------------------------------------------------------- deco
+add('deco-0', 'deco', [-6, -60, -8], [6, 59, 10]);
+add('deco-1', 'deco', [-7, -60, -58], [7, 46, -42]);
+add('deco-2', 'deco', [-7, -60, -92], [7, 60, -76]);
+add('deco-3', 'deco', [-7, -60, -142], [7, 47, -126]);
+add('deco-4', 'deco', [-7, -60, -192], [7, 43, -178]);
+add('deco-5', 'deco', [-7, -60, -228], [7, 57, -212]);
+add('deco-sky-1', 'deco', [-44, -60, -46], [-22, 66, 12]);
+add('deco-sky-2', 'deco', [22, -60, -96], [46, 58, -20]);
+add('deco-sky-3', 'deco', [-48, -60, -150], [-24, 72, -80]);
+add('deco-sky-4', 'deco', [24, -60, -206], [48, 62, -130]);
+add('deco-sky-5', 'deco', [-46, -60, -230], [-22, 70, -160]);
+add('deco-sky-6', 'deco', [20, -60, -240], [44, 76, -180]);
+
+const LEVEL = {
+  name: 'LAST LIGHT',
+  spawn: { pos: [0, 60.01, 4], yaw: 0 },
+  killY: KILL_Y,
+  boxes,
+  movers: [],
+  anchors: boxes.filter((b) => b.kind === 'grapple')
+    .map((b) => ({ id: b.id, point: [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2) })),
+  checkpoints: [
+    gate(ID + '-cp0', 'THE FIRST DROP', -50, { pos: [0, 47.01, -52.5], yaw: 0 }),
+    gate(ID + '-cp1', 'UP THE WALL', -84, { pos: [0, 61.01, -86.5], yaw: 0 }),
+    gate(ID + '-cp2', 'THE SECOND DROP', -134, { pos: [0, 48.01, -136.5], yaw: 0 }),
+  ],
+  finish: { min: [-60, 58, -228], max: [60, 158, -212] },
+  signs: [
+    { pos: [0, 62.6, -6.5], yaw: 0, text: 'LAST LIGHT\nEVERY ANCHOR AT FULL RANGE' },
+    { pos: [-4.4, 60.4, -5], yaw: 0, text: 'E — AND HOLD IT\nLET GO ON THE WAY UP' },
+    { pos: [-5.4, 47.4, -56], yaw: 0, text: 'F ALL THE WAY\nLET GO AS IT SNAPS' },
+    { pos: [-5.4, 61.4, -90], yaw: 0, text: 'LONG ONE — HOLD LATE' },
+    { pos: [-5.4, 48.4, -140], yaw: 0, text: 'E, THEN A TAP OF F\nTHIS ONE FLIES FLAT' },
+    { pos: [-5.4, 44.4, -192], yaw: 0, text: 'LAST SHOT — F, THEN LET GO' },
+  ],
+};
+return Object.freeze({ LEVEL });
+})();
+
+// ---- js/levels/pack-extreme.js ----
+const __vl$m32_js_levels_pack_extreme = (function () {
+const { LEVEL: RAZOR } = __vl$m29_js_levels_razor;
+const { LEVEL: SPINE } = __vl$m30_js_levels_spine;
+const { LEVEL: LASTLIGHT } = __vl$m31_js_levels_lastlight;
+// THE EXTREME PACK — three difficulty-5 courses for players who have finished THE GAUNTLET.
+// Pure data + imports: no DOM, no side effects. Same shape as js/levels/catalog.js, so a level-select
+// screen can read this directly: `level` is the LEVEL object itself, ready for `new World(level)`.
+//
+// What makes these different from the campaign and the five challenge levels: the geometry is cut
+// against the limits the physics ACTUALLY has (measured in tests/pack-extreme.mjs and printed as a
+// margin for every required move), not against the comfortable values in REACH. A sprint gap here is
+// 8.6 m rather than 5; a wall-run is 17-20 m rather than 12; the grapple anchors sit at 93-98% of the
+// range the level tests allow. Every one of them is still proven possible by a scripted run of the
+// real World and Player, and every level is cut into short sections by checkpoints, so a hard course
+// is a series of hard moments rather than one perfect run.
+//
+//   id          the module name under js/levels/ (also the prefix of every box id in that level)
+//   name        the level's own LEVEL.name
+//   blurb       one line: what the level is about
+//   difficulty  5 for all three: this pack is the end of the road
+//   level       the LEVEL data
+
+
+
+
+
+const EXTREME_PACK = [
+  {
+    id: 'razor',
+    name: RAZOR.name,
+    blurb: 'Flat rooftops and eight gaps, every one of them cut to within half a metre of what a sprint, a slide or a mantle can actually do.',
+    difficulty: 5,
+    category: 'level',
+    level: RAZOR,
+  },
+  {
+    id: 'spine',
+    name: SPINE.name,
+    blurb: 'Wall-runs at 17 to 20 m, a wall-jump ladder that climbs while it crosses, and two machines that only let you through on their own schedule.',
+    difficulty: 5,
+    category: 'level',
+    level: SPINE,
+  },
+  {
+    id: 'lastlight',
+    name: LASTLIGHT.name,
+    blurb: 'Grapple only, every anchor at the far end of its range: swings that drop you 13 m across 34 m of air, and F shots you have to let go of on time.',
+    difficulty: 5,
+    category: 'level',
+    level: LASTLIGHT,
+  },
+];
+return Object.freeze({ EXTREME_PACK });
+})();
+
 // ---- js/levels/catalog.js ----
-const __vl$m15_js_levels_catalog = (function () {
+const __vl$m33_js_levels_catalog = (function () {
 const { LEVEL: TUTORIAL2 } = __vl$m10_js_levels_tutorial2;
 const { LEVEL: WALLRUN } = __vl$m11_js_levels_wallrun;
 const { LEVEL: SLIDE } = __vl$m12_js_levels_slide;
 const { LEVEL: GRAPPLE } = __vl$m13_js_levels_grapple;
 const { LEVEL: GAUNTLET } = __vl$m14_js_levels_gauntlet;
+const { TUTORIALS_PACK } = __vl$m21_js_levels_pack_tutorials;
+const { LEVELS_PACK } = __vl$m28_js_levels_pack_levels;
+const { EXTREME_PACK } = __vl$m32_js_levels_pack_extreme;
 // Catalogue of the standalone challenge levels, in intended play order (easiest first, the gauntlet last).
 // Pure data + imports: no DOM, no side effects. A level-select screen can read this directly —
 // `level` is the LEVEL object itself, in exactly the js/level-data.js shape, ready for `new World(level)`.
@@ -1880,8 +4070,12 @@ const { LEVEL: GAUNTLET } = __vl$m14_js_levels_gauntlet;
 //   id          the module name under js/levels/ (also the prefix of every box id in that level)
 //   name        the level's own LEVEL.name, as it should appear on the card
 //   blurb       one line: what the level is about
+//   category    'tutorial' (it teaches a move) or 'level' (a course to race). Missing means 'level'.
 //   difficulty  1 (an extended tutorial) .. 5 (the last unlock)
 //   level       the LEVEL data
+//
+// The menu reads `category` to decide which list an entry belongs in — Tutorials or Levels — and
+// `difficulty` to sort within a list and to draw the pips on the card.
 
 
 
@@ -1889,11 +4083,17 @@ const { LEVEL: GAUNTLET } = __vl$m14_js_levels_gauntlet;
 
 
 
-const CHALLENGE_LEVELS = [
+
+
+
+// The first five challenge levels. Their data must never change: a level's id is a hash of its data,
+// and that id keys players' records and the public leaderboard.
+const CORE_LEVELS = [
   {
     id: 'tutorial2',
     name: TUTORIAL2.name,
     blurb: 'Where the campaign left off: precise mantling, slide-jump chains, wall-run into wall-jump, and the hook.',
+    category: 'tutorial',
     difficulty: 1,
     level: TUTORIAL2,
   },
@@ -1901,6 +4101,7 @@ const CHALLENGE_LEVELS = [
     id: 'wallrun',
     name: WALLRUN.name,
     blurb: 'Wall-run only. Every gap and every metre of climb is taken on the yellow walls.',
+    category: 'level',
     difficulty: 2,
     level: WALLRUN,
   },
@@ -1908,6 +4109,7 @@ const CHALLENGE_LEVELS = [
     id: 'slide',
     name: SLIDE.name,
     blurb: 'Slide only. Ducts with 1.1 m of headroom and gaps no standing jump can clear.',
+    category: 'level',
     difficulty: 3,
     level: SLIDE,
   },
@@ -1915,6 +4117,7 @@ const CHALLENGE_LEVELS = [
     id: 'grapple',
     name: GRAPPLE.name,
     blurb: 'Grapple only. Decks strung over a void, with nothing between them but green anchors.',
+    category: 'level',
     difficulty: 4,
     level: GRAPPLE,
   },
@@ -1922,15 +4125,20 @@ const CHALLENGE_LEVELS = [
     id: 'gauntlet',
     name: GAUNTLET.name,
     blurb: 'Everything at once, with the spare room taken out. The last unlock.',
+    category: 'level',
     difficulty: 5,
     level: GAUNTLET,
   },
 ];
+
+// Everything the menu lists after the campaign: the core five, then the six lessons, the six-level
+// pack and the three difficulty-5 levels. The menu sorts within each list by difficulty.
+const CHALLENGE_LEVELS = [...CORE_LEVELS, ...TUTORIALS_PACK, ...LEVELS_PACK, ...EXTREME_PACK];
 return Object.freeze({ CHALLENGE_LEVELS });
 })();
 
 // ---- js/level-codec.js ----
-const __vl$m16_js_level_codec = (function () {
+const __vl$m34_js_level_codec = (function () {
 
 // Level <-> link payload, shared by the game and the level designer so the two can never drift.
 //
@@ -2158,7 +4366,7 @@ return Object.freeze({ CODEC_VERSION, TAG_DEFLATE, TAG_PLAIN, LINK_WARN_LENGTH, 
 })();
 
 // ---- js/ghost.js ----
-const __vl$m17_js_ghost = (function () {
+const __vl$m35_js_ghost = (function () {
 
 // Ghost runs: record the player's motion, replay it, and measure how far ahead or behind you are.
 //
@@ -2536,9 +4744,9 @@ return Object.freeze({ GHOST_VERSION, GHOST_RATE, GHOST_STATES, ANGLE_UNITS, MAX
 })();
 
 // ---- js/ghost-codec.js ----
-const __vl$m18_js_ghost_codec = (function () {
-const { encodeBytes, decodeBytes, readHashParam, HASH_PARAM, LINK_WARN_LENGTH } = __vl$m16_js_level_codec;
-const { GHOST_VERSION, GHOST_RATE, GHOST_STATES, ANGLE_UNITS, MAX_GHOST_SECONDS, MIN_GHOST_FRAMES, isGhost } = __vl$m17_js_ghost;
+const __vl$m36_js_ghost_codec = (function () {
+const { encodeBytes, decodeBytes, readHashParam, HASH_PARAM, LINK_WARN_LENGTH } = __vl$m34_js_level_codec;
+const { GHOST_VERSION, GHOST_RATE, GHOST_STATES, ANGLE_UNITS, MAX_GHOST_SECONDS, MIN_GHOST_FRAMES, isGhost } = __vl$m35_js_ghost;
 // A ghost run, packed small enough to ride in a URL next to the level it belongs to.
 //
 // The envelope is the level codec's: js/level-codec.js encodeBytes/decodeBytes give the same
@@ -2872,14 +5080,14 @@ return Object.freeze({ GHOST_PARAM, GHOST_MAGIC, GHOST_WARN_LENGTH, LINK_MAX_LEN
 })();
 
 // ---- tools/validate-run.mjs ----
-const __vl$m19_tools_validate_run = (function () {
+const __vl$m37_tools_validate_run = (function () {
 const { readFileSync } = __vl$n0_node_fs;
 const { PHYS, GRAPPLE } = __vl$m0_js_config;
 const { LEVEL: CAMPAIGN } = __vl$m9_js_level_data;
-const { CHALLENGE_LEVELS } = __vl$m15_js_levels_catalog;
-const { levelId } = __vl$m16_js_level_codec;
-const { decodeGhost } = __vl$m18_js_ghost_codec;
-const { frameCount, ghostDuration, isGhost, GHOST_RATE } = __vl$m17_js_ghost;
+const { CHALLENGE_LEVELS } = __vl$m33_js_levels_catalog;
+const { levelId } = __vl$m34_js_level_codec;
+const { decodeGhost } = __vl$m36_js_ghost_codec;
+const { frameCount, ghostDuration, isGhost, GHOST_RATE } = __vl$m35_js_ghost;
 // The leaderboard's referee: does this ghost really run this course in this time?
 //
 // A run is posted as a GitHub issue carrying three fields — the level id, the claimed time and the
@@ -3251,23 +5459,23 @@ return Object.freeze({ TIME_TOLERANCE, SPEED_TOLERANCE, SPEED_LIMIT, RESPAWN_RAD
 })();
 
 // ---- tools/validate-run.mjs: exports + command line ----
-export const TIME_TOLERANCE = __vl$m19_tools_validate_run.TIME_TOLERANCE;
-export const SPEED_TOLERANCE = __vl$m19_tools_validate_run.SPEED_TOLERANCE;
-export const SPEED_LIMIT = __vl$m19_tools_validate_run.SPEED_LIMIT;
-export const RESPAWN_RADIUS = __vl$m19_tools_validate_run.RESPAWN_RADIUS;
-export const SUBSTEP = __vl$m19_tools_validate_run.SUBSTEP;
-export const FINISH_WINDOW = __vl$m19_tools_validate_run.FINISH_WINDOW;
-export const ABSOLUTE_FLOOR = __vl$m19_tools_validate_run.ABSOLUTE_FLOOR;
-export const builtinLevels = __vl$m19_tools_validate_run.builtinLevels;
-export const levelFor = __vl$m19_tools_validate_run.levelFor;
-export const respawnPoints = __vl$m19_tools_validate_run.respawnPoints;
-export const timeFloor = __vl$m19_tools_validate_run.timeFloor;
-export const walkPath = __vl$m19_tools_validate_run.walkPath;
-export const findTeleport = __vl$m19_tools_validate_run.findTeleport;
-export const validateRun = __vl$m19_tools_validate_run.validateRun;
-export const parseIssueBody = __vl$m19_tools_validate_run.parseIssueBody;
-export const runCli = __vl$m19_tools_validate_run.runCli;
+export const TIME_TOLERANCE = __vl$m37_tools_validate_run.TIME_TOLERANCE;
+export const SPEED_TOLERANCE = __vl$m37_tools_validate_run.SPEED_TOLERANCE;
+export const SPEED_LIMIT = __vl$m37_tools_validate_run.SPEED_LIMIT;
+export const RESPAWN_RADIUS = __vl$m37_tools_validate_run.RESPAWN_RADIUS;
+export const SUBSTEP = __vl$m37_tools_validate_run.SUBSTEP;
+export const FINISH_WINDOW = __vl$m37_tools_validate_run.FINISH_WINDOW;
+export const ABSOLUTE_FLOOR = __vl$m37_tools_validate_run.ABSOLUTE_FLOOR;
+export const builtinLevels = __vl$m37_tools_validate_run.builtinLevels;
+export const levelFor = __vl$m37_tools_validate_run.levelFor;
+export const respawnPoints = __vl$m37_tools_validate_run.respawnPoints;
+export const timeFloor = __vl$m37_tools_validate_run.timeFloor;
+export const walkPath = __vl$m37_tools_validate_run.walkPath;
+export const findTeleport = __vl$m37_tools_validate_run.findTeleport;
+export const validateRun = __vl$m37_tools_validate_run.validateRun;
+export const parseIssueBody = __vl$m37_tools_validate_run.parseIssueBody;
+export const runCli = __vl$m37_tools_validate_run.runCli;
 const __vl$argv = typeof process !== 'undefined' && Array.isArray(process.argv) ? process.argv : [];
 if (__vl$argv[1] && /validate-run\.mjs$/.test(__vl$argv[1].replace(/\\/g, '/'))) {
-  __vl$m19_tools_validate_run.runCli(__vl$argv.slice(2));
+  __vl$m37_tools_validate_run.runCli(__vl$argv.slice(2));
 }
