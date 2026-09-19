@@ -1,4 +1,13 @@
 {
- "updated": null,
- "levels": {}
+ "updated": "2026-09-19T11:53:07.173Z",
+ "levels": {
+  "rjxfo-ypcflq": {
+   "name": "SKYHOOK",
+   "runs": 1,
+   "leader": {
+    "user": "Aruvine",
+    "time": 9.75
+   }
+  }
+ }
 }
