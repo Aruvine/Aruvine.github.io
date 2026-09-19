@@ -650,6 +650,136 @@
   .level-row .lv-blurb { grid-column: 1 / -1; font-size: 12px; line-height: 1.4; color: rgba(232, 237, 241, 0.6); }
   .levels-hint { margin-top: 12px; font-size: 13px; }
 
+  /* Leaderboard panel (title screen): the runs posted for the built-in level that is loaded. */
+  .board { grid-column: 1 / -1; padding: 16px 18px 18px; }
+  .board-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .btn-small { min-height: 34px; padding: 7px 13px; font-size: 13px; }
+  .board-status { margin: 10px 0 0; font-size: 13px; line-height: 1.45; color: var(--paper-dim); }
+  .board-status.is-warn { color: #FF9A92; }
+  .board-list {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+    max-height: 336px;
+    overflow-y: auto;
+  }
+  .board-list li { margin: 0; }
+  .board-row {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: 6px 12px;
+    width: 100%;
+    padding: 8px 12px;
+    font-family: var(--f-body);
+    font-size: 14px;
+    text-align: left;
+    color: #E8EDF1;
+    background: rgba(232, 237, 241, 0.05);
+    border: 1px solid var(--panel-line);
+    border-left: 3px solid var(--paper-faint);
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .board-row:hover { background: rgba(232, 237, 241, 0.11); }
+  .board-row[aria-pressed="true"] { border-left-color: var(--signal); background: rgba(242, 183, 5, 0.12); }
+  .board-row.is-you { border-left-color: var(--ahead); }
+  .board-row .bd-rank {
+    min-width: 2.2em;
+    font-family: var(--f-mono);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    color: rgba(232, 237, 241, 0.6);
+  }
+  .board-row .bd-avatar {
+    display: block;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(232, 237, 241, 0.12);
+    object-fit: cover;
+  }
+  .board-row .bd-name { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .board-row .bd-you {
+    font-family: var(--f-mono);
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    padding: 3px 5px 2px;
+    border-radius: 2px;
+    color: #0F1B26;
+    background: var(--ahead);
+  }
+  .board-row .bd-time {
+    font-family: var(--f-mono);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+    color: var(--signal);
+    justify-self: end;
+  }
+  .board-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 6px;
+    padding: 0 0 2px 14px;
+  }
+  .board-note { font-size: 12px; line-height: 1.45; color: var(--paper-dim); }
+  .board-note.is-warn { color: #FF9A92; }
+  .board-you { margin-top: 14px; }
+  .board-you .field-help { margin: 4px 0 0; font-size: 12px; color: var(--paper-dim); }
+  .text-input {
+    width: 100%;
+    max-width: 260px;
+    padding: 8px 10px;
+    font-family: var(--f-mono);
+    font-size: 13px;
+    color: #E8EDF1;
+    background: rgba(15, 27, 38, 0.55);
+    border: 1px solid rgba(232, 237, 241, 0.28);
+    border-radius: 3px;
+  }
+  .text-input:focus { border-color: var(--signal); }
+  .board-hint { margin-top: 12px; font-size: 13px; }
+
+  /* Spectating: the bar that says whose run is playing, with the way out of it. */
+  .watch-bar {
+    position: absolute;
+    top: var(--edge-t);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 8px 8px 14px;
+    pointer-events: auto;
+  }
+  .watch-tag { font-family: var(--f-mono); font-size: 10px; letter-spacing: 0.18em; color: var(--signal); }
+  .watch-who { font-weight: 600; font-size: 15px; }
+  .watch-time { font-family: var(--f-mono); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--paper-dim); }
+
+  /* Finish screen: posting the run that just happened. */
+  .board-post { margin-top: 16px; }
+  .post-note { margin: 8px 0 0; font-size: 13px; }
+  .post-note.is-warn { color: #FF9A92; }
+  .post-field {
+    display: block;
+    width: 100%;
+    margin-top: 8px;
+    min-height: 62px;
+    padding: 8px;
+    font-family: var(--f-mono);
+    font-size: 11px;
+    color: #E8EDF1;
+    background: rgba(15, 27, 38, 0.8);
+    border: 1px solid var(--panel-line);
+    border-radius: 3px;
+    resize: vertical;
+    word-break: break-all;
+  }
+
   .settings-slot:empty { display: none; }
   .field + .field { margin-top: 14px; }
   .field-row {
@@ -1033,6 +1163,13 @@
     <ol id="splits" class="splits" aria-label="Splits"></ol>
   </section>
 
+  <div id="watch-bar" class="watch-bar panel" role="status" hidden>
+    <span class="watch-tag">WATCHING</span>
+    <span id="watch-who" class="watch-who">a run</span>
+    <span id="watch-time" class="watch-time"></span>
+    <button id="btn-watch-exit" class="btn btn-ghost btn-small" type="button">Back to menu</button>
+  </div>
+
   <div id="crosshair" class="crosshair" aria-hidden="true"></div>
 
   <div id="toast" class="toast panel" role="status" aria-live="polite" aria-atomic="true" hidden>
@@ -1093,6 +1230,22 @@
           <p id="ghost-help" class="field-help">Race the fastest run you have stored for this level.</p>
         </div>
         <p class="panel-note levels-hint">Levels you save in the designer show up here. Share one with its play link.</p>
+      </section>
+
+      <section id="board" class="panel board" aria-labelledby="board-heading" hidden>
+        <div class="board-head">
+          <h2 id="board-heading" class="eyebrow">Leaderboard</h2>
+          <button id="btn-board-refresh" class="btn btn-ghost btn-small" type="button">Refresh</button>
+        </div>
+        <p id="board-status" class="board-status" role="status">Loading the leaderboard…</p>
+        <ol id="board-list" class="board-list" aria-label="Fastest posted runs"></ol>
+        <div class="field board-you">
+          <div class="field-row"><label for="board-user">Your GitHub username</label></div>
+          <input id="board-user" class="text-input" type="text" spellcheck="false" autocomplete="off"
+                 autocapitalize="off" maxlength="39" placeholder="octocat" aria-describedby="board-you-help">
+          <p id="board-you-help" class="field-help">Kept in this browser, so your own row stands out.</p>
+        </div>
+        <p class="panel-note board-hint">Pick a runner to watch their best run or race it. Finish a run to post your own.</p>
       </section>
 
       <section class="panel controls" aria-labelledby="controls-heading">
@@ -1199,6 +1352,11 @@
       <button id="btn-ghost-link" class="btn btn-ghost" type="button">Copy ghost link</button>
       <p id="ghost-link-note" class="panel-note ghost-link-note" hidden></p>
       <textarea id="ghost-link-field" class="ghost-link-field" readonly spellcheck="false" aria-label="Ghost link" hidden></textarea>
+    </div>
+    <div id="board-post" class="board-post" hidden>
+      <button id="btn-post-run" class="btn btn-ghost" type="button">Post to leaderboard</button>
+      <p id="post-note" class="panel-note post-note" hidden></p>
+      <textarea id="post-ghost-field" class="post-field" readonly spellcheck="false" aria-label="Ghost payload" hidden></textarea>
     </div>
     <div class="btn-row">
       <button id="btn-again" class="btn btn-primary btn-xl" type="button">
@@ -8821,6 +8979,7 @@ const KEY_SENS = 'vaultline.sens';
 const KEY_VOL = 'vaultline.vol';
 const KEY_PB = 'vaultline.pb';
 const KEY_GHOST_MODE = 'vaultline.ghostmode';
+const KEY_BOARD_USER = 'vaultline.board.user';
 const DEFAULT_SENS = 0.0022;
 const DEFAULT_VOL = 0.8;
 
@@ -8855,6 +9014,9 @@ const IDS = [
   'hint', 'speed', 'speed-value', 'speed-bar', 'speed-tick-walk', 'speed-tick-sprint',
   'screen-title', 'title-body', 'title-pb', 'title-pb-time', 'touch-note', 'title-settings-slot',
   'levels', 'levels-list', 'levels-note',
+  'board', 'board-status', 'board-list', 'board-user', 'btn-board-refresh',
+  'watch-bar', 'watch-who', 'watch-time', 'btn-watch-exit',
+  'board-post', 'btn-post-run', 'post-note', 'post-ghost-field',
   'ghost-field', 'ghost-best', 'ghost-imported', 'ghost-off', 'ghost-help',
   'ghost-delta', 'ghost-delta-label', 'ghost-delta-value',
   'settings', 'sens', 'sens-val', 'vol', 'vol-val',
@@ -9023,6 +9185,16 @@ class Hud {
     this._ghostDeltaTone = '';
     this._ghostLink = '';
 
+    /** Leaderboard: what is on screen, which row is picked, and who the player says they are. */
+    this.boardUser = '';
+    this._board = { status: 'off', entries: [], message: '' };
+    this._boardPick = '';
+    this._boardNote = { text: '', warn: false };
+    this._boardCbs = { refresh: [], watch: [], race: [], user: [] };
+    this._watchCbs = [];
+    this._postCbs = [];
+    this._post = null;
+
     this._names = [];
     this._runSplits = [];
     this._runBest = [];
@@ -9040,6 +9212,7 @@ class Hud {
     this._initSettings();
     this._initQuality();
     this._initGhost();
+    this._initBoard();
     this._initButtons();
     this._initSpeedTicks();
     this._renderTimer(formatTime(0));
@@ -9340,6 +9513,7 @@ class Hud {
     this._ghostOptions = {
       best: isNum(data.best) && data.best > 0 ? data.best : null,
       imported: isNum(data.imported) && data.imported > 0 ? data.imported : null,
+      importedFrom: typeof data.importedFrom === 'string' ? data.importedFrom : '',
       note: typeof data.note === 'string' ? data.note : '',
     };
     for (const m of ['best', 'imported']) {
@@ -9355,7 +9529,8 @@ class Hud {
     if (this.ghostMode === 'best') {
       text = opts.best ? 'Racing your best run, ' + formatTime(opts.best) + '.' : 'No ghost stored for this level yet — finish a run and it is kept.';
     } else if (this.ghostMode === 'imported') {
-      text = opts.imported ? 'Racing the ghost from the link, ' + formatTime(opts.imported) + '.' : 'No ghost came in with a link.';
+      const whose = opts.importedFrom ? opts.importedFrom + "'s posted run, " : 'the ghost from the link, ';
+      text = opts.imported ? 'Racing ' + whose + formatTime(opts.imported) + '.' : 'No ghost came in with a link.';
     }
     if (opts.note) text = opts.note + ' ' + text;
     this._setText(this.el['ghost-help'], text);
@@ -9525,12 +9700,311 @@ class Hud {
     this.setGhostLink(null);
   }
 
-  _levelKey(ev, btn) {
+  // ------------------------------------------------------------ leaderboard
+
+  /** Register a listener. `what` is 'refresh' | 'watch' | 'race' | 'user'; watch/race get the login. */
+  onBoard(what, cb) {
+    if (typeof cb === 'function' && this._boardCbs[what]) this._boardCbs[what].push(cb);
+  }
+
+  /** Show or hide the whole panel: only the built-in levels have a leaderboard. */
+  setBoardVisible(on) {
+    const el = this.el.board;
+    if (el) el.hidden = !on;
+    if (!on) {
+      this._boardPick = '';
+      this._boardNote = { text: '', warn: false };
+    }
+  }
+
+  /** The login of the row the player has picked, or '' when none is. */
+  get boardPick() {
+    return this._boardPick;
+  }
+
+  /**
+   * Fill the leaderboard.
+   *   { status: 'loading' | 'ready' | 'empty' | 'error', entries: [{ rank, user, time, issue, at }],
+   *     message: a line to show instead of / above the table }
+   * The rows are buttons: Tab and Enter work, Up/Down/Home/End move between them, and picking one
+   * opens Watch and Race underneath it.
+   */
+  setBoard(state) {
+    const data = state && typeof state === 'object' ? state : {};
+    const entries = Array.isArray(data.entries) ? data.entries.filter((e) => e && typeof e.user === 'string') : [];
+    this._board = {
+      status: typeof data.status === 'string' ? data.status : 'ready',
+      entries,
+      message: typeof data.message === 'string' ? data.message : '',
+    };
+    if (this._boardPick && !entries.some((e) => e.user === this._boardPick)) this._boardPick = '';
+    this._renderBoard();
+  }
+
+  /** A line under the picked row: what is being fetched, or why it could not be. */
+  setBoardNote(text, warn) {
+    this._boardNote = { text: typeof text === 'string' ? text : '', warn: !!warn };
+    const note = this.el['board-list'] ? this.el['board-list'].querySelector('.board-note') : null;
+    if (!note) {
+      this._renderBoard();
+      return;
+    }
+    this._setText(note, this._boardNote.text);
+    note.className = 'board-note' + (this._boardNote.warn ? ' is-warn' : '');
+    note.hidden = !this._boardNote.text;
+  }
+
+  /** Pick a row from code (the same path a click takes, without the callbacks). */
+  setBoardPick(user) {
+    const next = typeof user === 'string' && this._board.entries.some((e) => e.user === user) ? user : '';
+    if (next === this._boardPick) return;
+    this._boardPick = next;
+    this._boardNote = { text: '', warn: false };
+    this._renderBoard();
+  }
+
+  _renderBoard() {
+    const host = this.el['board-list'];
+    const status = this.el['board-status'];
+    const board = this._board;
+    if (status) {
+      const text = board.message ||
+        (board.status === 'loading' ? 'Loading the leaderboard…'
+          : board.status === 'empty' ? 'No runs posted yet — be the first'
+            : board.status === 'error' ? 'The leaderboard could not be reached.' : '');
+      this._setText(status, text);
+      status.className = 'board-status' + (board.status === 'error' ? ' is-warn' : '');
+      status.hidden = !text;
+    }
+    const refresh = this.el['btn-board-refresh'];
+    if (refresh) refresh.disabled = board.status === 'loading';
+    if (!host || !this.doc) return;
+    this._clear(host);
+    for (const entry of board.entries) {
+      const li = this.doc.createElement('li');
+      const btn = this.doc.createElement('button');
+      const picked = entry.user === this._boardPick;
+      const you = !!this.boardUser && entry.user.toLowerCase() === this.boardUser.toLowerCase();
+      btn.type = 'button';
+      btn.className = 'board-row' + (you ? ' is-you' : '');
+      btn.dataset.user = entry.user;
+      btn.setAttribute('aria-pressed', picked ? 'true' : 'false');
+      btn.appendChild(this._span(isNum(entry.rank) ? pad2(entry.rank) : '', 'bd-rank'));
+      btn.appendChild(this._avatar(entry.user));
+      btn.appendChild(this._span(entry.user, 'bd-name'));
+      btn.appendChild(this._span(you ? 'YOU' : '', you ? 'bd-you' : 'bd-blank'));
+      const time = this._span(formatTime(entry.time), 'bd-time');
+      time.setAttribute('aria-label', 'Time ' + formatTime(entry.time));
+      btn.appendChild(time);
+      btn.addEventListener('click', () => this._pickBoardRow(entry.user));
+      btn.addEventListener('keydown', (ev) => this._listKey(ev, btn, 'board-list', 'button.board-row'));
+      li.appendChild(btn);
+      if (picked) li.appendChild(this._boardActions(entry));
+      host.appendChild(li);
+    }
+  }
+
+  // The avatar is fetched from github.com. It is the one thing on this panel that can fail on its
+  // own (a blocked host, a user with no picture), so a failed load simply leaves the circle empty.
+  _avatar(user) {
+    const img = this.doc.createElement('img');
+    img.className = 'bd-avatar';
+    img.width = 40;
+    img.height = 40;
+    img.alt = '';
+    img.setAttribute('aria-hidden', 'true');
+    img.loading = 'lazy';
+    img.addEventListener('error', () => { img.style.visibility = 'hidden'; });
+    img.src = 'https://github.com/' + encodeURIComponent(user) + '.png?size=40';
+    return img;
+  }
+
+  _boardActions(entry) {
+    const row = this.doc.createElement('div');
+    row.className = 'board-actions';
+    const watch = this.doc.createElement('button');
+    watch.type = 'button';
+    watch.className = 'btn btn-ghost btn-small bd-watch';
+    watch.textContent = 'Watch';
+    watch.setAttribute('aria-label', 'Watch ' + entry.user + "'s run");
+    watch.addEventListener('click', () => {
+      for (const cb of this._boardCbs.watch) cb(entry.user, entry);
+    });
+    const race = this.doc.createElement('button');
+    race.type = 'button';
+    race.className = 'btn btn-primary btn-small bd-race';
+    race.textContent = 'Race';
+    race.setAttribute('aria-label', 'Race ' + entry.user + "'s run");
+    race.addEventListener('click', () => {
+      for (const cb of this._boardCbs.race) cb(entry.user, entry);
+    });
+    row.appendChild(watch);
+    row.appendChild(race);
+    const note = this._span(this._boardNote.text, 'board-note' + (this._boardNote.warn ? ' is-warn' : ''));
+    note.hidden = !this._boardNote.text;
+    row.appendChild(note);
+    return row;
+  }
+
+  _pickBoardRow(user) {
+    this._boardPick = this._boardPick === user ? '' : user;
+    this._boardNote = { text: '', warn: false };
+    this._renderBoard();
+    const picked = this.el['board-list']
+      ? this.el['board-list'].querySelector('button.board-row[aria-pressed="true"]') : null;
+    if (picked && typeof picked.focus === 'function') picked.focus();
+  }
+
+  _initBoard() {
+    const stored = storageGet(KEY_BOARD_USER);
+    this.boardUser = typeof stored === 'string' ? stored.trim().slice(0, 39) : '';
+    const field = this.el['board-user'];
+    if (field) {
+      field.value = this.boardUser;
+      field.addEventListener('change', () => this._onBoardUser(field));
+      field.addEventListener('blur', () => this._onBoardUser(field));
+    }
+    const refresh = this.el['btn-board-refresh'];
+    if (refresh) {
+      refresh.addEventListener('click', () => {
+        for (const cb of this._boardCbs.refresh) cb();
+      });
+    }
+    const exit = this.el['btn-watch-exit'];
+    if (exit) {
+      exit.addEventListener('click', () => {
+        for (const cb of this._watchCbs) cb();
+      });
+    }
+    const post = this.el['btn-post-run'];
+    if (post) post.addEventListener('click', () => this._onPostRun());
+    this.setWatching(false);
+    this.setPostRun(null);
+  }
+
+  _onBoardUser(field) {
+    const name = String(field.value || '').trim().slice(0, 39);
+    if (name === this.boardUser) return;
+    this.boardUser = name;
+    field.value = name;
+    storageSet(KEY_BOARD_USER, name);
+    this._renderBoard();
+    for (const cb of this._boardCbs.user) cb(name);
+  }
+
+  // ------------------------------------------------------------ watching somebody else's run
+
+  /** Register a listener for "stop watching": cb(). */
+  onWatchExit(cb) {
+    if (typeof cb === 'function') this._watchCbs.push(cb);
+  }
+
+  /** The bar over the spectator camera. `info` is `{ user, time }`. */
+  setWatching(on, info) {
+    const bar = this.el['watch-bar'];
+    const data = info && typeof info === 'object' ? info : {};
+    if (bar) bar.hidden = !on;
+    if (this.el.crosshair) this.el.crosshair.hidden = !!on;
+    if (!on) return;
+    this._setText(this.el['watch-who'], data.user ? data.user + "'s run" : 'a posted run');
+    this._setText(this.el['watch-time'], isNum(data.time) && data.time > 0 ? formatTime(data.time) : '');
+  }
+
+  // ------------------------------------------------------------ posting a run
+
+  /** Register a listener for the Post button: cb({ url, clipboard, copied }). */
+  onPostRun(cb) {
+    if (typeof cb === 'function') this._postCbs.push(cb);
+  }
+
+  /**
+   * The finish screen's Post row. `state`:
+   *   { enabled, label, message, url, ghost, clipboard }
+   * `clipboard` means the ghost is too big for the URL: the button copies it before handing the URL
+   * back, and the payload is left on screen to be copied by hand if that was refused.
+   */
+  setPostRun(state) {
+    const data = state && typeof state === 'object' ? state : null;
+    const on = !!(data && data.enabled !== false && data.url);
+    this._post = on ? {
+      url: String(data.url),
+      ghost: typeof data.ghost === 'string' ? data.ghost : '',
+      clipboard: !!data.clipboard,
+    } : null;
+    const row = this.el['board-post'];
+    const btn = this.el['btn-post-run'];
+    const field = this.el['post-ghost-field'];
+    if (btn) {
+      btn.disabled = !on;
+      btn.textContent = data && data.label ? data.label : 'Post to leaderboard';
+    }
+    if (field) {
+      field.value = this._post ? this._post.ghost : '';
+      field.hidden = true;
+    }
+    if (row) row.hidden = !(data && (on || data.message));
+    this.setPostNote(data && data.message ? data.message : '', !!(data && data.warn));
+  }
+
+  /** The line under the Post button. */
+  setPostNote(text, warn) {
+    const note = this.el['post-note'];
+    if (!note) return;
+    const message = typeof text === 'string' ? text : '';
+    this._setText(note, message);
+    note.className = 'panel-note post-note' + (warn ? ' is-warn' : '');
+    note.hidden = !message;
+  }
+
+  // The copy has to happen inside the click, so the URL that follows it still counts as a user
+  // gesture: execCommand first (it works from file:// and in a sandboxed iframe), then the async
+  // clipboard as a best effort, and the payload stays on screen if both were refused.
+  _onPostRun() {
+    const post = this._post;
+    if (!post) return;
+    let copied = false;
+    if (post.clipboard) {
+      copied = this._copyInto(this.el['post-ghost-field'], post.ghost);
+      const field = this.el['post-ghost-field'];
+      if (!copied && field) field.hidden = false;
+    }
+    for (const cb of this._postCbs) cb({ url: post.url, clipboard: post.clipboard, copied });
+  }
+
+  /** Put `text` on the clipboard through `field`, synchronously. -> true when that worked. */
+  _copyInto(field, text) {
+    if (!field || !text) return false;
+    const wasHidden = field.hidden;
+    field.hidden = false;
+    field.value = text;
+    let ok = false;
+    try {
+      field.focus();
+      field.select();
+      ok = !!(this.doc && this.doc.execCommand && this.doc.execCommand('copy'));
+    } catch (e) {
+      ok = false;
+    }
+    if (!ok) {
+      try {
+        if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => {}, () => {});
+        }
+      } catch (e) {
+        // nothing else to try: the text is on screen
+      }
+    }
+    field.hidden = ok ? true : wasHidden;
+    return ok;
+  }
+
+  // Shared list keyboard walk: Up/Down/Home/End between the buttons of one list.
+  _listKey(ev, btn, hostId, selector) {
     const keys = ['ArrowDown', 'ArrowUp', 'Home', 'End'];
     if (keys.indexOf(ev.key) < 0) return;
-    const host = this.el['levels-list'];
+    const host = this.el[hostId];
     if (!host) return;
-    const all = Array.prototype.slice.call(host.querySelectorAll('button.level-row'));
+    const all = Array.prototype.slice.call(host.querySelectorAll(selector));
     if (!all.length) return;
     const at = all.indexOf(btn);
     let next = at;
@@ -9540,6 +10014,10 @@ class Hud {
     else next = all.length - 1;
     ev.preventDefault();
     all[next].focus();
+  }
+
+  _levelKey(ev, btn) {
+    this._listKey(ev, btn, 'levels-list', 'button.level-row');
   }
 
   /** Register a listener for the Show FPS checkbox: cb(boolean). Not fired by setShowFps(). */
@@ -13349,8 +13827,396 @@ function clearGhosts() {
 return Object.freeze({ GHOST_PREFIX, GHOST_INDEX_KEY, MAX_TOTAL_BYTES, MAX_ONE_BYTES, MAX_GHOSTS, ghostKeyFor, readIndex, loadGhost, ghostTimeFor, saveGhost, removeGhost, storedBytes, clearGhosts });
 })();
 
+// ---- js/board.js ----
+const __vl$m42_js_board = (function () {
+
+// The public leaderboard: where a posted run lives, and how the game reads it back.
+//
+// There is no server. A run is posted as an issue on the site's own repository; a GitHub Action
+// validates it with tools/validate-run.mjs and writes static files that the site serves:
+//
+//   board/<levelId>.json              the table for one level, fastest first, one entry per user
+//   board/ghosts/<levelId>/<user>.txt the payload js/ghost-codec.js encodeGhost() produced
+//
+// The contract other pieces depend on lives here and nowhere else: the base URL, those two paths, the
+// avatar URL, and the "new issue" URL a Post button opens. Leaderboards exist only for the built-in
+// levels (the campaign and the five challenge courses), keyed by the very same stable level id the
+// per-level records and ghosts use.
+//
+// Where the page is served from decides how the board is reached. On the site itself the board sits
+// next to the page, so a relative 'board/' is used; anywhere else (a local file://, a copy on another
+// host) the absolute URL is fetched. Inside a sandboxed iframe that fetch is refused by the page's
+// CSP before it reaches the network — indistinguishable from being offline, and both mean the same
+// thing to a player, so both come back as `blocked` with one honest line to show.
+//
+// Pure module apart from fetch: no DOM, no three, no storage. Node can drive all of it.
+
+const BOARD_ORIGIN = 'https://aruvine.github.io';
+const BOARD_PATH = 'board/';
+const BOARD_URL = BOARD_ORIGIN + '/' + BOARD_PATH;
+const BOARD_REPO = 'Aruvine/Aruvine.github.io';
+const ISSUE_TEMPLATE = 'run.yml';
+const AVATAR_SIZE = 40;
+
+/** Past this many characters the ghost is put on the clipboard instead of into the URL. */
+const POST_URL_MAX = 7500;
+/** One entry per user, and never more rows than this. */
+const MAX_ENTRIES = 100;
+
+/** Shown wherever the board cannot be reached at all (a sandboxed iframe, or no network). */
+const OFFLINE_NOTE = 'The leaderboard lives at aruvine.github.io';
+const PASTE_NOTE = 'Your ghost is copied — paste it into the Ghost box on GitHub.';
+const POSTED_NOTE = 'Posted runs appear on the board a minute or two after GitHub checks them.';
+const EMPTY_NOTE = 'No runs posted yet — be the first';
+
+// GitHub logins: letters, digits and single inner hyphens, 39 characters at most. Anything else is
+// not a user, so it never reaches a URL.
+const USER_RE = /^[A-Za-z0-9](?:-?[A-Za-z0-9])*$/;
+const LEVEL_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/;
+
+function isNum(v) {
+  return typeof v === 'number' && Number.isFinite(v);
+}
+
+/** True for a login this module is willing to put in a URL. */
+function isUser(name) {
+  return typeof name === 'string' && name.length > 0 && name.length <= 39 && USER_RE.test(name);
+}
+
+/** True for the kinds of level that have a leaderboard: the built-ins, and nothing else. */
+function hasBoard(kind) {
+  return kind === 'campaign' || kind === 'challenge';
+}
+
+// mm:ss.cc, truncated to whole centiseconds — the same clock the HUD prints, so a posted title and
+// the time on screen can never disagree.
+function clockText(seconds) {
+  const cs = isNum(seconds) && seconds > 0 ? Math.floor(seconds * 100 + 1e-6) : 0;
+  const pad = (n) => (n < 10 ? '0' + n : String(n));
+  return pad(Math.floor(cs / 6000)) + ':' + pad(Math.floor(cs / 100) % 60) + '.' + pad(cs % 100);
+}
+
+/**
+ * The base every board file is fetched from. `loc` is window.location (or anything with `origin`).
+ * On the site itself that is a relative 'board/', so the page works on a preview deployment too;
+ * everywhere else it is the absolute URL.
+ */
+function boardBase(loc) {
+  const origin = loc && typeof loc.origin === 'string' ? loc.origin : '';
+  return origin === BOARD_ORIGIN ? BOARD_PATH : BOARD_URL;
+}
+
+/** board/<levelId>.json */
+function boardFileUrl(levelId, loc) {
+  return boardBase(loc) + encodeURIComponent(levelId) + '.json';
+}
+
+/** board/ghosts/<levelId>/<user>.txt */
+function ghostFileUrl(levelId, user, loc) {
+  return boardBase(loc) + 'ghosts/' + encodeURIComponent(levelId) + '/' + encodeURIComponent(user) + '.txt';
+}
+
+/** The player's GitHub avatar, at the size the table draws it. */
+function avatarUrl(user, size) {
+  const px = isNum(size) && size > 0 ? Math.round(size) : AVATAR_SIZE;
+  return 'https://github.com/' + encodeURIComponent(user) + '.png?size=' + px;
+}
+
+/** The issue title a posted run carries: "[run] <level name> <mm:ss.cc>". */
+function issueTitleFor(levelName, time) {
+  return '[run] ' + String(levelName == null ? '' : levelName) + ' ' + clockText(time);
+}
+
+/**
+ * The "new issue" URL a Post button opens. `level`, `time` and `ghost` are the ids of the fields in
+ * the repository's issue form, so GitHub pre-fills them.
+ *
+ * -> { url, withGhost, length, ghost }
+ * A URL that would grow past POST_URL_MAX comes back without the ghost in it (`withGhost:false`) and
+ * the caller puts `ghost` on the clipboard instead — a link that is too long to open is worse than
+ * one paste.
+ */
+function postUrl(run) {
+  const info = run && typeof run === 'object' ? run : {};
+  const id = String(info.levelId == null ? '' : info.levelId);
+  const time = isNum(info.time) && info.time > 0 ? info.time : 0;
+  const ghost = typeof info.ghost === 'string' ? info.ghost : '';
+  const base = 'https://github.com/' + BOARD_REPO + '/issues/new?template=' + ISSUE_TEMPLATE +
+    '&title=' + encodeURIComponent(issueTitleFor(info.levelName, time)) +
+    '&level=' + encodeURIComponent(id) +
+    '&time=' + time.toFixed(3);
+  const full = ghost ? base + '&ghost=' + encodeURIComponent(ghost) : base;
+  if (ghost && full.length <= POST_URL_MAX) return { url: full, withGhost: true, length: full.length, ghost };
+  return { url: base, withGhost: false, length: base.length, ghost };
+}
+
+// ------------------------------------------------------------------------------------ board files
+
+/** One row, or null when it is not a row this build will show. */
+function readEntry(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  if (!isUser(raw.user)) return null;
+  if (!isNum(raw.time) || raw.time <= 0) return null;
+  const splits = Array.isArray(raw.splits) ? raw.splits.filter(isNum) : [];
+  return {
+    user: raw.user,
+    time: raw.time,
+    splits,
+    issue: isNum(raw.issue) ? raw.issue : null,
+    at: typeof raw.at === 'string' ? raw.at : '',
+  };
+}
+
+/**
+ * A parsed board file -> { level, name, updated, entries }. Junk rows are dropped rather than
+ * shown, the rows are sorted fastest first, one per user, and capped at MAX_ENTRIES. Never throws.
+ */
+function readBoard(data, levelId) {
+  const obj = data && typeof data === 'object' ? data : {};
+  const rows = Array.isArray(obj.entries) ? obj.entries : [];
+  const best = new Map();
+  for (const raw of rows) {
+    const entry = readEntry(raw);
+    if (!entry) continue;
+    const seen = best.get(entry.user);
+    if (!seen || entry.time < seen.time) best.set(entry.user, entry);
+  }
+  const entries = Array.from(best.values()).sort((a, b) => a.time - b.time).slice(0, MAX_ENTRIES);
+  for (let i = 0; i < entries.length; i++) entries[i].rank = i + 1;
+  return {
+    level: typeof obj.level === 'string' && obj.level ? obj.level : String(levelId || ''),
+    name: typeof obj.name === 'string' ? obj.name : '',
+    updated: typeof obj.updated === 'string' ? obj.updated : '',
+    entries,
+  };
+}
+
+// One GET, with every failure turned into an answer rather than an exception.
+//   { ok:true, text } | { ok:false, missing:true } | { ok:false, blocked:true } | { ok:false, reason }
+async function get(url) {
+  if (typeof fetch !== 'function') return { ok: false, blocked: true, reason: OFFLINE_NOTE };
+  let res = null;
+  try {
+    res = await fetch(url, { cache: 'no-store', credentials: 'omit' });
+  } catch (err) {
+    // A refused CSP, a blocked host and being offline all land here and all mean the same thing.
+    return { ok: false, blocked: true, reason: OFFLINE_NOTE };
+  }
+  if (res.status === 404) return { ok: false, missing: true, reason: 'nothing posted yet' };
+  if (!res.ok) return { ok: false, reason: 'The leaderboard answered ' + res.status + '.' };
+  let text = '';
+  try {
+    text = await res.text();
+  } catch (err) {
+    return { ok: false, reason: 'The leaderboard could not be read.' };
+  }
+  return { ok: true, text };
+}
+
+/**
+ * One level's table.
+ * -> { ok:true, board } | { ok:false, blocked, empty, reason }
+ * A 404 is not a failure: it is a level nobody has posted a run on yet, so it comes back as an empty
+ * board rather than an error on screen.
+ */
+async function fetchBoard(levelId, loc) {
+  if (!levelId || !LEVEL_ID_RE.test(String(levelId))) return { ok: false, reason: 'That level has no leaderboard.' };
+  const res = await get(boardFileUrl(levelId, loc));
+  if (res.missing) return { ok: true, empty: true, board: readBoard(null, levelId) };
+  if (!res.ok) return { ok: false, blocked: !!res.blocked, reason: res.reason };
+  let data = null;
+  try {
+    data = JSON.parse(res.text);
+  } catch (err) {
+    return { ok: false, reason: 'The leaderboard file could not be read.' };
+  }
+  const board = readBoard(data, levelId);
+  return { ok: true, empty: board.entries.length === 0, board };
+}
+
+/**
+ * One player's best ghost for one level, as the payload a link would carry.
+ * -> { ok:true, payload } | { ok:false, blocked, reason }
+ */
+async function fetchGhost(levelId, user, loc) {
+  if (!levelId || !LEVEL_ID_RE.test(String(levelId))) return { ok: false, reason: 'That level has no leaderboard.' };
+  if (!isUser(user)) return { ok: false, reason: 'That is not a GitHub user name.' };
+  const res = await get(ghostFileUrl(levelId, user, loc));
+  if (res.missing) return { ok: false, reason: 'No ghost is stored for that run.' };
+  if (!res.ok) return { ok: false, blocked: !!res.blocked, reason: res.reason };
+  const payload = String(res.text || '').trim();
+  if (!payload) return { ok: false, reason: 'That ghost file is empty.' };
+  return { ok: true, payload };
+}
+return Object.freeze({ BOARD_ORIGIN, BOARD_PATH, BOARD_URL, BOARD_REPO, ISSUE_TEMPLATE, AVATAR_SIZE, POST_URL_MAX, MAX_ENTRIES, OFFLINE_NOTE, PASTE_NOTE, POSTED_NOTE, EMPTY_NOTE, isUser, hasBoard, clockText, boardBase, boardFileUrl, ghostFileUrl, avatarUrl, issueTitleFor, postUrl, readBoard, fetchBoard, fetchGhost });
+})();
+
+// ---- js/spectate.js ----
+const __vl$m43_js_spectate = (function () {
+const { samplePose, makePose, ghostDuration, frameCount, isGhost, GHOST_RATE } = __vl$m39_js_ghost;
+// Watching somebody else's run: play a ghost back with a camera that chases it.
+//
+// This is the spectator half of the leaderboard. Nothing here is a run: there is no Player, no input
+// and no timer of your own — a ghost is replayed at its own recorded rate and the camera is flown
+// along behind it, so what you see is what that runner did, from the outside.
+//
+// The camera is produced in exactly the shape js/game-flyover.js produces for the title screen: a
+// plain object Renderer.update(dt, view) understands. `eyeHeight` is 0 because `pos` is already the
+// eye — the camera is not standing on anything.
+//
+// Pure module: no DOM, no three, no storage. Node can drive it.
+
+
+
+const CHASE_BACK = 5.5;      // m behind the runner, along the way they are facing
+const CHASE_UP = 2.6;        // m above their feet
+const CHASE_LOOK = 1.15;     // m up the body the camera aims at
+const CHASE_EASE = 5.5;      // how fast the camera closes on its target (1/s)
+const CHASE_TURN = 6.5;      // the same for the aim
+const SNAP_DIST = 12;        // m of ghost movement in one frame that counts as a teleport
+const END_HOLD = 3.5;        // s the camera stays on a finished run before the caller gives up
+
+const TAU = Math.PI * 2;
+const num = (v, fallback) => (typeof v === 'number' && Number.isFinite(v) ? v : fallback);
+const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
+
+function shortAngle(from, to) {
+  let d = (to - from) % TAU;
+  if (d > Math.PI) d -= TAU;
+  if (d < -Math.PI) d += TAU;
+  return d;
+}
+
+/**
+ * One spectated run.
+ *
+ *   const watch = new Spectate(ghost, { level });
+ *   watch.update(dt);          // every frame -> the camera object for Renderer.update
+ *   watch.pose                 // the ghost's pose this frame, for Renderer.setGhostPose
+ *   watch.drainSplits()        // checkpoint indices the ghost has just passed
+ *   watch.done                 // the recording has run out
+ */
+class Spectate {
+  constructor(ghost, options) {
+    const opts = options || {};
+    this.ghost = isGhost(ghost) ? ghost : null;
+    this.level = opts.level || null;
+    this.user = typeof opts.user === 'string' ? opts.user : '';
+    this.rate = this.ghost ? this.ghost.rate || GHOST_RATE : GHOST_RATE;
+    // Play to the end of the recording OR to the run time it claims, whichever is later: the last
+    // sample can sit a frame short of the finish gate.
+    this.duration = this.ghost ? Math.max(ghostDuration(this.ghost), num(this.ghost.time, 0)) : 0;
+    this.splits = this.ghost && Array.isArray(this.ghost.splits) ? this.ghost.splits.slice() : [];
+    this.frames = frameCount(this.ghost);
+    this.pose = makePose();
+    this.view = {
+      pos: [0, 0, 0], vel: [0, 0, 0], yaw: 0, pitch: 0, state: 'air',
+      height: 1.8, eyeHeight: 0, cameraRoll: 0, fovKick: 0, speed: 0,
+    };
+    this.reset();
+  }
+
+  /** Back to the first frame of the recording, camera snapped into place. */
+  reset() {
+    this.time = 0;
+    this.done = false;
+    this.endHeld = 0;
+    this._snap = true;
+    this._nextSplit = 0;
+    this._due = [];
+    this._lastGhost = null;
+    this.update(0);
+  }
+
+  /** The ghost's own time at checkpoint `i`, or null. */
+  splitAt(i) {
+    const v = this.splits[i];
+    return typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null;
+  }
+
+  /** Checkpoint indices passed since the last call, in order. */
+  drainSplits() {
+    const out = this._due;
+    this._due = [];
+    return out;
+  }
+
+  /**
+   * Advance the playback by `dt` and fly the camera. -> the view object for Renderer.update(dt, view).
+   * Safe to call with dt 0 (it just re-poses), and safe to call after the run has ended.
+   */
+  update(dt) {
+    const step = clamp(num(dt, 0), 0, 0.1);
+    if (!this.ghost) return this.view;
+    if (!this.done) {
+      this.time += step;
+      if (this.time >= this.duration) {
+        this.time = this.duration;
+        this.done = true;
+      }
+    } else {
+      this.endHeld += step;
+    }
+
+    samplePose(this.ghost, this.time, this.pose);
+    // Splits are announced as they are passed, in order; a checkpoint the run never recorded is
+    // stepped over rather than held on to for ever.
+    while (this._nextSplit < this.splits.length) {
+      const at = this.splitAt(this._nextSplit);
+      if (at === null) { this._nextSplit++; continue; }
+      if (this.time + 1e-6 < at) break;
+      this._due.push(this._nextSplit);
+      this._nextSplit++;
+    }
+
+    const p = this.pose.pos;
+    // A respawn inside the recording jumps metres between two samples: snap the camera rather than
+    // sweep it through the level.
+    const last = this._lastGhost;
+    if (last && Math.hypot(p[0] - last[0], p[1] - last[1], p[2] - last[2]) > SNAP_DIST) this._snap = true;
+    this._lastGhost = [p[0], p[1], p[2]];
+
+    const yaw = num(this.pose.yaw, 0);
+    const back = [Math.sin(yaw), 0, Math.cos(yaw)];     // forward is (-sin yaw, 0, -cos yaw)
+    const tx = p[0] + back[0] * CHASE_BACK;
+    const ty = p[1] + CHASE_UP;
+    const tz = p[2] + back[2] * CHASE_BACK;
+
+    const v = this.view;
+    const k = this._snap ? 1 : 1 - Math.exp(-step * CHASE_EASE);
+    v.pos[0] += (tx - v.pos[0]) * k;
+    v.pos[1] += (ty - v.pos[1]) * k;
+    v.pos[2] += (tz - v.pos[2]) * k;
+
+    const dx = p[0] - v.pos[0];
+    const dy = p[1] + CHASE_LOOK - v.pos[1];
+    const dz = p[2] - v.pos[2];
+    const flat = Math.hypot(dx, dz);
+    const wantYaw = flat > 1e-4 ? Math.atan2(-dx, -dz) : v.yaw;
+    const wantPitch = Math.atan2(dy, Math.max(flat, 1e-4));
+    if (this._snap) {
+      v.yaw = wantYaw;
+      v.pitch = wantPitch;
+    } else {
+      const kr = 1 - Math.exp(-step * CHASE_TURN);
+      v.yaw += shortAngle(v.yaw, wantYaw) * kr;
+      v.pitch += (wantPitch - v.pitch) * kr;
+    }
+    v.speed = num(this.pose.speed, 0);
+    this._snap = false;
+    return v;
+  }
+
+  /** How far past the end of the recording the camera has been held (for an auto-return). */
+  get finishedFor() {
+    return this.done ? this.endHeld : 0;
+  }
+}
+return Object.freeze({ CHASE_BACK, CHASE_UP, CHASE_LOOK, CHASE_EASE, CHASE_TURN, SNAP_DIST, END_HOLD, Spectate });
+})();
+
 // ---- js/main.js ----
-const __vl$m42_js_main = (function () {
+const __vl$m44_js_main = (function () {
 const { PHYS } = __vl$m0_js_config;
 const { LEVEL } = __vl$m9_js_level_data;
 const { World } = __vl$m10_js_world;
@@ -13367,6 +14233,8 @@ const { collectSources, campaignEntry, linkEntry } = __vl$m38_js_level_source;
 const { GhostRecorder, GhostTracker, samplePose, makePose, ghostSplit, isGhost } = __vl$m39_js_ghost;
 const { encodeGhost, decodeGhost, readGhostPayload, raceHashFor, LINK_MAX_LENGTH } = __vl$m40_js_ghost_codec;
 const { loadGhost, saveGhost, removeGhost, ghostTimeFor } = __vl$m41_js_ghost_store;
+const { hasBoard, fetchBoard, fetchGhost, postUrl, OFFLINE_NOTE, EMPTY_NOTE, PASTE_NOTE, POSTED_NOTE } = __vl$m42_js_board;
+const { Spectate, END_HOLD } = __vl$m43_js_spectate;
 // Vaultline boot + game loop: wires Renderer, World, Player, Input, Sfx, Hud.
 // States: 'title' -> 'playing' <-> 'paused' -> 'finished'. Fixed-step physics at PHYS.dt (max 8 steps/frame).
 //
@@ -13375,6 +14243,13 @@ const { loadGhost, saveGhost, removeGhost, ghostTimeFor } = __vl$m41_js_ghost_st
 // Player, Renderer and Input over to whichever one is picked in the Levels panel. The campaign is the
 // default and is never modified; anything else has to pass the editor's validator first, and a level
 // that fails is listed with the reason instead of being loaded.
+//
+// On top of that the built-in levels carry a public leaderboard (js/board.js): the runs other people
+// have posted, fetched as static JSON from aruvine.github.io. Picking a runner there fetches their
+// ghost and either watches it (js/spectate.js: a spectator camera, no player) or races it (the ghost
+// machinery that already exists), and a complete run offers to post itself.
+
+
 
 
 
@@ -13442,6 +14317,20 @@ let linkGhostNote = '';
 let lastRun = null;          // the ghost just recorded, for "Copy ghost link"
 let ghostLinkToken = 0;      // so a slow link build cannot overwrite a newer finish screen
 
+// ---- the leaderboard ------------------------------------------------------------------------
+// boardCache: one fetched table per level id, so returning to the title screen is free.
+// spectate: the run being watched (a ghost and a camera, never a Player).
+// boardGhost: a ghost fetched from the board to race — it rides in the same slot a link's ghost does.
+const boardCache = new Map();
+let boardToken = 0;
+let ghostFetchToken = 0;
+let boardGhost = null;
+let boardGhostUser = '';
+let spectate = null;
+let watchUser = '';
+let postToken = 0;
+let postInfo = null;         // the Post button's built URL, for the tests and the console
+
 // ------------------------------------------------------------------ run control
 
 function respawnPoint() {
@@ -13458,6 +14347,7 @@ function placePlayer(point) {
 
 function resetRun() {
   finishInfo = null;
+  hud.setPostRun(null);
   recorder = active && active.id ? new GhostRecorder({ levelId: active.id }) : new GhostRecorder({});
   if (tracker) tracker.reset();
   if (renderer) renderer.resetGhost();
@@ -13510,10 +14400,17 @@ function setState(name) {
     } else if (name === 'finished') {
       hud.showScreen('finish', finishInfo || finishData(runTime, splits, pb, checkpoints));
       refreshLevelTimes();
+    } else if (name === 'watching') {
+      // No run, no control: the ghost plays itself and the camera chases it.
+      hud.showScreen('none');
+      hud.setWatching(true, { user: watchUser, time: spectate && spectate.ghost ? spectate.ghost.time : 0 });
+      hud.setHint('Watching ' + (watchUser || 'a posted run') + ' — [Esc] goes back to the menu', 5);
     } else if (name === 'title') {
+      hud.setWatching(false);
       flyover.reset();
       refreshLevelTimes();
       hud.showScreen('title');
+      refreshBoard(false);
     }
   }
 }
@@ -13569,6 +14466,7 @@ function finishRun() {
   // Keeping the ghost and building the share link are both async: the screen is already up, and both
   // only ever fill something in on it.
   keepGhost(lastRun).then(() => buildGhostLink(lastRun), () => buildGhostLink(lastRun));
+  buildPostLink(lastRun);
 }
 
 // ------------------------------------------------------------------ ghost racing
@@ -13599,11 +14497,16 @@ async function readLinkGhost(hash) {
   }
 }
 
-/** The imported ghost, but only when it belongs to the level that is loaded. */
+/**
+ * The imported ghost, but only when it belongs to the level that is loaded. A ghost picked off the
+ * leaderboard rides in the same slot as one that came in with a link — it is the same thing to race,
+ * and the toggle only ever has to offer one of them.
+ */
 function importedGhost() {
-  if (!linkGhost || !active) return null;
-  if (linkGhost.levelId && active.id && linkGhost.levelId !== active.id) return null;
-  return linkGhost;
+  const g = boardGhost || linkGhost;
+  if (!g || !active) return null;
+  if (g.levelId && active.id && g.levelId !== active.id) return null;
+  return g;
 }
 
 /** Point the racing state at whichever ghost the toggle is set to. Safe to call any time. */
@@ -13635,6 +14538,7 @@ function refreshGhostUi() {
   hud.setGhostOptions({
     best: storedGhost ? storedGhost.time : null,
     imported: imported ? imported.time : null,
+    importedFrom: imported && imported === boardGhost ? boardGhostUser : '',
     note,
   });
   applyGhostChoice();
@@ -13734,6 +14638,183 @@ async function buildGhostLink(run) {
   });
 }
 
+// ------------------------------------------------------------------ the leaderboard
+
+/** The level id the board is keyed by, or null when this level has no board (anything custom). */
+function boardLevelId() {
+  return active && hasBoard(active.kind) && active.id ? active.id : null;
+}
+
+function showBoard(id, table) {
+  hud.setBoard({
+    status: table.entries.length ? 'ready' : 'empty',
+    entries: table.entries,
+    message: table.entries.length ? '' : EMPTY_NOTE,
+  });
+}
+
+/**
+ * Fill the leaderboard panel for the level that is loaded. Cached per level for the session, so
+ * walking back and forth between levels costs nothing; `force` is the Refresh button.
+ */
+async function refreshBoard(force) {
+  const id = boardLevelId();
+  hud.setBoardVisible(!!id);
+  if (!id) return;
+  const cached = boardCache.get(id);
+  if (cached && !force) {
+    showBoard(id, cached);
+    return;
+  }
+  const token = ++boardToken;
+  hud.setBoard({ status: 'loading', entries: cached ? cached.entries : [] });
+  let res = null;
+  try {
+    res = await fetchBoard(id, window.location);
+  } catch (err) {
+    res = { ok: false, reason: 'The leaderboard could not be reached.' };
+  }
+  if (token !== boardToken || boardLevelId() !== id) return;
+  if (!res.ok) {
+    hud.setBoard({ status: 'error', entries: [], message: res.blocked ? OFFLINE_NOTE : res.reason });
+    return;
+  }
+  boardCache.set(id, res.board);
+  showBoard(id, res.board);
+}
+
+/** One runner's ghost off the board, decoded. -> the ghost, or null with the reason on the panel. */
+async function boardGhostFor(user) {
+  const id = boardLevelId();
+  if (!id) return null;
+  const token = ++ghostFetchToken;
+  hud.setBoardNote('Fetching ' + user + '\u2019s ghost\u2026', false);
+  let res = null;
+  try {
+    res = await fetchGhost(id, user, window.location);
+  } catch (err) {
+    res = { ok: false, reason: 'That ghost could not be fetched.' };
+  }
+  if (token !== ghostFetchToken || boardLevelId() !== id) return null;
+  if (!res.ok) {
+    hud.setBoardNote(res.blocked ? OFFLINE_NOTE : res.reason, true);
+    return null;
+  }
+  try {
+    const g = await decodeGhost(res.payload);
+    if (!isGhost(g)) throw new Error('That ghost could not be replayed.');
+    if (token !== ghostFetchToken) return null;
+    hud.setBoardNote('', false);
+    return g;
+  } catch (err) {
+    if (token !== ghostFetchToken) return null;
+    hud.setBoardNote(err && err.message ? err.message : 'That ghost could not be replayed.', true);
+    return null;
+  }
+}
+
+/** Watch somebody's run: their ghost, played back, with the camera chasing it. */
+async function watchBoardRun(user) {
+  sfx.unlock();
+  sfx.play('uiClick');
+  const g = await boardGhostFor(user);
+  if (!g || state === 'playing') return;
+  startWatch(g, user);
+}
+
+/** Race somebody's run: their ghost becomes the imported one, and the run starts. */
+async function raceBoardRun(user) {
+  sfx.unlock();
+  sfx.play('uiClick');
+  const g = await boardGhostFor(user);
+  if (!g) return;
+  boardGhost = g;
+  boardGhostUser = user;
+  if (hud.ghostMode !== 'imported') hud.setGhostMode('imported', false);
+  refreshGhostUi();
+  if (!ghost) {
+    // The only way a fetched ghost is refused is a level id that does not match this course.
+    hud.setBoardNote('That run was recorded on another version of this level.', true);
+    return;
+  }
+  startRun();
+}
+
+function startWatch(g, user) {
+  watchUser = typeof user === 'string' ? user : '';
+  spectate = new Spectate(g, { level, user: watchUser });
+  simTime = 0;
+  world.step(0, PHYS.dt);
+  hud.resetRun();
+  hud.setRunTime(0);
+  hud.setSpeed(0);
+  hud.setGhostRacing(false);
+  hud.setGhostDelta(null);
+  if (renderer) {
+    renderer.resetCheckpoints();
+    renderer.resetGhost();
+  }
+  setState('watching');
+}
+
+function stopWatch() {
+  if (state !== 'watching') return;
+  spectate = null;
+  watchUser = '';
+  hud.setWatching(false);
+  hud.resetRun();
+  if (renderer) {
+    renderer.setGhostPose(null);
+    renderer.resetGhost();
+    renderer.resetCheckpoints();
+  }
+  setState('title');
+}
+
+/** The ghost has reached a checkpoint: the same toast and beacon a run of your own would get. */
+function watchSplit(index) {
+  if (!spectate) return;
+  const at = spectate.splitAt(index);
+  if (at === null) return;
+  const cp = checkpoints[index];
+  const best = pb && Array.isArray(pb.splits) && Number.isFinite(pb.splits[index]) ? pb.splits[index] : null;
+  hud.checkpoint(index, cp && cp.name ? cp.name : 'Checkpoint ' + (index + 1), at, best, null);
+  if (renderer) renderer.setCheckpointReached(index);
+  sfx.play('checkpoint');
+}
+
+/**
+ * The finish screen's "Post to leaderboard". Only a complete run on a built-in level gets one —
+ * `run` is null for anything else, and then the row stays hidden.
+ */
+async function buildPostLink(run) {
+  const token = ++postToken;
+  const id = boardLevelId();
+  postInfo = null;
+  if (!run || !id) {
+    hud.setPostRun(null);
+    return;
+  }
+  let payload = '';
+  try {
+    payload = await encodeGhost(run);
+  } catch (err) {
+    payload = '';
+  }
+  if (token !== postToken) return;
+  const built = postUrl({ levelId: id, levelName: level.name, time: run.time, ghost: payload });
+  postInfo = built;
+  hud.setPostRun({
+    enabled: true,
+    url: built.url,
+    ghost: payload,
+    clipboard: !built.withGhost,
+    message: built.withGhost
+      ? 'Opens a GitHub issue with this run already filled in.'
+      : 'This ghost is too long for a link (' + payload.length + ' characters) — the button copies it for you.',
+  });
+}
+
 // ------------------------------------------------------------------ levels
 
 // Re-read the stored best of every listed level and redraw the panel. Cheap (one storage read each):
@@ -13762,11 +14843,13 @@ function swapCanvas(old) {
 
 function wireInput() {
   input.onPause = (reason) => {
-    if (state === 'playing') setState('paused');
+    if (state === 'watching') stopWatch();
+    else if (state === 'playing') setState('paused');
     else if (state === 'paused' && reason === 'key') { sfx.unlock(); setState('playing'); }
   };
   input.onRestart = () => {
     if (state === 'title') return;
+    if (state === 'watching') { stopWatch(); return; }
     sfx.unlock();
     startRun();
   };
@@ -13824,8 +14907,15 @@ function mount(entry) {
   lastRun = null;
   ghost = null;
   tracker = null;
+  spectate = null;
+  watchUser = '';
+  boardGhost = null;
+  boardGhostUser = '';
   hud.setGhostRacing(false);
   hud.setGhostLink(null);
+  hud.setWatching(false);
+  hud.setBoardPick('');
+  hud.setBoard({ status: 'loading', entries: [] });
   resetRun();
   setState('title');
   // The ghosts are storage and codec work, so they land a tick later; the level is playable meanwhile.
@@ -13890,6 +14980,27 @@ hud.onSettings = (s) => {
 };
 hud.onLevelPick((key) => pickLevel(key));
 hud.onGhostModeChange(() => { sfx.unlock(); sfx.play('uiClick'); refreshGhostUi(); });
+hud.onBoard('refresh', () => { sfx.unlock(); sfx.play('uiClick'); refreshBoard(true); });
+hud.onBoard('watch', (user) => { watchBoardRun(user); });
+hud.onBoard('race', (user) => { raceBoardRun(user); });
+hud.onWatchExit(() => { sfx.play('uiClick'); stopWatch(); });
+hud.onPostRun((info) => {
+  sfx.play('uiClick');
+  let opened = null;
+  try {
+    opened = window.open(info.url, '_blank');
+    if (opened) opened.opener = null;
+  } catch (err) {
+    opened = null;
+  }
+  const parts = [];
+  if (info.clipboard) {
+    parts.push(info.copied ? PASTE_NOTE : 'Copy was blocked here — the ghost is below: copy it and paste it into the Ghost box on GitHub.');
+  }
+  parts.push(POSTED_NOTE);
+  if (!opened) parts.push('The new tab was blocked, so open the issue link yourself.');
+  hud.setPostNote(parts.join(' '), !opened || (info.clipboard && !info.copied));
+});
 
 window.addEventListener('pointerdown', () => sfx.unlock(), { passive: true });
 window.addEventListener('keydown', () => sfx.unlock(), { passive: true });
@@ -13954,6 +15065,10 @@ function stepGame(dt) {
 
 // Replay the ghost at this run time and show the gap. Drawing only: nothing here touches the sim.
 function syncGhost(dt) {
+  if (state === 'watching') {
+    if (renderer) renderer.setGhostPose(spectate ? spectate.pose : null, dt);
+    return;
+  }
   const racing = ghost && (state === 'playing' || state === 'paused');
   if (!racing) {
     if (renderer) renderer.setGhostPose(null);
@@ -13973,7 +15088,18 @@ function frame(now) {
   lastFrame = now;
   if (!world || !player) return;
 
-  if (state === 'playing') {
+  if (state === 'watching') {
+    // A spectated run: the world keeps moving, the ghost plays itself, nothing is simulated.
+    simTime += dt;
+    world.step(simTime, dt);
+    if (spectate) {
+      spectate.update(dt);
+      hud.setRunTime(spectate.time);
+      hud.setSpeed(spectate.view.speed);
+      for (const i of spectate.drainSplits()) watchSplit(i);
+      if (spectate.finishedFor > END_HOLD) stopWatch();
+    }
+  } else if (state === 'playing') {
     acc += dt;
     let steps = 0;
     while (acc >= PHYS.dt && steps < MAX_STEPS && state === 'playing') {
@@ -13994,7 +15120,10 @@ function frame(now) {
 
   if (!renderer) return;
   renderer.syncMovers(world);
-  renderer.update(dt, state === 'title' ? flyover.update(dt) : player);
+  const view = state === 'title' ? flyover.update(dt)
+    : state === 'watching' && spectate ? spectate.view
+      : player;
+  renderer.update(dt, view);
   syncGrapple();   // after update(): the camera position is the rope's muzzle end
   syncGhost(dt);   // same reason: the trail and the ghost's rope are sized against this camera
   renderer.render();
@@ -14046,6 +15175,37 @@ window.__vaultline = {
     };
   },
   setGhostMode(mode) { hud.setGhostMode(mode); refreshGhostUi(); },
+  /** The leaderboard, for the tests and the console. */
+  get board() {
+    const id = boardLevelId();
+    const table = id ? boardCache.get(id) : null;
+    return {
+      level: id,
+      entries: table ? table.entries.length : 0,
+      users: table ? table.entries.map((e) => e.user) : [],
+      pick: hud.boardPick,
+      user: hud.boardUser,
+      ghostUser: boardGhostUser,
+      post: postInfo ? { url: postInfo.url, withGhost: postInfo.withGhost, length: postInfo.length } : null,
+    };
+  },
+  /** Spectating, for the tests and the console. */
+  get watching() {
+    if (state !== 'watching' || !spectate) return null;
+    return {
+      user: watchUser,
+      time: spectate.time,
+      ghostTime: spectate.ghost ? spectate.ghost.time : 0,
+      done: spectate.done,
+      pose: spectate.pose.pos.slice(),
+      camera: spectate.view.pos.slice(),
+      yaw: spectate.view.yaw,
+    };
+  },
+  refreshBoard,
+  watchRun: watchBoardRun,
+  raceRun: raceBoardRun,
+  stopWatch,
   get checkpoint() { return lastCp; },
   teleport,
   setState(name) {
