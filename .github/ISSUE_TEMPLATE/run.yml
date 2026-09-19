@@ -1,0 +1,32 @@
+name: Post a run
+description: Put your Vaultline time on the leaderboard. The game fills this in for you.
+title: "[run] "
+labels: ["run"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The game filled this in. Press **Create** at the bottom — a bot checks the run against the real level and adds it to the board within a couple of minutes, then replies here.
+
+        Your GitHub name is what shows on the board.
+  - type: input
+    id: level
+    attributes:
+      label: Level
+      description: Filled in by the game — leave as is.
+    validations:
+      required: true
+  - type: input
+    id: time
+    attributes:
+      label: Time
+      description: Seconds, filled in by the game — leave as is.
+    validations:
+      required: true
+  - type: textarea
+    id: ghost
+    attributes:
+      label: Ghost
+      description: Your recorded run. If this box is empty, click in it and paste — the game copied your ghost to the clipboard.
+    validations:
+      required: true

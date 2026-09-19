@@ -1,0 +1,69 @@
+name: Leaderboard
+
+# A run is posted from the game's finish screen as an issue made with the "Post a run" form (label: run).
+# This checks it against the real level geometry, keeps each player's best, publishes the board as static
+# files under board/, and replies on the issue.
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  contents: write
+  issues: write
+
+# One run at a time, so two posts never race each other on board/*.json.
+concurrency:
+  group: leaderboard
+  cancel-in-progress: false
+
+jobs:
+  record:
+    if: contains(github.event.issue.labels.*.name, 'run') && github.event.issue.state == 'open'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check the run
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_USER: ${{ github.event.issue.user.login }}
+        run: node .github/scripts/record-run.mjs
+
+      - name: Publish the board
+        id: publish
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_USER: ${{ github.event.issue.user.login }}
+        run: |
+          if [ -z "$(git status --porcelain -- board)" ]; then
+            echo "pushed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name "vaultline-board"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add board
+          git commit -m "Board: run #${ISSUE_NUMBER} by ${ISSUE_USER}"
+          for attempt in 1 2 3; do
+            if git pull --rebase origin main && git push origin HEAD:main; then
+              echo "pushed=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "pushed=false" >> "$GITHUB_OUTPUT"
+
+      - name: Reply on the issue
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          BOARD_PUSHED: ${{ steps.publish.outputs.pushed }}
+        run: node .github/scripts/reply.mjs
