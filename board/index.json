@@ -1,5 +1,5 @@
 {
- "updated": "2026-09-19T11:58:28.571Z",
+ "updated": "2026-09-19T12:01:00.554Z",
  "levels": {
   "rjxfo-ypcflq": {
    "name": "SKYHOOK",
@@ -23,6 +23,14 @@
    "leader": {
     "user": "Aruvine",
     "time": 20.017
+   }
+  },
+  "1anfvv3-18jy1kl": {
+   "name": "YELLOW LINE",
+   "runs": 1,
+   "leader": {
+    "user": "Aruvine",
+    "time": 18.883
    }
   }
  }
