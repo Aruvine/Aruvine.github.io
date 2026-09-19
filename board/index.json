@@ -1,5 +1,5 @@
 {
- "updated": "2026-09-19T12:01:00.554Z",
+ "updated": "2026-09-19T12:03:17.981Z",
  "levels": {
   "rjxfo-ypcflq": {
    "name": "SKYHOOK",
@@ -31,6 +31,14 @@
    "leader": {
     "user": "Aruvine",
     "time": 18.883
+   }
+  },
+  "1v4to37-1qwl3zs": {
+   "name": "PROVING GROUND",
+   "runs": 1,
+   "leader": {
+    "user": "Aruvine",
+    "time": 25.508
    }
   }
  }
