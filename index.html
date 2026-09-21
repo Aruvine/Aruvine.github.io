@@ -661,7 +661,14 @@
     color: var(--signal);
   }
   .home-settings .btn[aria-expanded="true"]::after { content: "\2212"; }
-  .home-settings .settings-slot { width: 100%; }
+  /* The home view opens Settings in place, so the panel has to fit around the buttons above it: past
+     this height it scrolls inside itself rather than pushing PLAY off the top of the screen. */
+  .home-settings .settings-slot {
+    width: 100%;
+    max-height: min(58vh, 460px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
   .home-settings .settings { width: 100%; }
 
   /* the two list views: Tutorials and Levels */
@@ -969,6 +976,11 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
   }
+  /* four choices (the frame cap) need four columns, and a tighter cap on narrow panels */
+  .segmented-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .segmented-4 .seg span { padding: 7px 4px 6px; }
+  /* a checkbox that sits under another control inside the same field */
+  .check-field { margin-top: 11px; }
   .seg { position: relative; display: block; }
   .seg input {
     position: absolute;
@@ -1444,7 +1456,20 @@
                       <label class="seg"><input id="quality-pc" type="radio" name="quality" value="pc" checked><span>PC</span></label>
                       <label class="seg"><input id="quality-laptop" type="radio" name="quality" value="laptop"><span>Laptop</span></label>
                     </div>
-                    <p id="quality-help" class="field-help">Full detail: sharp resolution, soft shadows, speed lines</p>
+                    <p id="quality-help" class="field-help">Golden hour: sun, shadows, glowing towers, bloom</p>
+                  </div>
+                  <div class="field">
+                    <div class="field-row">
+                      <span id="cap-label" class="field-label">Frame cap</span>
+                    </div>
+                    <div class="segmented segmented-4" role="radiogroup" aria-labelledby="cap-label" aria-describedby="cap-help">
+                      <label class="seg"><input id="cap-30" type="radio" name="framecap" value="30"><span>30</span></label>
+                      <label class="seg"><input id="cap-60" type="radio" name="framecap" value="60" checked><span>60</span></label>
+                      <label class="seg"><input id="cap-120" type="radio" name="framecap" value="120"><span>120</span></label>
+                      <label class="seg"><input id="cap-off" type="radio" name="framecap" value="0"><span>Off</span></label>
+                    </div>
+                    <label class="check check-field" for="adaptive-res"><input id="adaptive-res" type="checkbox" checked><span>Adaptive resolution</span></label>
+                    <p id="cap-help" class="field-help">Draws at most 60 frames a second, and trades a little sharpness rather than frame time when a view turns out to be expensive.</p>
                   </div>
                   <div class="field">
                     <label class="check" for="show-fps"><input id="show-fps" type="checkbox"><span>Show FPS</span></label>
@@ -5345,15 +5370,27 @@ const PALETTE = {
   moverEdge: '#F2B705',
   glass: '#9FD8E8',
   glassFrame: '#E3F5FA',
-  decoDark: '#7C8994',
-  decoLight: '#A7B2BB',
+  decoDark: '#828E99',
+  decoLight: '#B6BEC5',
   decoLine: '#6C7984',
-  skyHorizon: '#C9D6DE',
-  skyZenith: '#5F7F98',
-  skyWarm: '#E6D2BF',
-  sun: '#FFE2B8',
-  hemiSky: '#BFD3E3',
-  hemiGround: '#8E99A3',
+  // --- golden hour ---------------------------------------------------------
+  // The sky is built from three colours and a phase function rather than a gradient: `skyZenith` is the
+  // Rayleigh end of the sky, `skyHorizon` the thick-atmosphere end, `skyGlow` the Mie glow round the sun.
+  skyHorizon: '#FBD3A2',
+  skyHorizonCool: '#C9C2D2',
+  skyZenith: '#3C6BA8',
+  skyGlow: '#FFA45C',
+  skyWarm: '#FFC58A',
+  sun: '#FFD199',
+  sunDisc: '#FFE8C4',
+  // Aerial perspective: the haze a distant surface is seen through is the sky in that direction.
+  hazeAway: '#A3B6C9',
+  hazeSun: '#E6BC92',
+  hazeHigh: '#7E9CBD',
+  // Warm key, cool fill: a low sun plus a blue sky above and a warm bounce off the rooftops.
+  hemiSky: '#AECBE8',
+  hemiGround: '#B4A28C',
+  window: '#FFC078',
   beam: '#7FE3FF',
   beamReached: '#F2B705',
   ink: '#0F1B26',
@@ -5361,7 +5398,6 @@ const PALETTE = {
   signal: '#F2B705',
   pylon: '#2A3B4C',
 };
-
 // ---------------------------------------------------------------------------
 // Shared GLSL (injected into MeshStandardMaterial / MeshBasicMaterial programs)
 // ---------------------------------------------------------------------------
@@ -5384,6 +5420,49 @@ vlFace = aFace;
 vlExtra = aExtra;
 `;
 
+// Aerial perspective. The haze a distant surface is seen through is the sky along that ray, so it turns
+// gold towards a low sun and stays cool blue away from it and overhead. The sun-ward factor is split out
+// on its own because the laptop path interpolates THAT (one float) from its vertex shader rather than
+// running a normalize() on every pixel of every surface.
+const HAZE_K_GLSL = /* glsl */ `
+uniform vec3 uSunDir;
+float vlHazeK( vec3 viewDir ) {
+  float sd = max( dot( viewDir, uSunDir ), 0.0 );
+  float s2 = sd * sd;
+  return s2 * s2 * 0.78;
+}
+`;
+
+const HAZE_COLORS_GLSL = /* glsl */ `
+uniform vec3 uHazeAway;
+uniform vec3 uHazeSun;
+`;
+
+const HAZE_GLSL = HAZE_K_GLSL + HAZE_COLORS_GLSL + /* glsl */ `
+uniform vec3 uHazeHigh;
+vec3 vlHaze( vec3 viewDir ) {
+  vec3 col = mix( uHazeAway, uHazeSun, vlHazeK( viewDir ) );
+  return mix( col, uHazeHigh, clamp( viewDir.y * 1.7, 0.0, 1.0 ) );
+}
+`;
+
+// Cheap ambient occlusion. Every level box is an axis-aligned box, so the only thing that can occlude a
+// point on one of its flat faces is whatever meets that face at its border: the distance to the nearest
+// border IS the occlusion term, with no samples and no texture. The second term is the contact shadow
+// where a wall meets the deck, which is the one a runner actually reads as "that is solid".
+const AO_GLSL = /* glsl */ `
+float vlBoxAO( vec4 face ) {
+  vec2 d = min( face.xy, face.zw - face.xy );
+  float e = 1.0 - clamp( min( d.x, d.y ) * 2.1, 0.0, 1.0 );
+  return e * e;
+}
+float vlBoxAOLit( vec4 face, vec3 n ) {
+  float wall = 1.0 - abs( n.y );
+  float foot = wall * ( 1.0 - clamp( face.y * 1.35, 0.0, 1.0 ) );
+  return 1.0 - 0.17 * vlBoxAO( face ) - 0.28 * foot * foot;
+}
+`;
+
 const FRAG_PARS = /* glsl */ `
 uniform float uTime;
 uniform float uVoidTop;
@@ -5395,11 +5474,16 @@ uniform float uShadowExtent;
 uniform vec3 uColA;
 uniform vec3 uColB;
 uniform vec3 uColC;
+uniform sampler2D uWinTex;
+uniform vec2 uWinScale;
+uniform vec3 uWinWarm;
+uniform float uWinGlint;
 varying vec3 vlWorldPos;
 varying vec3 vlWorldNormal;
 varying vec3 vlLocalPos;
 varying vec4 vlFace;
 varying vec3 vlExtra;
+` + HAZE_GLSL + AO_GLSL + `
 
 // Anti-aliased line of given half width (meters) repeating every 'spacing' meters.
 // Lines narrower than a pixel are widened but dimmed, and fade out entirely before they moire.
@@ -5452,7 +5536,11 @@ float getShadow( sampler2D shadowMap, vec2 shadowMapSize, float shadowIntensity,
 #endif
 `;
 
-const FOG_FRAGMENT = /* glsl */ `
+// Fog, void fade and aerial perspective in one blend. `haze` is the expression that yields the haze
+// colour: the PBR path evaluates vlHaze() per pixel, the laptop path hands in a colour its vertex shader
+// worked out, because a normalize() per pixel is exactly the kind of thing that path exists to avoid.
+function fogFragment(haze) {
+  return /* glsl */ `
 #ifdef USE_FOG
   #ifdef FOG_EXP2
     float vlFogF = 1.0 - exp( - fogDensity * fogDensity * vFogDepth * vFogDepth );
@@ -5461,9 +5549,12 @@ const FOG_FRAGMENT = /* glsl */ `
   #endif
   float vlVoid = 1.0 - smoothstep( uVoidBottom, uVoidTop, vlWorldPos.y );
   vlFogF = max( vlFogF, vlVoid );
-  gl_FragColor.rgb = mix( gl_FragColor.rgb, fogColor, vlFogF );
+  gl_FragColor.rgb = mix( gl_FragColor.rgb, ` + haze + `, vlFogF );
 #endif
 `;
+}
+
+const FOG_FRAGMENT = fogFragment('vlHaze( normalize( vlWorldPos - cameraPosition ) )');
 
 // Per-mode surface pattern code. Runs right after <color_fragment>; may modify diffuseColor and vlEmissive.
 const MODE_COLOR = {
@@ -5476,7 +5567,7 @@ const MODE_COLOR = {
     col = mix( col, uColA, minor );
     col = mix( col, uColA * 0.86, major );
     col = mix( col, uColB, edge * 0.85 );
-    diffuseColor.rgb = col;
+    diffuseColor.rgb = col * vlBoxAOLit( vlFace, vlWorldNormal );
   `,
   CHEVRON: /* glsl */ `
     // vlExtra.xy = run direction (unit, XZ). vlExtra.z = 1 on climb walls: chevrons point up instead.
@@ -5498,7 +5589,7 @@ const MODE_COLOR = {
     float chev = stripe * band * sideFace;
     float edge = vlEdge( vlFace, 0.05 );
     float mask = max( chev, edge * 0.9 );
-    diffuseColor.rgb = mix( diffuseColor.rgb, uColA, mask );
+    diffuseColor.rgb = mix( diffuseColor.rgb, uColA, mask ) * vlBoxAOLit( vlFace, vlWorldNormal );
     vlEmissive = uColC * 0.07 * ( 1.0 - mask );
   `,
   RINGS: /* glsl */ `
@@ -5525,7 +5616,7 @@ const MODE_COLOR = {
     float edge = vlEdge( vlFace, 0.085 );
     vec3 col = mix( diffuseColor.rgb, uColB, minor * 0.7 );
     col = mix( col, uColA, edge );
-    diffuseColor.rgb = col;
+    diffuseColor.rgb = col * ( 1.0 - 0.14 * vlBoxAO( vlFace ) );
     vlEmissive = uColA * edge * 0.22;
   `,
   GLASS: /* glsl */ `
@@ -5534,15 +5625,22 @@ const MODE_COLOR = {
     vlGlassEdge = edge;
   `,
   DECO: /* glsl */ `
+    // City massing: the same box shader the course uses, plus a window grid read from one small tiling
+    // texture (R = pane mask, G = which panes are already lit from inside). Two texture fetches were four
+    // fwidth+smoothstep chains before, so the towers gained windows and got cheaper doing it.
     float vert = 1.0 - step( 0.5, abs( vlWorldNormal.y ) );
     vec2 gp = vlPlanar( vlWorldPos, vlWorldNormal );
-    float floors = vlLine( vlWorldPos.y, 3.6, 0.22 ) * vert;
-    float mull = vlLine( gp.x, 6.0, 0.18 ) * vert;
+    vec3 win = texture2D( uWinTex, gp * uWinScale ).rgb;
+    float pane = win.r * vert;
     vec3 col = diffuseColor.rgb;
-    col = mix( col, uColA, floors * 0.35 + mull * 0.18 );
+    col = mix( col, uColB, pane * 0.40 );            // glass sits darker than its concrete frame
+    col *= 1.0 - 0.16 * vlBoxAO( vlFace );
     diffuseColor.rgb = col;
-    // neutral grey fill lifts the shade sides so city massing stays a cool grey (never mover-blue)
-    vlEmissive = uColC * mix( 0.2, 0.08, max( dot( vlWorldNormal, vec3( 0.0, 1.0, 0.0 ) ), 0.0 ) );
+    // A low sun rakes across the glass: a warm sheet of glints on the faces that can see it, plus the
+    // handful of panes lit from inside. uColC is the neutral fill that keeps the shade sides cool grey.
+    float faceSun = max( dot( vlWorldNormal, uSunDir ), 0.0 );
+    float glint = pane * ( faceSun * faceSun * faceSun * uWinGlint + step( 0.86, win.g ) * ( 0.05 + win.b * 0.10 ) );
+    vlEmissive = uColC * mix( 0.20, 0.08, max( vlWorldNormal.y, 0.0 ) ) + uWinWarm * glint;
   `,
 };
 
@@ -5554,6 +5652,14 @@ function patchShader(shader, mode, shared, colors) {
   shader.uniforms.uShadowAxisX = shared.uShadowAxisX;
   shader.uniforms.uShadowAxisY = shared.uShadowAxisY;
   shader.uniforms.uShadowExtent = shared.uShadowExtent;
+  shader.uniforms.uSunDir = shared.uSunDir;
+  shader.uniforms.uHazeAway = shared.uHazeAway;
+  shader.uniforms.uHazeSun = shared.uHazeSun;
+  shader.uniforms.uHazeHigh = shared.uHazeHigh;
+  shader.uniforms.uWinTex = shared.uWinTex;
+  shader.uniforms.uWinScale = shared.uWinScale;
+  shader.uniforms.uWinWarm = shared.uWinWarm;
+  shader.uniforms.uWinGlint = shared.uWinGlint;
   shader.uniforms.uColA = { value: colors.a };
   shader.uniforms.uColB = { value: colors.b };
   shader.uniforms.uColC = { value: colors.c };
@@ -5600,7 +5706,19 @@ function applyPatch(material, mode, shared, colors) {
 
 // Shared uniforms object; values updated by the Renderer each frame.
 // shadow = { center, axisX, axisY } (THREE.Vector3, referenced live) and extent (half-size of the shadow frustum, m).
-function createSharedUniforms(voidTop, voidBottom, shadow) {
+function createSharedUniforms(voidTop, voidBottom, shadow, sky) {
+  // Numeric fallbacks so a caller that forgets the sky block still gets a shader that compiles and draws
+  // something sane rather than uploading undefined. Both real callers pass the block.
+  const s = Object.assign({
+    sunDir: [0.62, 0.23, 0.75],
+    hazeAway: [0.38, 0.49, 0.60],
+    hazeSun: [0.79, 0.50, 0.29],
+    hazeHigh: [0.21, 0.32, 0.50],
+    windowTexture: null,
+    windowScale: [1 / 14.4, 1 / 28.8],
+    windowWarm: [1.0, 0.52, 0.19],
+    windowGlint: 1,
+  }, sky || {});
   return {
     uTime: { value: 0 },
     uVoidTop: { value: voidTop },
@@ -5609,6 +5727,16 @@ function createSharedUniforms(voidTop, voidBottom, shadow) {
     uShadowAxisX: { value: shadow.axisX },
     uShadowAxisY: { value: shadow.axisY },
     uShadowExtent: { value: shadow.extent },
+    // Golden hour. `sunDir` points TOWARDS the sun; the three haze colours are the sky the aerial
+    // perspective is sampled from, and the window uniforms drive the city's glass.
+    uSunDir: { value: s.sunDir },
+    uHazeAway: { value: s.hazeAway },
+    uHazeSun: { value: s.hazeSun },
+    uHazeHigh: { value: s.hazeHigh },
+    uWinTex: { value: s.windowTexture || null },
+    uWinScale: { value: s.windowScale },
+    uWinWarm: { value: s.windowWarm },
+    uWinGlint: { value: s.windowGlint },
   };
 }
 
@@ -5671,52 +5799,146 @@ function patchBasicFog(material, shared, keySuffix) {
 // Sky dome
 // ---------------------------------------------------------------------------
 
-function createSkyMaterial(THREE, sunDir) {
+// The golden-hour sky is analytic rather than a gradient: single-scattering along the view ray with a
+// Rayleigh phase for the blue and a Henyey-Greenstein phase for the Mie glow around a low sun, plus the
+// sun's own disc with limb darkening. It costs one inversesqrt, one sqrt and no pow() at all — the old
+// dome ran three pow() calls — and, unlike the old one, it is drawn LAST of the opaque objects with the
+// depth test on, so the pixels the city already covers are never shaded at all.
+function createSkyMaterial(THREE, sunDir, cheap) {
+  const MIE_G = 0.76;
   return new THREE.ShaderMaterial({
-    name: 'VaultlineSky',
+    name: cheap ? 'VaultlineSkyCheap' : 'VaultlineSky',
+    defines: cheap ? { VL_SKY_CHEAP: '' } : {},
     uniforms: {
       uHorizon: { value: new THREE.Color(PALETTE.skyHorizon) },
+      uHorizonCool: { value: new THREE.Color(PALETTE.skyHorizonCool) },
       uZenith: { value: new THREE.Color(PALETTE.skyZenith) },
+      uGlow: { value: new THREE.Color(PALETTE.skyGlow) },
       uWarm: { value: new THREE.Color(PALETTE.skyWarm) },
-      uSun: { value: new THREE.Color(PALETTE.sun) },
+      uSun: { value: new THREE.Color(PALETTE.sunDisc) },
+      uGround: { value: new THREE.Color(PALETTE.hazeAway) },
       uSunDir: { value: sunDir.clone().normalize() },
+      uMieG: { value: MIE_G },
+      uCosSun: { value: Math.cos(0.021) },      // a 1.2 degree disc: the real one is a pixel wide
     },
     vertexShader: /* glsl */ `
       varying vec3 vDir;
       void main() {
         vDir = position;
-        vec4 mv = modelViewMatrix * vec4( position, 1.0 );
-        gl_Position = projectionMatrix * mv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
       }
     `,
     fragmentShader: /* glsl */ `
       uniform vec3 uHorizon;
+      uniform vec3 uHorizonCool;
       uniform vec3 uZenith;
+      uniform vec3 uGlow;
       uniform vec3 uWarm;
       uniform vec3 uSun;
+      uniform vec3 uGround;
       uniform vec3 uSunDir;
+      uniform float uMieG;
+      uniform float uCosSun;
       varying vec3 vDir;
       void main() {
         vec3 d = normalize( vDir );
         float h = d.y;
-        float g = pow( clamp( h, 0.0, 1.0 ), 0.5 );
-        vec3 col = mix( uHorizon, uZenith, smoothstep( 0.0, 1.0, g ) );
-        float sd = max( dot( d, uSunDir ), 0.0 );
-        float nearHorizon = 1.0 - smoothstep( 0.0, 0.45, abs( h ) );
-        col = mix( col, uWarm, pow( sd, 4.0 ) * nearHorizon * 0.45 );
-        float above = smoothstep( -0.01, 0.01, h );
-        col += uSun * ( pow( sd, 28.0 ) * 0.22 + pow( sd, 1400.0 ) * 1.6 ) * above;
-        col = mix( uHorizon, col, smoothstep( -0.09, 0.0, h ) );
+        float cosT = dot( d, uSunDir );
+
+        // Air mass along this ray: 1 straight up, ~8 at the horizon, clamped so it stays finite below it.
+        float depth = clamp( 0.24 / ( max( h, 0.0 ) + 0.12 ), 0.0, 1.0 );
+
+
+        #ifdef VL_SKY_CHEAP
+          // Laptop inherits the same colours through a gradient: no phase functions, no disc maths, and
+          // the horizon is the warm one everywhere rather than turning with the sun - the cool side of
+          // the sky is behind 260 m of this preset's fog anyway.
+          float s2 = cosT * cosT;
+          vec3 col = mix( uZenith, uHorizon, depth );
+          col = mix( col, uWarm, max( cosT, 0.0 ) * s2 * depth * 0.5 );
+          float glow = max( cosT, 0.0 );
+          glow = glow * glow;
+          col += uGlow * glow * glow * depth * 0.22;
+          col += uSun * smoothstep( uCosSun - 0.004, uCosSun, cosT ) * 2.6;
+        #else
+          // Rayleigh phase: 3/4 (1 + cos^2). It is what keeps the sky opposite the sun cool and deep.
+          float ray = 0.75 * ( 1.0 + cosT * cosT );
+          // Henyey-Greenstein, written so the 3/2 power is one sqrt instead of a pow().
+          float g2 = uMieG * uMieG;
+          float den = max( 1.0 + g2 - 2.0 * uMieG * cosT, 1e-4 );
+          float mie = ( 1.0 - g2 ) / ( den * sqrt( den ) );
+
+          // The horizon is not one colour: gold where the sun is going down, cool dusty mauve round the
+          // back. One mix, and the city stops looking lit from everywhere at once.
+          vec3 horizon = mix( uHorizonCool, uHorizon, smoothstep( -0.25, 0.72, cosT ) );
+          vec3 col = mix( uZenith, horizon, depth );
+          col *= 0.74 + 0.26 * ray;
+          col = mix( col, uWarm, clamp( mie * 0.03, 0.0, 0.40 ) * depth );
+          col += uGlow * clamp( mie * 0.010, 0.0, 0.7 ) * depth;
+
+          // The disc, with limb darkening: I(r) = 1 - u(1 - sqrt(1 - r^2)) at the classic u = 0.6.
+          float disc = smoothstep( uCosSun - 0.0009, uCosSun + 0.0002, cosT );
+          float r = clamp( ( 1.0 - cosT ) / max( 1.0 - uCosSun, 1e-5 ), 0.0, 1.0 );
+          float limb = 0.4 + 0.6 * sqrt( max( 1.0 - r * r, 0.0 ) );
+          col += uSun * disc * limb * 5.0;
+        #endif
+
+        // Below the horizon there is only haze: the city's own fog colour, so the two never disagree.
+        col = mix( uGround, col, smoothstep( -0.06, 0.015, h ) );
         gl_FragColor = vec4( col, 1.0 );
         #include <colorspace_fragment>
       }
     `,
     side: THREE.BackSide,
     depthWrite: false,
-    depthTest: false,
+    depthTest: true,
     fog: false,
     toneMapped: false,
   });
+}
+
+// One small tiling texture for every window in the city: R = pane mask, G = a per-pane random value
+// (which panes are lit from inside), B = a second one (how brightly). PANES x FLOORS windows per tile at
+// WIN_W x WIN_H metres, so the shader's only work is world position * a scale.
+const WINDOW_TILE = { panes: 8, floors: 8, width: 14.4, height: 28.8 };
+
+function createWindowTexture(THREE) {
+  const N = 128;                       // 16 texels per window: enough for a crisp mullion, 64 KB of VRAM
+  const cell = N / WINDOW_TILE.panes;
+  const canvas = document.createElement('canvas');
+  canvas.width = N;
+  canvas.height = N;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(0, 0, N, N);
+  // Deterministic: the same city every load, same as the skyline's own PRNG.
+  let seed = 0x9E3779B9;
+  const rand = () => {
+    seed = (Math.imul(seed ^ (seed >>> 15), seed | 1) + 0x6D2B79F5) >>> 0;
+    return ((seed ^ (seed >>> 14)) >>> 0) / 4294967296;
+  };
+  const inset = Math.max(1, Math.round(cell * 0.17));
+  for (let fy = 0; fy < WINDOW_TILE.floors; fy++) {
+    for (let px = 0; px < WINDOW_TILE.panes; px++) {
+      const g = Math.round(rand() * 255);
+      const b = Math.round(rand() * 255);
+      ctx.fillStyle = 'rgb(255,' + g + ',' + b + ')';
+      ctx.fillRect(px * cell + inset, fy * cell + inset, cell - inset * 2, cell - inset * 2.4);
+    }
+  }
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.name = 'VaultlineWindowTile';
+  tex.colorSpace = THREE.NoColorSpace;    // three masks, not a colour
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.magFilter = THREE.LinearFilter;
+  // Bilinear on ONE mip, not trilinear across two: half the taps, and a window tile has no detail that
+  // survives a mip transition anyway.
+  tex.minFilter = THREE.LinearMipmapNearestFilter;
+  tex.generateMipmaps = true;
+  tex.anisotropy = 1;
+  tex.needsUpdate = true;
+  return tex;
 }
 
 // ---------------------------------------------------------------------------
@@ -5845,7 +6067,7 @@ function createSpeedLinesMaterial(THREE) {
     toneMapped: false,
   });
 }
-return Object.freeze({ PALETTE, VERT_PARS, VERT_MAIN, FRAG_PARS, FOG_FRAGMENT, MODE_COLOR, createSharedUniforms, createSurfaceMaterials, patchBasicFog, createSkyMaterial, createBeamMaterial, createSpeedLinesMaterial });
+return Object.freeze({ PALETTE, VERT_PARS, VERT_MAIN, HAZE_K_GLSL, HAZE_COLORS_GLSL, HAZE_GLSL, AO_GLSL, FRAG_PARS, fogFragment, FOG_FRAGMENT, MODE_COLOR, createSharedUniforms, createSurfaceMaterials, patchBasicFog, createSkyMaterial, WINDOW_TILE, createWindowTexture, createBeamMaterial, createSpeedLinesMaterial });
 })();
 
 // ---- js/render-build.js ----
@@ -6098,8 +6320,10 @@ function buildStaticMeshes(THREE, level, materials, path) {
   const group = new THREE.Group();
   group.name = 'static-level';
   const meshes = {};
+  // [castShadow, receiveShadow]. The city blocks cast (their shadows fall across the course) but do not
+  // receive: they are drawn with the unlit city material, which has no shadow term to spend pixels on.
   const shadowSettings = {
-    concrete: [true, true], bounce: [true, true], glass: [false, true], deco: [true, true],
+    concrete: [true, true], bounce: [true, true], glass: [false, true], deco: [true, false],
   };
   for (const key of Object.keys(groups)) {
     if (groups[key].length === 0) continue;
@@ -6135,7 +6359,19 @@ function buildMoverMeshes(THREE, level, material) {
   return { group, byId };
 }
 
-// Distant city massing in cool greys, sunk into the fog void below the course.
+// The distant city, in two meshes. Each tower is a STACK of boxes rather than one slab: a shaft, an
+// optional setback and an optional crown make the MASSING, and one to three pieces of rooftop clutter
+// (plant room, tank, mast) make the DETAIL. They are two meshes and not one because they want different
+// view distances: on a game that is pixel-bound, a plant room is pure overdraw sitting on top of a roof,
+// and a preset that cannot afford it should be able to drop every one of them without losing a silhouette.
+//
+// Within each mesh everything is merged, so the whole city is two draw calls and one material. On this
+// geometry an InstancedMesh per silhouette would have bought four draw calls' worth of nothing and cost
+// the ability to cull by distance with a draw range, which is where the real saving is.
+//
+// Nearest tower first, with each tower's index count recorded, so a preset drops the far ones by
+// shortening the draw range (see Renderer.setQuality). The city never casts shadows: at this distance a
+// shadow map has nothing to catch it on, and it would double the depth pass for free.
 function buildSkyline(THREE, bounds, material, seed) {
   const rand = mulberry32(seed || 0x5A17);
   const inner = 90;
@@ -6147,10 +6383,15 @@ function buildSkyline(THREE, bounds, material, seed) {
   const dark = new THREE.Color(PALETTE.decoDark);
   const light = new THREE.Color(PALETTE.decoLight);
   const tmp = new THREE.Color();
-  const entries = [];
+  const towers = [];
+
+  const shade = (k) => {
+    tmp.lerpColors(dark, light, Math.min(1, Math.max(0, k)));
+    return [tmp.r, tmp.g, tmp.b];
+  };
 
   let tries = 0;
-  while (entries.length < 300 && tries < 8000) {
+  while (towers.length < 240 && tries < 9000) {
     tries++;
     const w = 14 + rand() * 34;
     const d = 14 + rand() * 34;
@@ -6159,41 +6400,89 @@ function buildSkyline(THREE, bounds, material, seed) {
     const gapX = Math.max(bounds.min[0] - inner - (x + w / 2), (x - w / 2) - (bounds.max[0] + inner), 0);
     const gapZ = Math.max(bounds.min[2] - inner - (z + d / 2), (z - d / 2) - (bounds.max[2] + inner), 0);
     if (gapX === 0 && gapZ === 0) continue;
-    const far = Math.min(Math.hypot(gapX, gapZ) / 450, 1);
-    const top = midY - 34 + Math.pow(rand(), 1.6) * (62 + far * 70);
-    tmp.lerpColors(dark, light, Math.min(1, rand() * 0.65 + far * 0.35));
-    const color = [tmp.r, tmp.g, tmp.b];
-    entries.push({ min: [x - w / 2, baseY, z - d / 2], max: [x + w / 2, top, z + d / 2], color, skipBottom: true });
-    if (rand() < 0.32) {
-      const sw = w * (0.45 + rand() * 0.25);
-      const sd = d * (0.45 + rand() * 0.25);
-      const sh = 5 + rand() * 18;
-      tmp.lerpColors(dark, light, Math.min(1, rand() * 0.5 + far * 0.4));
-      entries.push({
-        min: [x - sw / 2, top, z - sd / 2], max: [x + sw / 2, top + sh, z + sd / 2],
-        color: [tmp.r, tmp.g, tmp.b], skipBottom: true,
+    const gap = Math.hypot(gapX, gapZ);
+    const far = Math.min(gap / 450, 1);
+    const tone = Math.min(1, rand() * 0.6 + far * 0.4);
+
+    const massing = [];
+    const detail = [];
+    // The shaft. Its height still grows with distance, so the far ring reads as the deep city.
+    let top = midY - 34 + Math.pow(rand(), 1.6) * (62 + far * 70);
+    let hw = w / 2, hd = d / 2;
+    massing.push({ min: [x - hw, baseY, z - hd], max: [x + hw, top, z + hd], color: shade(tone), skipBottom: true });
+
+    // Silhouette. Below 0.42 the tower is a plain slab; above it the shaft steps back once, and above
+    // 0.76 again into a crown. Every step is narrower and the colour lifts, which is what reads as depth.
+    const style = rand();
+    if (style > 0.42) {
+      const k = 0.62 + rand() * 0.2;
+      hw *= k; hd *= k;
+      const rise = 8 + rand() * 24;
+      massing.push({ min: [x - hw, top, z - hd], max: [x + hw, top + rise, z + hd], color: shade(tone + 0.1), skipBottom: true });
+      top += rise;
+    }
+    if (style > 0.76) {
+      const k = 0.55 + rand() * 0.2;
+      hw *= k; hd *= k;
+      const rise = 6 + rand() * 16;
+      massing.push({ min: [x - hw, top, z - hd], max: [x + hw, top + rise, z + hd], color: shade(tone + 0.18), skipBottom: true });
+      top += rise;
+    }
+
+    // Rooftop clutter: plant rooms, tanks, and a mast on some of the near ones. Past about 320 m a plant
+    // room is a texel, so the deep city gets clean crowns instead and never pays for them.
+    const clutterTone = Math.max(0, tone - 0.18);
+    const pieces = gap < 320 ? 1 + Math.floor(rand() * 2) : 0;
+    for (let i = 0; i < pieces; i++) {
+      const cw = hw * (0.16 + rand() * 0.34);
+      const cd = hd * (0.16 + rand() * 0.34);
+      const ch = 1.6 + rand() * 5.5;
+      const ox = (rand() - 0.5) * (hw - cw) * 1.7;
+      const oz = (rand() - 0.5) * (hd - cd) * 1.7;
+      detail.push({
+        min: [x + ox - cw, top, z + oz - cd], max: [x + ox + cw, top + ch, z + oz + cd],
+        color: shade(clutterTone), skipBottom: true,
       });
     }
+    if (gap < 220 && rand() < 0.35) {
+      const mh = 6 + rand() * 16;
+      detail.push({
+        min: [x - 0.5, top, z - 0.5], max: [x + 0.5, top + mh, z + 0.5],
+        color: shade(clutterTone), skipBottom: true,
+      });
+    }
+
+    towers.push({ dist: gap, massing, detail });
   }
 
-  // Nearest buildings first so a quality preset can hide distant ones with geometry.setDrawRange (every
-  // skyline entry has 5 faces = 30 indices). Same set of opaque boxes either way, so PC looks identical.
-  const distOf = (e) => Math.hypot(
-    Math.max(bounds.min[0] - e.max[0], e.min[0] - bounds.max[0], 0),
-    Math.max(bounds.min[2] - e.max[2], e.min[2] - bounds.max[2], 0)
-  );
-  for (const e of entries) e.dist = distOf(e);
-  entries.sort((a, b) => a.dist - b.dist);
+  towers.sort((a, b) => a.dist - b.dist);
 
-  const mesh = new THREE.Mesh(buildBoxGeometry(THREE, entries), material);
-  mesh.userData.skylineDists = Float32Array.from(entries, (e) => e.dist);
-  mesh.userData.indicesPerEntry = 30;
-  mesh.name = 'skyline';
-  mesh.castShadow = false;
-  mesh.receiveShadow = false;
-  mesh.matrixAutoUpdate = false;
-  mesh.updateMatrix();
-  return mesh;
+  // One mesh per part, each with its own nearest-first ordering and its own running index total.
+  const build = (key, name) => {
+    const entries = [];
+    const dists = [];
+    const ends = [];
+    let indices = 0;
+    for (const tower of towers) {
+      const boxes = tower[key];
+      if (boxes.length === 0) continue;
+      for (const b of boxes) entries.push(b);
+      indices += boxes.length * 30;     // 5 faces x 6 indices (skipBottom everywhere)
+      dists.push(tower.dist);
+      ends.push(indices);
+    }
+    const mesh = new THREE.Mesh(buildBoxGeometry(THREE, entries), material);
+    mesh.userData.skylineDists = Float32Array.from(dists);
+    mesh.userData.skylineEnds = Uint32Array.from(ends);
+    mesh.name = name;
+    mesh.castShadow = false;
+    mesh.receiveShadow = false;
+    mesh.matrixAutoUpdate = false;
+    mesh.updateMatrix();
+    return mesh;
+  };
+
+  return { massing: build('massing', 'skyline'), detail: build('detail', 'skyline-detail') };
 }
 
 // ---------------------------------------------------------------------------
@@ -6820,7 +7109,7 @@ return Object.freeze({ createGhostRunner });
 
 // ---- js/render-cheap.js ----
 const __vl$m18_js_render_cheap = (function () {
-const { PALETTE, FOG_FRAGMENT, MODE_COLOR } = __vl$m14_js_render_materials;
+const { PALETTE, fogFragment, MODE_COLOR, HAZE_K_GLSL, HAZE_COLORS_GLSL, AO_GLSL } = __vl$m14_js_render_materials;
 // Vaultline laptop shading path: the same surfaces drawn with an unlit material whose lighting is baked
 // per vertex instead of MeshStandardMaterial's per-pixel PBR. Every level face is a flat axis-aligned quad,
 // so the sun + hemisphere term is constant across a face and a per-vertex evaluation is exact for the
@@ -6839,16 +7128,25 @@ uniform vec3 uSunTo;
 uniform vec3 uHemiSky;
 uniform vec3 uHemiGround;
 varying vec3 vlShade;
-`;
+varying float vlHazeT;
+` + HAZE_K_GLSL;
 
+// Aerial perspective is worked out HERE rather than per pixel, and travels as ONE float. It is a smooth
+// function of the view direction, and haze only reads at range, where a whole face subtends a couple of
+// degrees, so interpolating the sun-ward factor is a better trade than a normalize() on every pixel of
+// every surface. The upward cooling of the PBR path is dropped: this preset can only see 260 m.
 const CHEAP_VERT_MAIN = /* glsl */ `
 vlShade = ( uSunRadiance * max( dot( vlNormalW, uSunTo ), 0.0 )
   + mix( uHemiGround, uHemiSky, 0.5 * vlNormalW.y + 0.5 ) ) * RECIPROCAL_PI;
+vec3 vlToCam = vlPosW - cameraPosition;
+float vlCamDist = max( length( vlToCam ), 1e-4 );
+vlHazeT = vlHazeK( vlToCam / vlCamDist );
 `;
 
 const CHEAP_FRAG_PARS = /* glsl */ `
 varying vec3 vlShade;
-`;
+varying float vlHazeT;
+` + HAZE_COLORS_GLSL;
 
 // Which of the shared varyings each laptop mode actually reads in the FRAGMENT shader. Every interpolator
 // costs per-pixel work on a software / integrated rasteriser, so the ones a mode never touches are not
@@ -6859,20 +7157,21 @@ const FRAG_NEEDS = {
   RINGS: { normal: true, face: true, extra: true, local: false },
   MOVER: { normal: false, face: true, extra: false, local: false },
   GLASS: { normal: false, face: true, extra: false, local: false },
-  DECO: { normal: true, face: false, extra: false, local: false },
+  DECO: { normal: false, face: false, extra: false, local: false },
+  DECOFLAT: { normal: false, face: false, extra: false, local: false },
 };
 
 // The shared FRAG_PARS/VERT_PARS declare every varying; these build only the ones `need` asks for.
-function vertPars(need, grid) {
+function vertPars(need, grid, win) {
   return 'attribute vec4 aFace;\nattribute vec3 aExtra;\nvarying vec3 vlWorldPos;\n' +
     (need.normal ? 'varying vec3 vlWorldNormal;\n' : '') +
     (need.local ? 'varying vec3 vlLocalPos;\n' : '') +
     (need.face ? 'varying vec4 vlFace;\n' : '') +
     (need.extra ? 'varying vec3 vlExtra;\n' : '') +
-    CHEAP_VERT_PARS + (grid ? GRID_VERT_PARS : '');
+    CHEAP_VERT_PARS + (grid ? GRID_VERT_PARS : '') + (win ? WIN_VERT_PARS : '');
 }
 
-function vertMain(need, grid, mode) {
+function vertMain(need, grid, win, mode) {
   let s = 'vec3 vlNormalW = normalize( mat3( modelMatrix ) * normal );\n' +
     'vec3 vlPosW = ( modelMatrix * vec4( transformed, 1.0 ) ).xyz;\n' +
     'vlWorldPos = vlPosW;\n' +
@@ -6887,10 +7186,11 @@ function vertMain(need, grid, mode) {
       ? 'vlGridUv = vlPlanarV( transformed, vlNormalW ) * uGridScale;\n'
       : 'vlGridUv = vlPlanarV( vlPosW, vlNormalW ) * uGridScale;\n';
   }
+  if (win) s += WIN_VERT_MAIN;
   return s;
 }
 
-function fragPars(need, grid) {
+function fragPars(need, grid, win) {
   return `
 uniform float uTime;
 uniform float uVoidTop;
@@ -6899,7 +7199,7 @@ uniform vec3 uColA;
 uniform vec3 uColB;
 uniform vec3 uColC;
 varying vec3 vlWorldPos;
-` +
+` + (need.face ? AO_GLSL : '') +
     (need.normal ? 'varying vec3 vlWorldNormal;\n' : '') +
     (need.local ? 'varying vec3 vlLocalPos;\n' : '') +
     (need.face ? 'varying vec4 vlFace;\n' : '') +
@@ -6934,15 +7234,13 @@ vec2 vlPlanar( vec3 p, vec3 n ) {
   return p.xz * useY + p.zy * useX + p.xy * useZ;
 }
 ` : '') +
-    CHEAP_FRAG_PARS + (grid ? GRID_FRAG_PARS : '');
+    CHEAP_FRAG_PARS + (grid ? GRID_FRAG_PARS : '') + (win ? WIN_FRAG_PARS : '');
 }
 
-// Grid-by-texture: the planar projection is a linear function of position over a flat axis-aligned face,
-// so evaluating it per vertex is exact and one mip-mapped fetch replaces four fwidth + smoothstep chains.
-// R = 1 m minor line coverage, G = 5 m major line coverage (the tile is 5 m square).
-const GRID_VERT_PARS = /* glsl */ `
-uniform float uGridScale;
-varying vec2 vlGridUv;
+// Texture-by-vertex-projection. The planar projection is a linear function of position over a flat
+// axis-aligned face, so evaluating it per VERTEX is exact, and one mip-mapped fetch then replaces a
+// stack of fwidth + smoothstep chains. Two surfaces use it: the course's grid and the city's windows.
+const PLANAR_V = /* glsl */ `
 vec2 vlPlanarV( vec3 p, vec3 n ) {
   vec3 a = abs( n );
   float useY = step( a.x, a.y ) * step( a.z, a.y );
@@ -6952,9 +7250,47 @@ vec2 vlPlanarV( vec3 p, vec3 n ) {
 }
 `;
 
+// R = 1 m minor line coverage, G = 5 m major line coverage (the tile is 5 m square).
+const GRID_VERT_PARS = /* glsl */ `
+uniform float uGridScale;
+varying vec2 vlGridUv;
+` + PLANAR_V;
+
 const GRID_FRAG_PARS = /* glsl */ `
 uniform sampler2D uGridTex;
 varying vec2 vlGridUv;
+`;
+
+// The city. Everything the window shader needs beyond the texture fetch is constant over a face - which
+// side of the box it is, how squarely the low sun hits it, how much neutral fill its shade side wants -
+// so all three ride in on one vec3 and the fragment shader is a fetch, a mix and an add.
+const WIN_VERT_PARS = /* glsl */ `
+uniform vec2 uWinScale;
+uniform float uWinGlint;
+uniform vec2 uWinFade;
+varying vec2 vlWinUv;
+varying vec3 vlWinTerm;
+` + PLANAR_V;
+
+// uWinFade is how far away the windows stop being drawn. The textured city never fades (its mipmaps do
+// the work); the procedural one has no mipmaps to fade with, so it hands the job to a distance term that
+// costs one interpolated multiply - and on the preset that uses it, 150 m is already 80% haze.
+const WIN_VERT_MAIN = /* glsl */ `
+{
+  float wall = 1.0 - step( 0.5, abs( vlNormalW.y ) );
+  float faceSun = max( dot( vlNormalW, uSunDir ), 0.0 );
+  wall *= 1.0 - smoothstep( uWinFade.x, uWinFade.y, vlCamDist );   // vlCamDist: already measured above
+  vlWinUv = vlPlanarV( vlPosW, vlNormalW ) * uWinScale;
+  vlWinTerm = vec3( wall, wall * faceSun * faceSun * faceSun * uWinGlint,
+    mix( 0.20, 0.08, max( vlNormalW.y, 0.0 ) ) );
+}
+`;
+
+const WIN_FRAG_PARS = /* glsl */ `
+uniform sampler2D uWinTex;
+uniform vec3 uWinWarm;
+varying vec2 vlWinUv;
+varying vec3 vlWinTerm;
 `;
 
 const CHEAP_MODE = {
@@ -6965,6 +7301,9 @@ const CHEAP_MODE = {
     col = mix( col, uColA, g.r );
     col = mix( col, uColA * 0.86, g.g );
     col = mix( col, uColB, edge * 0.85 );
+    // No corner AO on this path. It is only a handful of instructions, but it runs on every pixel of
+    // every deck in the level, and measured on the laptop preset those instructions are the difference
+    // between "no slower than before" and 8% slower. The edge outline already reads the box's shape.
     diffuseColor.rgb = col;
   `,
   MOVER: /* glsl */ `
@@ -6974,6 +7313,34 @@ const CHEAP_MODE = {
     col = mix( col, uColA, edge );
     diffuseColor.rgb = col;
     vlEmissive = uColA * edge * 0.22;
+  `,
+  // THE CITY, on both presets: the Renderer points the skyline and the level's deco boxes at this
+  // material whichever preset is up, because the city is flat axis-aligned boxes that receive no shadows
+  // and per-vertex light is exact for them. One texture fetch replaces the two vlLine() chains the old
+  // city shader ran, and everything else it needs arrives interpolated, so the towers gained their
+  // windows and got cheaper doing it. vlWinTerm.y is the raking-sun sheet on the glass: it carries
+  // uWinGlint, which is 0.40 on PC and 0 on Laptop, where only the panes lit from inside remain.
+  DECO: /* glsl */ `
+    vec3 win = texture2D( uWinTex, vlWinUv ).rgb;
+    float pane = win.r * vlWinTerm.x;
+    diffuseColor.rgb = mix( diffuseColor.rgb, uColB, pane * 0.40 );
+    float glint = win.r * ( vlWinTerm.y + vlWinTerm.x * step( 0.86, win.g ) * ( 0.05 + win.b * 0.10 ) );
+    vlEmissive = uColC * vlWinTerm.z + uWinWarm * glint;
+  `,
+  // THE CITY WITHOUT A TEXTURE. A mip-mapped fetch is cheap on a GPU and is not cheap on an integrated
+  // one: measured on the laptop preset it cost more than the four fwidth+smoothstep chains the old city
+  // shader ran, which would have made this preset slower than it was before it had windows at all. So
+  // here the same grid is eight step()s on an interpolated UV, and the distance fade in the vertex
+  // shader stands in for the mipmap chain. Same windows, same warm panes, no sampler.
+  DECOFLAT: /* glsl */ `
+    vec2 wc = vlWinUv * 8.0;                       // WINDOW_TILE is 8 panes x 8 floors
+    vec2 cell = floor( wc );
+    vec2 f = wc - cell;
+    float pane = step( 0.16, f.x ) * step( f.x, 0.84 ) * step( 0.18, f.y ) * step( f.y, 0.80 ) * vlWinTerm.x;
+    float rnd = fract( cell.x * 0.1031 + cell.y * 0.0973 + cell.x * cell.y * 0.0421 );
+    diffuseColor.rgb = mix( diffuseColor.rgb, uColB, pane * 0.40 );
+    float glint = pane * ( vlWinTerm.y + step( 0.86, rnd ) * ( 0.05 + fract( rnd * 7.13 ) * 0.10 ) );
+    vlEmissive = uColC * vlWinTerm.z + uWinWarm * glint;
   `,
 };
 
@@ -7024,15 +7391,27 @@ function patchCheapShader(shader, mode, shared, colors, light, extraFrag) {
   shader.uniforms.uColA = { value: colors.a };
   shader.uniforms.uColB = { value: colors.b };
   shader.uniforms.uColC = { value: colors.c };
+  shader.uniforms.uSunDir = shared.uSunDir;
+  shader.uniforms.uHazeAway = shared.uHazeAway;
+  shader.uniforms.uHazeSun = shared.uHazeSun;
+  shader.uniforms.uHazeHigh = shared.uHazeHigh;
+  shader.uniforms.uWinTex = shared.uWinTex;
+  shader.uniforms.uWinScale = shared.uWinScale;
+  shader.uniforms.uWinWarm = shared.uWinWarm;
+  shader.uniforms.uWinGlint = shared.uWinGlint;
+  // Textured city: no fade, the mipmaps handle range. Procedural city: fade out over 70-150 m.
+  shader.uniforms.uWinFade = { value: mode === 'DECOFLAT' ? [70, 150] : [1e6, 2e6] };
   shader.uniforms.uSunRadiance = light.sunRadiance;
   shader.uniforms.uSunTo = light.sunTo;
   shader.uniforms.uHemiSky = light.hemiSky;
   shader.uniforms.uHemiGround = light.hemiGround;
 
-  const grid = light.gridTexture && CHEAP_MODE[mode] ? light.gridTexture : null;
+  const wantsGrid = mode === 'GRID' || mode === 'MOVER';
+  const grid = wantsGrid && light.gridTexture ? light.gridTexture : null;
+  const win = mode === 'DECO' || mode === 'DECOFLAT';
   const need = Object.assign({}, FRAG_NEEDS[mode]);
-  let body = grid ? CHEAP_MODE[mode] : MODE_COLOR[mode];
-  if (!grid && CHEAP_MODE[mode]) {
+  let body = CHEAP_MODE[mode] && (grid || !wantsGrid) ? CHEAP_MODE[mode] : MODE_COLOR[mode];
+  if (wantsGrid && !grid) {
     // falling back to the shared procedural pattern: it projects per pixel, so it needs the normal
     need.normal = true;
     if (mode === 'MOVER') need.local = true;
@@ -7043,12 +7422,12 @@ function patchCheapShader(shader, mode, shared, colors, light, extraFrag) {
   }
 
   shader.vertexShader = shader.vertexShader
-    .replace('#include <common>', '#include <common>\n' + vertPars(need, !!grid))
-    .replace('#include <begin_vertex>', '#include <begin_vertex>\n' + vertMain(need, !!grid, mode));
+    .replace('#include <common>', '#include <common>\n' + vertPars(need, !!grid, win))
+    .replace('#include <begin_vertex>', '#include <begin_vertex>\n' + vertMain(need, !!grid, win, mode));
 
   shader.fragmentShader = shader.fragmentShader
-    .replace('#include <common>', '#include <common>\n' + fragPars(need, !!grid))
-    .replace('#include <fog_fragment>', FOG_FRAGMENT)
+    .replace('#include <common>', '#include <common>\n' + fragPars(need, !!grid, win))
+    .replace('#include <fog_fragment>', fogFragment('mix( uHazeAway, uHazeSun, vlHazeT )'))
     .replace(
       '#include <color_fragment>',
       '#include <color_fragment>\nvec3 vlEmissive = vec3( 0.0 );\nfloat vlGlassEdge = 0.0;\n{\n' +
@@ -7102,78 +7481,619 @@ function createCheapSurfaceMaterials(THREE, shared, light) {
     'diffuseColor.a = clamp( diffuseColor.a + vlGlassEdge * 0.55, 0.0, 1.0 );\n'
   );
 
+  // Two city materials, same colours: `deco` reads the window tile, `decoFlat` works the same grid out
+  // with step()s. The Renderer picks per preset (quality.windows), and both are only ever compiled if a
+  // preset actually draws with them.
+  const cityColors = { a: C(PALETTE.decoLine), b: C(PALETTE.decoLine), c: C(PALETTE.decoDark) };
   const deco = applyCheap(
     new THREE.MeshBasicMaterial({ color: C('#FFFFFF'), vertexColors: true }),
-    'DECO', shared, { a: C(PALETTE.decoLine), b: C(PALETTE.decoLine), c: C(PALETTE.decoDark) }, light
+    'DECO', shared, cityColors, light
+  );
+  const decoFlat = applyCheap(
+    new THREE.MeshBasicMaterial({ color: C('#FFFFFF'), vertexColors: true }),
+    'DECOFLAT', shared, cityColors, light
   );
 
-  return { concrete, bounce, mover, glass, deco };
+  return { concrete, bounce, mover, glass, deco, decoFlat };
 }
 
-// ---------------------------------------------------------------------------
-// Laptop sky dome
-// ---------------------------------------------------------------------------
+// The laptop sky is no longer a separate shader: createSkyMaterial(THREE, sunDir, true) in
+// render-materials.js compiles the same dome with VL_SKY_CHEAP defined, which swaps the two phase
+// functions and the limb-darkened disc for a gradient and a smoothstep over the same colours.
+return Object.freeze({ createGridTexture, createCheapLightUniforms, createCheapSurfaceMaterials });
+})();
 
-// Same gradient, warm horizon glow and sun as the PC sky, but without a single pow(): pow(x, y) costs two
-// transcendentals per pixel on a full-screen dome, and the fragment ran three of them (4, 28 and 1400).
-// The exponents become multiply chains and the tiny 1400 disc becomes a smoothstep over the same angle.
-// depthTest is on and the dome draws last of the opaque objects, so covered pixels are never shaded.
-function createCheapSkyMaterial(THREE, sunDir) {
-  return new THREE.ShaderMaterial({
-    name: 'VaultlineSkyCheap',
+// ---- js/render-bloom.js ----
+const __vl$m19_js_render_bloom = (function () {
+
+// Vaultline bloom: a quarter-resolution glow around the two things in the frame that are actually bright —
+// the sun's disc and the window glints the low sun strikes off the city.
+// Does not import three: render.js passes the THREE namespace in (SPEC: only render.js imports three).
+//
+// It does NOT work the way a post-processing bloom usually does. The usual chain renders the whole frame
+// into a texture, reads it back to find the bright pixels, and then copies the frame to the screen through
+// a composite pass — three full-resolution memory passes, plus a multisample resolve, for an effect that
+// only ever touches the sun and a few panes of glass. Measured on the software rasteriser the tests run
+// on, that cost 150-300 ms a frame at 720p: more than the entire rest of the frame.
+//
+// So the frame is never copied at all. It goes straight to the canvas with its MSAA intact, and the glow
+// is built from a SEPARATE quarter-resolution pass that draws only the glow sources (the sun through the
+// sky dome, the windows on the city) plus flat black occluders for everything that can stand in front of
+// them. Two 9-tap blurs later it is added over the frame with one additive full-screen quad. Nothing in
+// the chain reads the frame, so the frame never has to be a texture.
+
+const QUAD_VERT = /* glsl */ `
+varying vec2 vUv;
+void main() {
+  vUv = uv;
+  gl_Position = vec4( position.xy, 0.0, 1.0 );
+}
+`;
+
+// Five taps at 1, 2 and 3 texels, placed between texel centres so bilinear filtering gives nine samples
+// for five fetches. Run once across and once down, it is a 9x9 Gaussian for ten fetches a pixel.
+// The vertical pass also does the display-space encode (one sqrt) at a sixteenth of the frame's pixels,
+// so the composite that runs at full resolution is a single fetch and an add.
+const BLUR_FRAG = /* glsl */ `
+uniform sampler2D uTex;
+uniform vec2 uStep;
+uniform float uEncode;
+varying vec2 vUv;
+void main() {
+  vec3 sum = texture2D( uTex, vUv ).rgb * 0.2270270;
+  vec2 o1 = uStep * 1.3846154;
+  vec2 o2 = uStep * 3.2307692;
+  sum += ( texture2D( uTex, vUv + o1 ).rgb + texture2D( uTex, vUv - o1 ).rgb ) * 0.3162162;
+  sum += ( texture2D( uTex, vUv + o2 ).rgb + texture2D( uTex, vUv - o2 ).rgb ) * 0.0702703;
+  sum = mix( sum, sqrt( clamp( sum, 0.0, 1.0 ) ), uEncode );
+  gl_FragColor = vec4( sum, 1.0 );
+}
+`;
+
+const COMPOSITE_FRAG = /* glsl */ `
+uniform sampler2D uBloom;
+uniform float uStrength;
+varying vec2 vUv;
+void main() {
+  gl_FragColor = vec4( texture2D( uBloom, vUv ).rgb * uStrength, 1.0 );
+}
+`;
+
+// The sun, and nothing else: the same limb-darkened disc the sky dome draws, on its own so it can be
+// blurred. Depth-tested against the occluders, so a tower in front of the sun cuts the glow out.
+const SUN_GLOW_FRAG = /* glsl */ `
+uniform vec3 uSun;
+uniform vec3 uSunDir;
+uniform float uCosSun;
+varying vec3 vDir;
+void main() {
+  vec3 d = normalize( vDir );
+  float cosT = dot( d, uSunDir );
+  float disc = smoothstep( uCosSun - 0.0012, uCosSun + 0.0002, cosT );
+  float r = clamp( ( 1.0 - cosT ) / max( 1.0 - uCosSun, 1e-5 ), 0.0, 1.0 );
+  float limb = 0.4 + 0.6 * sqrt( max( 1.0 - r * r, 0.0 ) );
+  // A little of the aureole as well, so the glow has somewhere to start from.
+  float halo = smoothstep( 0.9986, 0.99995, cosT );
+  gl_FragColor = vec4( uSun * ( disc * limb + halo * 0.22 ), 1.0 );
+}
+`;
+
+// The window glints, and nothing else: the emissive half of the city shader, with the albedo dropped.
+const WINDOW_GLOW_FRAG = /* glsl */ `
+uniform sampler2D uWinTex;
+uniform vec2 uWinScale;
+uniform vec3 uWinWarm;
+uniform float uWinGlint;
+uniform vec3 uSunDir;
+varying vec3 vPosW;
+varying vec3 vNorW;
+vec2 vlPlanar( vec3 p, vec3 n ) {
+  vec3 a = abs( n );
+  float useY = step( a.x, a.y ) * step( a.z, a.y );
+  float useX = ( 1.0 - useY ) * step( a.z, a.x );
+  float useZ = 1.0 - useY - useX;
+  return p.xz * useY + p.zy * useX + p.xy * useZ;
+}
+void main() {
+  vec3 n = normalize( vNorW );
+  float vert = 1.0 - step( 0.5, abs( n.y ) );
+  vec3 win = texture2D( uWinTex, vlPlanar( vPosW, n ) * uWinScale ).rgb;
+  float pane = win.r * vert;
+  float faceSun = max( dot( n, uSunDir ), 0.0 );
+  float glint = pane * ( faceSun * faceSun * faceSun * uWinGlint + step( 0.86, win.g ) * ( 0.05 + win.b * 0.10 ) );
+  gl_FragColor = vec4( uWinWarm * glint, 1.0 );
+}
+`;
+
+const WORLD_VERT = /* glsl */ `
+varying vec3 vPosW;
+varying vec3 vNorW;
+void main() {
+  vPosW = ( modelMatrix * vec4( position, 1.0 ) ).xyz;
+  vNorW = mat3( modelMatrix ) * normal;
+  gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+}
+`;
+
+const DIVISOR = 4;      // the glow buffers are a quarter of the frame on each axis
+
+/** Materials for the glow pass. `shared` is the Renderer's shared uniform object. */
+function createGlowMaterials(THREE, shared, sky) {
+  const sunGlow = new THREE.ShaderMaterial({
+    name: 'VaultlineSunGlow',
     uniforms: {
-      uHorizon: { value: new THREE.Color(PALETTE.skyHorizon) },
-      uZenith: { value: new THREE.Color(PALETTE.skyZenith) },
-      uWarm: { value: new THREE.Color(PALETTE.skyWarm) },
-      uSun: { value: new THREE.Color(PALETTE.sun) },
-      uSunDir: { value: sunDir.clone().normalize() },
+      uSun: { value: sky.sun },
+      uSunDir: shared.uSunDir,
+      uCosSun: { value: sky.cosSun },
     },
-    vertexShader: /* glsl */ `
-      varying vec3 vDir;
-      void main() {
-        vDir = position;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-      }
-    `,
-    fragmentShader: /* glsl */ `
-      uniform vec3 uHorizon;
-      uniform vec3 uZenith;
-      uniform vec3 uWarm;
-      uniform vec3 uSun;
-      uniform vec3 uSunDir;
-      varying vec3 vDir;
-      void main() {
-        vec3 d = normalize( vDir );
-        float h = d.y;
-        float g = sqrt( clamp( h, 0.0, 1.0 ) );                 // pow( h, 0.5 )
-        vec3 col = mix( uHorizon, uZenith, smoothstep( 0.0, 1.0, g ) );
-        float sd = max( dot( d, uSunDir ), 0.0 );
-        float s2 = sd * sd;
-        float s4 = s2 * s2;                                      // pow( sd, 4.0 )
-        float nearHorizon = 1.0 - smoothstep( 0.0, 0.45, abs( h ) );
-        col = mix( col, uWarm, s4 * nearHorizon * 0.45 );
-        float s8 = s4 * s4;
-        float s32 = s8 * s8 * s8 * s8;                           // ~ pow( sd, 28.0 )
-        float disc = smoothstep( 0.9967, 0.9999, sd );           // ~ pow( sd, 1400.0 )
-        float above = smoothstep( -0.01, 0.01, h );
-        col += uSun * ( s32 * 0.22 + disc * 1.6 ) * above;
-        col = mix( uHorizon, col, smoothstep( -0.09, 0.0, h ) );
-        gl_FragColor = vec4( col, 1.0 );
-        #include <colorspace_fragment>
-      }
-    `,
+    vertexShader: 'varying vec3 vDir;\nvoid main() {\n  vDir = position;\n  gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );\n}',
+    fragmentShader: SUN_GLOW_FRAG,
     side: THREE.BackSide,
     depthWrite: false,
     depthTest: true,
     fog: false,
     toneMapped: false,
   });
+
+  const windowGlow = new THREE.ShaderMaterial({
+    name: 'VaultlineWindowGlow',
+    uniforms: {
+      uWinTex: shared.uWinTex,
+      uWinScale: shared.uWinScale,
+      uWinWarm: shared.uWinWarm,
+      uWinGlint: shared.uWinGlint,
+      uSunDir: shared.uSunDir,
+    },
+    vertexShader: WORLD_VERT,
+    fragmentShader: WINDOW_GLOW_FRAG,
+    fog: false,
+    toneMapped: false,
+  });
+
+  // Everything that is not a glow source is a hole punched in the glow: black, but it writes depth.
+  const occluder = new THREE.MeshBasicMaterial({ color: 0x000000, fog: false, toneMapped: false });
+
+  return { sunGlow, windowGlow, occluder };
 }
-return Object.freeze({ createGridTexture, createCheapLightUniforms, createCheapSurfaceMaterials, createCheapSkyMaterial });
+
+function createBloom(THREE, options) {
+  const o = options || {};
+
+  const target = (depth) => {
+    const rt = new THREE.WebGLRenderTarget(1, 1, {
+      minFilter: THREE.LinearFilter,
+      magFilter: THREE.LinearFilter,
+      format: THREE.RGBAFormat,
+      type: THREE.UnsignedByteType,
+      depthBuffer: !!depth,
+      stencilBuffer: false,
+    });
+    rt.texture.generateMipmaps = false;
+    rt.texture.wrapS = THREE.ClampToEdgeWrapping;
+    rt.texture.wrapT = THREE.ClampToEdgeWrapping;
+    return rt;
+  };
+
+  // The glow pass needs its own depth buffer (the occluders); the blur ping-pong never does, and neither
+  // buffer is ever multisampled - a quarter-resolution glow that is about to be blurred cannot see edges.
+  const glowRT = target(true);
+  const rtB = target(false);
+
+  const mat = (frag, uniforms, blending) => new THREE.ShaderMaterial({
+    uniforms, vertexShader: QUAD_VERT, fragmentShader: frag,
+    depthTest: false, depthWrite: false, fog: false, toneMapped: false,
+    transparent: !!blending,
+    blending: blending || THREE.NormalBlending,
+  });
+
+  const blurMat = mat(BLUR_FRAG, { uTex: { value: null }, uStep: { value: new THREE.Vector2() }, uEncode: { value: 0 } });
+  const compositeMat = mat(COMPOSITE_FRAG, {
+    uBloom: { value: glowRT.texture },
+    uStrength: { value: o.strength === undefined ? 0.42 : o.strength },
+  }, THREE.AdditiveBlending);
+
+  const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), blurMat);
+  quad.frustumCulled = false;
+  const passScene = new THREE.Scene();
+  passScene.add(quad);
+  const passCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+
+  // The Renderer fills this with meshes that SHARE the level's geometries: glow sources with the glow
+  // materials, everything else with the flat black occluder.
+  const glowScene = new THREE.Scene();
+
+  let w = 0;
+  let h = 0;
+
+  return {
+    get scene() { return glowScene; },
+    /** Size the chain from the full drawing-buffer size; the buffers are a quarter of it on each axis. */
+    setSize(nextW, nextH) {
+      const bw = Math.max(1, Math.ceil(Math.max(1, nextW) / DIVISOR));
+      const bh = Math.max(1, Math.ceil(Math.max(1, nextH) / DIVISOR));
+      if (bw === w && bh === h) return;
+      w = bw;
+      h = bh;
+      glowRT.setSize(w, h);
+      rtB.setSize(w, h);
+    },
+    setStrength(v) { compositeMat.uniforms.uStrength.value = v; },
+    /**
+     * Draw the glow and add it over whatever is already on the canvas. The renderer must have autoClear
+     * off (the Renderer sets it) so the composite does not wipe the frame it is adding to.
+     */
+    apply(renderer, camera) {
+      renderer.setRenderTarget(glowRT);
+      renderer.clear(true, true, false);
+      renderer.render(glowScene, camera);
+
+      quad.material = blurMat;
+      blurMat.uniforms.uTex.value = glowRT.texture;
+      blurMat.uniforms.uStep.value.set(1 / w, 0);
+      blurMat.uniforms.uEncode.value = 0;
+      renderer.setRenderTarget(rtB);
+      renderer.render(passScene, passCamera);
+
+      blurMat.uniforms.uTex.value = rtB.texture;
+      blurMat.uniforms.uStep.value.set(0, 1 / h);
+      blurMat.uniforms.uEncode.value = 1;
+      renderer.setRenderTarget(glowRT);
+      renderer.render(passScene, passCamera);
+
+      quad.material = compositeMat;
+      renderer.setRenderTarget(null);
+      renderer.render(passScene, passCamera);
+    },
+    dispose() {
+      glowRT.dispose();
+      rtB.dispose();
+      quad.geometry.dispose();
+      blurMat.dispose();
+      compositeMat.dispose();
+      glowScene.clear();
+    },
+  };
+}
+return Object.freeze({ createGlowMaterials, createBloom });
+})();
+
+// ---- js/quality.js ----
+const __vl$m20_js_quality = (function () {
+
+// Vaultline graphics presets. Pure data + tiny helpers: no imports, no DOM/window access at import time.
+// Renderer.setQuality(name) applies a preset live; main.js/Hud own the UI and persistence.
+//
+// Notes for integrators:
+// - `antialias` (WebGL MSAA) is fixed when the WebGL context is created, so the Renderer picks it once at
+//   startup from the STORED preset (detectDefaultQuality()). Switching live changes everything else;
+//   the MSAA setting follows on the next page load.
+// - localStorage key QUALITY_KEY holds 'pc' | 'laptop'. The Renderer only reads it; whoever changes the
+//   setting (UI or the one-time auto switch) writes it.
+// - FPS_CAP_KEY and ADAPTIVE_KEY hold the two frame-pacing settings, which apply to BOTH presets: the
+//   frame cap (how often a frame is drawn at all) and adaptive resolution (how many pixels each frame
+//   costs). They are the first line against a laptop spinning its fans, so they are never preset data.
+
+const QUALITY_KEY = 'vaultline.quality';
+const SHOW_FPS_KEY = 'vaultline.showfps';
+const FPS_CAP_KEY = 'vaultline.fpscap';
+const ADAPTIVE_KEY = 'vaultline.adaptive';
+
+// Auto-detect rule (used by main.js): no stored choice -> start 'pc', average the frame time over the first
+// AUTO_SAMPLE_SEC of the title flyover; above AUTO_SWITCH_MS -> switch to 'laptop' once.
+const AUTO_SAMPLE_SEC = 3;
+const AUTO_SWITCH_MS = 22;
+
+// Frame cap, in frames per second. 0 means uncapped (draw on every animation frame the browser gives us).
+// The order is the order the Settings panel shows.
+const FPS_CAPS = [30, 60, 120, 0];
+const DEFAULT_FPS_CAP = 60;
+const DEFAULT_ADAPTIVE = true;
+
+// Adaptive resolution bounds. The drawing buffer is scaled by this factor on top of the preset's pixel
+// ratio; 0.6 is the floor because below it the 1 m grid lines start to crawl.
+const MIN_RENDER_SCALE = 0.6;
+const RENDER_SCALE_STEP = 0.05;
+// Frame time the adaptive scaler aims at when nothing caps the frame rate: one 60 Hz frame plus a little.
+const UNCAPPED_TARGET_MS = 1000 / 60;
+
+const QUALITY = {
+  pc: {
+    name: 'pc',
+    label: 'PC',
+    helper: 'Golden hour: sun, shadows, glowing towers, bloom',
+    antialias: true,          // startup only (context attribute)
+    maxPixelRatio: 2,         // devicePixelRatio cap
+    maxPixels: Infinity,      // cap on drawing-buffer pixels (render scale drops below 1 on bigger canvases)
+    shadows: true,
+    shadowMapSize: 1536,      // PCFSoft
+    shadowExtent: 32,         // half-size of the orthographic shadow frustum (m): one tight cascade
+    shadowLead: 11,           // the cascade centre sits this far ahead of the player
+    shadowHz: 24,             // ceiling on shadow-map re-renders per second (it is cached between them)
+    speedLines: true,         // fullscreen speed lines + vignette pass
+    bloom: true,              // quarter-res bloom on the sun and window glints
+    cameraFar: 3000,          // m
+    fogDensity: 0.0027,       // FogExp2
+    skylineRange: 430,        // city silhouettes past this are pure haze
+    clutterRange: 320,        // rooftop plant/tanks/masts: overdraw, so they stop far sooner        // hide skyline towers farther than this from the course bounds (m)
+    shading: 'pbr',           // 'pbr' = MeshStandardMaterial; 'cheap' = unlit + per-vertex sun/hemisphere
+    sky: 'full',              // 'full' = analytic scattering dome; 'cheap' = gradient, no pow()
+    windows: 'lit',           // skyline windows: 'lit' = grid texture + warm glints, 'flat' = grid only
+    grappleGlow: 1,           // grapple aim marker: opacity multiplier (a fill-rate knob)
+    ropeSegments: 26,         // grapple rope spline segments (sag + taper); one draw call either way
+  },
+  laptop: {
+    name: 'laptop',
+    label: 'Laptop',
+    helper: 'Smoother: lighter resolution, no shadows, shorter view distance',
+    antialias: false,
+    maxPixelRatio: 1,
+    maxPixels: 1.3e6,         // ~1510x850 at 16:9; smaller windows render at scale 1
+    shadows: false,
+    shadowMapSize: 0,
+    shadowExtent: 32,
+    shadowLead: 11,
+    shadowHz: 0,
+    speedLines: false,
+    bloom: false,
+    cameraFar: 260,
+    fogDensity: 0.0074,       // ~97% fogged at the far plane so the cut-off is invisible
+    skylineRange: 170,        // at this preset's fog, a tower past 170 m is 82% haze already
+    clutterRange: 0,          // no rooftop clutter at all: it is overdraw this preset cannot spend
+    shading: 'cheap',         // per-pixel PBR is the biggest cost on integrated GPUs; bake it per vertex
+    sky: 'cheap',             // a full-screen dome with three pow() calls is pure fill cost
+    windows: 'flat',
+    grappleGlow: 0.7,         // a quieter reticle: still obvious at 28 m, less overdraw
+    ropeSegments: 9,          // a 9-segment rope still sags; 26 would cost nothing but bytes
+  },
+};
+
+function isQualityName(name) {
+  return name === 'pc' || name === 'laptop';
+}
+
+function isFrameCap(v) {
+  return typeof v === 'number' && Number.isFinite(v) && FPS_CAPS.indexOf(v) >= 0;
+}
+
+function store() {
+  try {
+    return typeof localStorage !== 'undefined' && localStorage ? localStorage : null;
+  } catch (err) {
+    return null;
+  }
+}
+
+function readKey(key) {
+  try {
+    const s = store();
+    return s ? s.getItem(key) : null;
+  } catch (err) {
+    return null;
+  }
+}
+
+function writeKey(key, value) {
+  try {
+    const s = store();
+    if (s) s.setItem(key, value);
+    return true;
+  } catch (err) {
+    return false;    // storage blocked: the choice lives for this session only
+  }
+}
+
+// Stored preset name, or null when nothing (valid) is stored or storage is blocked.
+function readStoredQuality() {
+  const v = readKey(QUALITY_KEY);
+  return isQualityName(v) ? v : null;
+}
+
+// Preset to boot with: the stored choice, else 'pc' (main.js may then auto-switch once after measuring).
+function detectDefaultQuality() {
+  return readStoredQuality() || 'pc';
+}
+
+// Stored frame cap in fps (0 = uncapped), or null when nothing valid is stored.
+function readStoredFrameCap() {
+  const raw = readKey(FPS_CAP_KEY);
+  if (raw === null || raw === '') return null;
+  const n = Number(raw);
+  return isFrameCap(n) ? n : null;
+}
+
+function writeStoredFrameCap(fps) {
+  if (!isFrameCap(fps)) return false;
+  return writeKey(FPS_CAP_KEY, String(fps));
+}
+
+/** Frame cap to boot with: the stored choice, else DEFAULT_FPS_CAP (60). */
+function detectDefaultFrameCap() {
+  const v = readStoredFrameCap();
+  return v === null ? DEFAULT_FPS_CAP : v;
+}
+
+// Stored adaptive-resolution flag, or null when nothing valid is stored.
+function readStoredAdaptive() {
+  const raw = readKey(ADAPTIVE_KEY);
+  if (raw === '1') return true;
+  if (raw === '0') return false;
+  return null;
+}
+
+function writeStoredAdaptive(on) {
+  return writeKey(ADAPTIVE_KEY, on ? '1' : '0');
+}
+
+/** Adaptive resolution to boot with: the stored choice, else on. */
+function detectDefaultAdaptive() {
+  const v = readStoredAdaptive();
+  return v === null ? DEFAULT_ADAPTIVE : v;
+}
+
+/** Frame time (ms) the adaptive scaler should hold for a given cap (0 = uncapped). */
+function frameTargetMs(cap) {
+  return isFrameCap(cap) && cap > 0 ? 1000 / cap : UNCAPPED_TARGET_MS;
+}
+
+/** The Settings label for a cap value. */
+function frameCapLabel(cap) {
+  return cap > 0 ? String(cap) : 'Off';
+}
+return Object.freeze({ QUALITY_KEY, SHOW_FPS_KEY, FPS_CAP_KEY, ADAPTIVE_KEY, AUTO_SAMPLE_SEC, AUTO_SWITCH_MS, FPS_CAPS, DEFAULT_FPS_CAP, DEFAULT_ADAPTIVE, MIN_RENDER_SCALE, RENDER_SCALE_STEP, UNCAPPED_TARGET_MS, QUALITY, isQualityName, isFrameCap, readStoredQuality, detectDefaultQuality, readStoredFrameCap, writeStoredFrameCap, detectDefaultFrameCap, readStoredAdaptive, writeStoredAdaptive, detectDefaultAdaptive, frameTargetMs, frameCapLabel });
+})();
+
+// ---- js/render-adaptive.js ----
+const __vl$m21_js_render_adaptive = (function () {
+const { MIN_RENDER_SCALE, RENDER_SCALE_STEP } = __vl$m20_js_quality;
+// Vaultline frame pacing: the two knobs that decide how much work a frame is allowed to be.
+// Pure maths — no imports, no DOM, no three — so both halves are unit-testable in plain node.
+//
+//   FrameLimiter   decides WHETHER to draw this animation frame (the frame cap).
+//   AdaptiveScale  decides HOW MANY PIXELS the frame is drawn at (adaptive resolution).
+//
+// Together they are what keeps a laptop's fans down: the cap stops the machine racing to 200 fps on the
+// title screen, and the scaler gives up resolution — smoothly, 5% at a time — rather than frame time
+// when a view turns out to be more expensive than the target allows.
+
+
+
+const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
+
+// A display refresh is never exactly 1/60 s, so a cap that demanded `now >= next` would drop every other
+// frame on a monitor that ticks a hair early. Allow half of the observed animation-frame interval.
+const DEFAULT_INTERVAL = 1000 / 60;
+
+class FrameLimiter {
+  /** @param cap frames per second, or 0 for uncapped. */
+  constructor(cap) {
+    this.interval = DEFAULT_INTERVAL;   // smoothed animation-frame interval (ms), for the slack
+    this._cap = 0;
+    this._next = -1;
+    this._last = -1;
+    this.setCap(cap);
+  }
+
+  get cap() {
+    return this._cap;
+  }
+
+  setCap(cap) {
+    const n = typeof cap === 'number' && Number.isFinite(cap) && cap > 0 ? cap : 0;
+    if (n === this._cap) return this._cap;
+    this._cap = n;
+    this.reset();
+    return this._cap;
+  }
+
+  /** Forget the schedule: the next frame offered always draws. */
+  reset() {
+    this._next = -1;
+    this._last = -1;
+  }
+
+  /**
+   * Call once per animation frame with its timestamp (ms). True = draw this frame.
+   * Uncapped it is always true; capped it is true on the frames nearest the cap's own beat.
+   */
+  shouldDraw(now) {
+    if (!(typeof now === 'number' && Number.isFinite(now))) return true;
+    if (this._last >= 0) {
+      const d = now - this._last;
+      if (d > 0 && d < 100) this.interval += (d - this.interval) * 0.15;
+    }
+    this._last = now;
+    if (this._cap <= 0) return true;
+
+    const period = 1000 / this._cap;
+    if (this._next < 0) {
+      this._next = now + period;
+      return true;
+    }
+    const slack = Math.min(this.interval * 0.5, period * 0.5);
+    if (now < this._next - slack) return false;
+    this._next += period;
+    // A stall (a tab in the background, a long GC) must not leave a backlog of "owed" frames.
+    if (this._next <= now) this._next = now + period;
+    return true;
+  }
+}
+
+class AdaptiveScale {
+  constructor(options) {
+    const o = options || {};
+    this.min = clamp(o.min || MIN_RENDER_SCALE, 0.2, 1);
+    this.step = o.step || RENDER_SCALE_STEP;
+    this.downRate = o.downRate || 0.7;   // scale units per second while over budget
+    this.upRate = o.upRate || 0.22;      // slower coming back, so a hitch does not bounce the resolution
+    this.overBudget = o.overBudget || 1.12;   // frame time above target * this -> give up pixels
+    this.underBudget = o.underBudget || 0.86; // below target * this -> take them back
+    this.settle = o.settle || 0.4;       // seconds to hold still after a resize before judging again
+    this.enabled = o.enabled !== false;
+    this.scale = 1;
+    this._raw = 1;
+    this._hold = 0;
+  }
+
+  setEnabled(on) {
+    const want = !!on;
+    if (want === this.enabled) return this.scale;
+    this.enabled = want;
+    if (!want) this.reset();
+    else this._hold = this.settle;
+    return this.scale;
+  }
+
+  /** Back to full resolution (a preset switch, a window resize, a teleport). */
+  reset() {
+    this.scale = 1;
+    this._raw = 1;
+    this._hold = 0;
+  }
+
+  /** Pin the scale, e.g. for a benchmark. Leaves `enabled` alone; the next update() moves it again. */
+  set(scale) {
+    const v = clamp(typeof scale === 'number' && Number.isFinite(scale) ? scale : 1, this.min, 1);
+    this.scale = Math.round(v / this.step) * this.step;
+    this.scale = Math.round(this.scale * 1000) / 1000;
+    this._raw = this.scale;
+    this._hold = this.settle;
+    return this.scale;
+  }
+
+  /**
+   * One frame of control. `dtSec` is the wall time since the last call, `frameMs` the smoothed interval
+   * between DRAWN frames, `targetMs` the frame time we are trying to hold. Returns the scale to draw at;
+   * it only ever moves in whole `step`s, so the drawing buffer is not resized on most frames.
+   */
+  update(dtSec, frameMs, targetMs) {
+    if (!this.enabled) return this.scale;
+    const dt = clamp(typeof dtSec === 'number' && Number.isFinite(dtSec) ? dtSec : 0, 0, 0.25);
+    if (this._hold > 0) {
+      this._hold -= dt;
+      return this.scale;
+    }
+    if (!(frameMs > 0) || !(targetMs > 0)) return this.scale;
+
+    if (frameMs > targetMs * this.overBudget) this._raw -= this.downRate * dt;
+    else if (frameMs < targetMs * this.underBudget) this._raw += this.upRate * dt;
+    this._raw = clamp(this._raw, this.min, 1);
+
+    // Hysteresis: the raw value has to clear three quarters of a step before the buffer is resized, so a
+    // frame time sitting right on a quantum boundary does not flip the resolution back and forth.
+    const gap = this._raw - this.scale;
+    if (gap <= -this.step * 0.75 || gap >= this.step * 0.75) {
+      const q = clamp(Math.round(this._raw / this.step) * this.step, this.min, 1);
+      this.scale = Math.round(q * 1000) / 1000;
+      this._hold = this.settle;
+    }
+    return this.scale;
+  }
+}
+return Object.freeze({ FrameLimiter, AdaptiveScale });
 })();
 
 // ---- js/render-text.js ----
-const __vl$m19_js_render_text = (function () {
+const __vl$m22_js_render_text = (function () {
 const { PALETTE, patchBasicFog } = __vl$m14_js_render_materials;
 // Vaultline render helpers: canvas-textured in-world text (signs, FINISH gate).
 // Does not import three: render.js passes the THREE namespace in (SPEC: only render.js imports three).
@@ -7501,100 +8421,22 @@ function createFinishGate(THREE, finish, runDir, shared, anisotropy, baseY) {
 return Object.freeze({ whenFontsReady, createSign, createFinishGate });
 })();
 
-// ---- js/quality.js ----
-const __vl$m20_js_quality = (function () {
-
-// Vaultline graphics presets. Pure data + tiny helpers: no imports, no DOM/window access at import time.
-// Renderer.setQuality(name) applies a preset live; main.js/Hud own the UI and persistence.
-//
-// Notes for integrators:
-// - `antialias` (WebGL MSAA) is fixed when the WebGL context is created, so the Renderer picks it once at
-//   startup from the STORED preset (detectDefaultQuality()). Switching live changes everything else;
-//   the MSAA setting follows on the next page load.
-// - localStorage key QUALITY_KEY holds 'pc' | 'laptop'. The Renderer only reads it; whoever changes the
-//   setting (UI or the one-time auto switch) writes it.
-
-const QUALITY_KEY = 'vaultline.quality';
-const SHOW_FPS_KEY = 'vaultline.showfps';
-
-// Auto-detect rule (used by main.js): no stored choice -> start 'pc', average the frame time over the first
-// AUTO_SAMPLE_SEC of the title flyover; above AUTO_SWITCH_MS -> switch to 'laptop' once.
-const AUTO_SAMPLE_SEC = 3;
-const AUTO_SWITCH_MS = 22;
-
-const QUALITY = {
-  pc: {
-    name: 'pc',
-    label: 'PC',
-    helper: 'Full detail: sharp resolution, soft shadows, speed lines',
-    antialias: true,          // startup only (context attribute)
-    maxPixelRatio: 2,         // devicePixelRatio cap
-    maxPixels: Infinity,      // cap on drawing-buffer pixels (render scale drops below 1 on bigger canvases)
-    shadows: true,
-    shadowMapSize: 2048,      // PCFSoft
-    speedLines: true,         // fullscreen speed lines + vignette pass
-    cameraFar: 3000,          // m
-    fogDensity: 0.0034,       // FogExp2
-    skylineRange: Infinity,   // hide skyline buildings farther than this from the course bounds (m)
-    shading: 'pbr',           // 'pbr' = MeshStandardMaterial; 'cheap' = unlit + per-vertex sun/hemisphere
-    sky: 'full',              // 'full' = pow-based dome drawn first; 'cheap' = pow-free and depth-tested last
-    grappleGlow: 1,           // grapple aim marker: opacity multiplier (a fill-rate knob)
-    ropeSegments: 26,         // grapple rope spline segments (sag + taper); one draw call either way
-  },
-  laptop: {
-    name: 'laptop',
-    label: 'Laptop',
-    helper: 'Smoother: lighter resolution, no shadows, shorter view distance',
-    antialias: false,
-    maxPixelRatio: 1,
-    maxPixels: 1.3e6,         // ~1510x850 at 16:9; smaller windows render at scale 1
-    shadows: false,
-    shadowMapSize: 0,
-    speedLines: false,
-    cameraFar: 260,
-    fogDensity: 0.0074,       // ~97% fogged at the far plane so the cut-off is invisible
-    skylineRange: 260,
-    shading: 'cheap',         // per-pixel PBR is the biggest cost on integrated GPUs; bake it per vertex
-    sky: 'cheap',             // a full-screen dome with three pow() calls is pure fill cost
-    grappleGlow: 0.7,         // a quieter reticle: still obvious at 28 m, less overdraw
-    ropeSegments: 9,          // a 9-segment rope still sags; 26 would cost nothing but bytes
-  },
-};
-
-function isQualityName(name) {
-  return name === 'pc' || name === 'laptop';
-}
-
-// Stored preset name, or null when nothing (valid) is stored or storage is blocked.
-function readStoredQuality() {
-  try {
-    if (typeof localStorage === 'undefined' || !localStorage) return null;
-    const v = localStorage.getItem(QUALITY_KEY);
-    return isQualityName(v) ? v : null;
-  } catch (err) {
-    return null;
-  }
-}
-
-// Preset to boot with: the stored choice, else 'pc' (main.js may then auto-switch once after measuring).
-function detectDefaultQuality() {
-  return readStoredQuality() || 'pc';
-}
-return Object.freeze({ QUALITY_KEY, SHOW_FPS_KEY, AUTO_SAMPLE_SEC, AUTO_SWITCH_MS, QUALITY, isQualityName, readStoredQuality, detectDefaultQuality });
-})();
-
 // ---- js/render.js ----
-const __vl$m21_js_render = (function () {
+const __vl$m23_js_render = (function () {
 const { PHYS } = __vl$m0_js_config;
-const { PALETTE, createSharedUniforms, createSurfaceMaterials, createSkyMaterial, createSpeedLinesMaterial } = __vl$m14_js_render_materials;
+const { PALETTE, WINDOW_TILE, createSharedUniforms, createSurfaceMaterials, createSkyMaterial, createSpeedLinesMaterial, createWindowTexture } = __vl$m14_js_render_materials;
 const { levelBounds, buildCoursePath, courseDirectionAt, supportTopAt, buildStaticMeshes, buildMoverMeshes, buildSkyline, buildCheckpointBeacon } = __vl$m15_js_render_build;
 const { createAimMarker, createGrappleRope } = __vl$m16_js_render_grapple;
 const { createGhostRunner } = __vl$m17_js_render_ghost;
-const { createCheapLightUniforms, createCheapSurfaceMaterials, createGridTexture, createCheapSkyMaterial } = __vl$m18_js_render_cheap;
-const { createSign, createFinishGate, whenFontsReady } = __vl$m19_js_render_text;
-const { QUALITY, detectDefaultQuality } = __vl$m20_js_quality;
+const { createCheapLightUniforms, createCheapSurfaceMaterials, createGridTexture } = __vl$m18_js_render_cheap;
+const { createBloom, createGlowMaterials } = __vl$m19_js_render_bloom;
+const { AdaptiveScale } = __vl$m21_js_render_adaptive;
+const { createSign, createFinishGate, whenFontsReady } = __vl$m22_js_render_text;
+const { QUALITY, detectDefaultQuality, detectDefaultAdaptive, detectDefaultFrameCap, frameTargetMs, MIN_RENDER_SCALE } = __vl$m20_js_quality;
 // Vaultline renderer: scene, sky, fog, lights, shadows, level meshes, camera + speed feel.
 // The only module that imports three (helpers receive the THREE namespace as a parameter).
+
+
 
 
 
@@ -7609,15 +8451,17 @@ const { QUALITY, detectDefaultQuality } = __vl$m20_js_quality;
 const BASE_FOV = 90;             // degrees, horizontal at a 4:3 reference aspect (Hor+ on wider screens)
 const REF_ASPECT = 4 / 3;
 const MAX_VFOV = 100;            // cap for tall/portrait viewports
-const SUN_DIR = new THREE.Vector3(0.55, 0.42, 0.72).normalize(); // towards the sun (low, behind-right of the run)
-const SUN_INTENSITY = 4.2;
-const HEMI_INTENSITY = 2.9;
+// Golden hour: the sun sits 13 degrees up, behind-right of the run. Everything warm in the game comes
+// from this vector — the key light, the sky's Mie glow, the aerial perspective and the window glints.
+const SUN_DIR = new THREE.Vector3(0.62, 0.23, 0.75).normalize();
+const SUN_INTENSITY = 5.6;       // a low sun rakes the decks, so the key has to be stronger to keep them pale
+const HEMI_INTENSITY = 2.8;      // cool sky fill + a warm bounce off the rooftops
 const EXPOSURE = 1.0;
-const FOG_DENSITY = 0.0034;
-const SHADOW_MAP_SIZE = 2048;
-const SHADOW_EXTENT = 42;        // half-size of the orthographic shadow frustum (m)
+const FOG_DENSITY = 0.0032;
 const SHADOW_DISTANCE = 150;     // light distance from its target (m)
-const SHADOW_LEAD = 14;          // shadow focus sits this far ahead of the player
+const SHADOW_SOFT_MOVE = 0.4;    // cascade drift (m) worth a scheduled shadow refresh
+const SHADOW_HARD_FRACTION = 0.3;// drift past this fraction of the cascade forces one, whatever the rate
+const MOVER_SHADOW_MOVE = 0.04;  // a mover moving less than this since the last shadow render changes nothing
 const BEACON_FADE_TIME = 0.45;
 const BOB_STRIDE = 2.4;          // meters per footfall for the head bob
 const ROPE_MAX_SEGMENTS = 26;    // buffer size; the preset picks how many are drawn (quality.ropeSegments)
@@ -7684,6 +8528,11 @@ class Renderer {
     this.renderer = renderer;
     this.antialias = !!this._quality.antialias;
     renderer.info.autoReset = false;         // render() resets once per frame so stats include every pass
+    // Adaptive resolution: the drawing buffer is the preset's pixel ratio times a scale the frame time
+    // moves, 5% at a time, between MIN_RENDER_SCALE and 1. `_frameTargetMs` is the frame time it holds.
+    this._adaptive = new AdaptiveScale({ min: MIN_RENDER_SCALE, enabled: detectDefaultAdaptive() });
+    this._frameTargetMs = frameTargetMs(detectDefaultFrameCap());
+    this._baseRatio = 1;
     this._dpr = this._pixelRatioFor(window.innerWidth || 1, window.innerHeight || 1, window.devicePixelRatio || 1);
     renderer.setPixelRatio(this._dpr);
     renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -7691,6 +8540,10 @@ class Renderer {
     renderer.toneMappingExposure = EXPOSURE;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // The shadow map is a CACHE, not a per-frame pass: the light is frozen between refreshes, so the
+    // depth map it produced stays exactly correct until the cascade has to move. _followShadow() decides.
+    renderer.shadowMap.autoUpdate = false;
+    renderer.shadowMap.needsUpdate = true;
     renderer.autoClear = false;
     renderer.setClearColor(new THREE.Color(PALETTE.skyHorizon), 1);
     const anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
@@ -7698,16 +8551,22 @@ class Renderer {
     // --- scene, camera, fog, sky ------------------------------------------
     const scene = new THREE.Scene();
     this.scene = scene;
-    scene.fog = new THREE.FogExp2(new THREE.Color(PALETTE.skyHorizon), FOG_DENSITY);
+    scene.fog = new THREE.FogExp2(new THREE.Color(PALETTE.hazeAway), FOG_DENSITY);
 
     this.camera = new THREE.PerspectiveCamera(70, 16 / 9, 0.06, 3000);
     this.camera.rotation.order = 'YXZ';
     this._fov = BASE_FOV;
 
-    this.sky = new THREE.Mesh(new THREE.SphereGeometry(1400, 48, 24), createSkyMaterial(THREE, SUN_DIR));
+    // Unit dome, scaled to sit just inside the far plane. It is drawn LAST of the opaque objects with the
+    // depth test ON: the old dome went first with no depth test, which shaded every sky pixel the city was
+    // about to paint over. That one change is what pays for an analytic sky instead of a gradient.
+    this.sky = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 24), createSkyMaterial(THREE, SUN_DIR, false));
     this.sky.name = 'sky';
     this.sky.frustumCulled = false;
-    this.sky.renderOrder = -1000;
+    this.sky.renderOrder = 1000;
+    this._skyKind = 'full';
+    this._fullSkyMat = this.sky.material;
+    this._cheapSkyMat = null;
     scene.add(this.sky);
 
     // --- lights -------------------------------------------------------------
@@ -7716,15 +8575,12 @@ class Renderer {
 
     const sun = new THREE.DirectionalLight(new THREE.Color(PALETTE.sun), SUN_INTENSITY);
     sun.castShadow = true;
-    sun.shadow.mapSize.set(SHADOW_MAP_SIZE, SHADOW_MAP_SIZE);
+    this._shadowExtent = this._quality.shadowExtent || 32;
+    this._shadowLead = num(this._quality.shadowLead, 11);
+    sun.shadow.mapSize.set(this._quality.shadowMapSize || 1536, this._quality.shadowMapSize || 1536);
     const sc = sun.shadow.camera;
-    sc.left = -SHADOW_EXTENT;
-    sc.right = SHADOW_EXTENT;
-    sc.top = SHADOW_EXTENT;
-    sc.bottom = -SHADOW_EXTENT;
     sc.near = 1;
     sc.far = SHADOW_DISTANCE * 2;
-    sc.updateProjectionMatrix();
     sun.shadow.bias = -0.0004;
     sun.shadow.normalBias = 0.035;
     sun.shadow.radius = 3;
@@ -7733,7 +8589,13 @@ class Renderer {
 
     this._lightX = new THREE.Vector3().crossVectors(new THREE.Vector3(0, 1, 0), SUN_DIR).normalize();
     this._lightY = new THREE.Vector3().crossVectors(SUN_DIR, this._lightX).normalize();
-    this._texel = (SHADOW_EXTENT * 2) / SHADOW_MAP_SIZE;
+    this._texel = (this._shadowExtent * 2) / (this._quality.shadowMapSize || 1536);
+    this._applyShadowFrustum();
+    // Shadow scheduling state: when the cascade was last moved, and how many times it has been rendered.
+    this._shadowClock = 1e3;
+    this._shadowDirty = true;
+    this._shadowRenders = 0;
+    this._moverShadowPos = null;
     this._v1 = new THREE.Vector3();
     this._v2 = new THREE.Vector3();
 
@@ -7742,17 +8604,27 @@ class Renderer {
     const bounds = levelBounds(lvl);
     const killY = num(lvl.killY, bounds.min[1] - 25);
     const voidTop = Math.min(killY + 12, bounds.min[1] - 4);
+    this._winTex = createWindowTexture(THREE);
     this.shared = createSharedUniforms(voidTop, voidTop - 50, {
       center: this.sun.target.position,   // live reference: updated by _followShadow
       axisX: this._lightX,
       axisY: this._lightY,
-      extent: SHADOW_EXTENT,
+      extent: this._shadowExtent,
+    }, {
+      sunDir: SUN_DIR,
+      hazeAway: new THREE.Color(PALETTE.hazeAway),
+      hazeSun: new THREE.Color(PALETTE.hazeSun),
+      hazeHigh: new THREE.Color(PALETTE.hazeHigh),
+      windowTexture: this._winTex,
+      windowScale: new THREE.Vector2(1 / WINDOW_TILE.width, 1 / WINDOW_TILE.height),
+      windowWarm: new THREE.Color(PALETTE.window),
+      windowGlint: 1,
     });
     this.materials = createSurfaceMaterials(THREE, this.shared);
     // Laptop shading set, built on first use and then kept (rebuilding it per switch would recompile shaders).
     this._cheapLight = createCheapLightUniforms(THREE, SUN_DIR, SUN_INTENSITY, HEMI_INTENSITY);
     this._cheapMaterials = null;
-    this._shading = 'pbr';
+    this._shading = null;          // null, not 'pbr': the first _setShading() must actually run
 
     const path = buildCoursePath(lvl);
     const statics = buildStaticMeshes(THREE, lvl, this.materials, path);
@@ -7767,8 +8639,11 @@ class Renderer {
     this._moverCount = -1;
     scene.add(movers.group);
 
-    this._skyline = buildSkyline(THREE, bounds, this.materials.deco, 0x5A17);
-    scene.add(this._skyline);
+    this._ensureCheapMaterials();
+    const city = buildSkyline(THREE, bounds, this._cheapMaterials.deco, 0x5A17);
+    this._skyline = city.massing;          // shafts, setbacks, crowns: the silhouette
+    this._skylineDetail = city.detail;     // rooftop plant, tanks, masts: dropped first when pixels are short
+    scene.add(city.massing, city.detail);
 
     this._colBeam = new THREE.Color(PALETTE.beam);
     this._colReached = new THREE.Color(PALETTE.beamReached);
@@ -7847,7 +8722,14 @@ class Renderer {
     // frame stats (getStats): smoothed interval between render() calls
     this._lastRenderAt = -1;
     this._frameMs = 16.7;
-    this._stats = { fps: 60, frameMs: 16.7, calls: 0, triangles: 0, pixelRatio: 1, shadows: false };
+    this._stats = {
+      fps: 60, frameMs: 16.7, calls: 0, triangles: 0, pixelRatio: 1, shadows: false,
+      renderScale: 1, shadowRenders: 0, targetMs: this._frameTargetMs,
+    };
+    this._bloom = null;
+    this._glow = null;
+    this._bufSize = new THREE.Vector2();    // scratch for getDrawingBufferSize: render() allocates nothing
+    this._renderScale = 1;
 
     this._size = { w: 0, h: 0, dpr: window.devicePixelRatio || 1 };
     this.setQuality(startName);
@@ -7919,9 +8801,25 @@ class Renderer {
       this._moverCount = cols.length;
     }
     const pairs = this._moverPairs;
+    if (!this._moverShadowPos || this._moverShadowPos.length !== pairs.length * 3) {
+      this._moverShadowPos = new Float32Array(pairs.length * 3);
+      this._shadowDirty = true;
+    }
+    const last = this._moverShadowPos;
     for (let i = 0; i < pairs.length; i++) {
       const c = pairs[i][0];
-      pairs[i][1].position.set((c.min[0] + c.max[0]) / 2, (c.min[1] + c.max[1]) / 2, (c.min[2] + c.max[2]) / 2);
+      const x = (c.min[0] + c.max[0]) / 2;
+      const y = (c.min[1] + c.max[1]) / 2;
+      const z = (c.min[2] + c.max[2]) / 2;
+      pairs[i][1].position.set(x, y, z);
+      // The cached shadow map holds the movers where they were when it was drawn. A platform that has
+      // since crept less than a shadow texel is not worth redrawing the whole map for.
+      if (!this._shadowDirty) {
+        const k = i * 3;
+        if (Math.abs(x - last[k]) + Math.abs(y - last[k + 1]) + Math.abs(z - last[k + 2]) > MOVER_SHADOW_MOVE) {
+          this._shadowDirty = true;
+        }
+      }
     }
   }
 
@@ -8110,7 +9008,8 @@ class Renderer {
     if (!motion) this._speedFx = 0;
     this._speedMat.uniforms.uIntensity.value = this._speedFx;
 
-    this._followShadow(px - Math.sin(yaw) * SHADOW_LEAD, py, pz - Math.cos(yaw) * SHADOW_LEAD);
+    const lead = this._shadowLead;
+    this._followShadow(px - Math.sin(yaw) * lead, py, pz - Math.cos(yaw) * lead, step);
 
     // the aim marker fades in/out and is sized against its depth; the rope follows the hand every frame
     const aimTarget = this._aimPoint === null ? 0 : 1;
@@ -8132,8 +9031,15 @@ class Renderer {
     this._refreshRope();
   }
 
-  // Keep the shadow frustum centred ahead of the player, snapped to shadow texels to avoid shimmer.
-  _followShadow(x, y, z) {
+  // The cascade follows the player, snapped to shadow texels so it never shimmers — but it only MOVES
+  // when it has to, and the shadow map is only redrawn when it moves. Freezing the light is what makes
+  // the cached map correct: the depth texture and the matrix that reads it are the same age.
+  //
+  // It moves on three triggers: the cascade has drifted past SHADOW_HARD_FRACTION of its own half-size
+  // (stop the world, the runner is leaving the lit area), the drift is worth a refresh and the preset's
+  // rate allows one, or a mover has moved far enough to matter. Standing still costs nothing at all.
+  _followShadow(x, y, z, step) {
+    if (!this._quality.shadows) return;
     const t = this._v1.set(x, y, z);
     const u = Math.round(t.dot(this._lightX) / this._texel) * this._texel;
     const v = Math.round(t.dot(this._lightY) / this._texel) * this._texel;
@@ -8141,10 +9047,46 @@ class Renderer {
     t.copy(this._lightX).multiplyScalar(u)
       .addScaledVector(this._lightY, v)
       .addScaledVector(SUN_DIR, w);
+
+    this._shadowClock += step;
+    const drift = this.sun.target.position.distanceTo(t);
+    const hz = num(this._quality.shadowHz, 0);
+    const period = hz > 0 ? 1 / hz : 0;
+    const ready = this._shadowClock >= period;
+    const due = drift >= this._shadowExtent * SHADOW_HARD_FRACTION ||
+      (ready && (this._shadowDirty || drift > SHADOW_SOFT_MOVE));
+    if (!due) return;
+
+    this._shadowClock = 0;
+    this._shadowDirty = false;
     this.sun.target.position.copy(t);
     this.sun.position.copy(t).addScaledVector(SUN_DIR, SHADOW_DISTANCE);
     this.sun.target.updateMatrixWorld();
     this.sun.updateMatrixWorld();
+    this.renderer.shadowMap.needsUpdate = true;
+    this._shadowRenders++;
+    const pairs = this._moverPairs;
+    const last = this._moverShadowPos;
+    if (last) {
+      for (let i = 0; i < pairs.length; i++) {
+        const pos = pairs[i][1].position;
+        const k = i * 3;
+        last[k] = pos.x;
+        last[k + 1] = pos.y;
+        last[k + 2] = pos.z;
+      }
+    }
+  }
+
+  // Resize the orthographic shadow frustum to the current cascade half-size.
+  _applyShadowFrustum() {
+    const sc = this.sun.shadow.camera;
+    sc.left = -this._shadowExtent;
+    sc.right = this._shadowExtent;
+    sc.top = this._shadowExtent;
+    sc.bottom = -this._shadowExtent;
+    sc.updateProjectionMatrix();
+    if (this.shared) this.shared.uShadowExtent.value = this._shadowExtent;
   }
 
   // fovDeg is the horizontal FOV at 4:3. Wider screens see more (Hor+); narrower ones keep that
@@ -8172,18 +9114,86 @@ class Renderer {
     if (w !== this._size.w || h !== this._size.h || dpr !== this._size.dpr) this.resize();
 
     const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
+    let step = 0;
     if (this._lastRenderAt >= 0) {
       const ms = Math.min(now - this._lastRenderAt, 250);
+      step = ms / 1000;
       this._frameMs += (ms - this._frameMs) * 0.1;
     }
     this._lastRenderAt = now;
 
+    // Adaptive resolution runs on the interval between DRAWN frames, which under a frame cap is the cap's
+    // own period: a machine comfortably holding 60 never gives up a pixel, and one that cannot holds the
+    // frame time by dropping to 0.95, 0.90... instead of stuttering.
+    const scale = this._adaptive.update(step, this._frameMs, this._frameTargetMs);
+    if (scale !== this._renderScale) this._syncPixelRatio();
+
     const r = this.renderer;
     r.info.reset();
     this.sky.position.copy(this.camera.position);
+
+    const bloom = this._bloom;
+    const overlay = this._quality.speedLines && this._speedFx > 0.003;
+    r.setRenderTarget(null);
     r.clear();
     r.render(this.scene, this.camera);
-    if (this._quality.speedLines && this._speedFx > 0.003) r.render(this._overlayScene, this._overlayCamera);
+    if (bloom) {
+      this._syncGlowScene();
+      bloom.apply(r, this.camera);    // quarter-res glow, added over the frame that is already there
+    }
+    if (overlay) r.render(this._overlayScene, this._overlayCamera);
+  }
+
+  /**
+   * The frame time (ms) the adaptive scaler tries to hold. main.js sets it from the frame cap, so the two
+   * settings agree: a 30 fps cap asks for 33.3 ms of headroom, uncapped asks for one 60 Hz frame.
+   */
+  setFrameTarget(ms) {
+    const v = typeof ms === 'number' && Number.isFinite(ms) && ms > 0 ? ms : frameTargetMs(0);
+    if (v === this._frameTargetMs) return v;
+    this._frameTargetMs = v;
+    this._adaptive.reset();            // a new budget: start from full resolution and measure again
+    this._syncPixelRatio();
+    return v;
+  }
+
+  /** Turn adaptive resolution on/off (persisted by the UI, not here). Off pins the scale at 1. */
+  setAdaptiveResolution(on) {
+    this._adaptive.setEnabled(on);
+    if (!on) this._adaptive.set(1);
+    this._syncPixelRatio();
+    return this._adaptive.enabled;
+  }
+
+  /** Pin the render scale (a benchmark, or a player who wants it fixed). Quantised to 5% steps. */
+  setRenderScale(scale) {
+    this._adaptive.set(scale);
+    this._syncPixelRatio();
+    return this._adaptive.scale;
+  }
+
+  /** The fraction of the preset's own pixel ratio the frame is currently drawn at (MIN_RENDER_SCALE..1). */
+  getRenderScale() {
+    return this._adaptive.scale;
+  }
+
+  /** True while adaptive resolution is allowed to move the scale. */
+  get adaptiveResolution() {
+    return this._adaptive.enabled;
+  }
+
+  // Push the preset ratio x the adaptive scale into the WebGL renderer, and resize the bloom chain with it.
+  _syncPixelRatio() {
+    this._renderScale = this._adaptive.scale;
+    const ratio = Math.max(0.2, Math.round(this._baseRatio * this._renderScale * 1000) / 1000);
+    if (ratio !== this._dpr) {
+      this._dpr = ratio;
+      this.renderer.setPixelRatio(ratio);
+    }
+    if (this._bloom) {
+      const size = this.renderer.getDrawingBufferSize(this._bufSize);
+      this._bloom.setSize(size.x, size.y);
+    }
   }
 
   // Drawing-buffer pixel ratio for a w x h CSS-px canvas: devicePixelRatio capped by the preset, then lowered
@@ -8202,11 +9212,11 @@ class Renderer {
     const w = Math.max(1, window.innerWidth || this.canvas.clientWidth || 1);
     const h = Math.max(1, window.innerHeight || this.canvas.clientHeight || 1);
     const dpr = window.devicePixelRatio || 1;
-    const ratio = this._pixelRatioFor(w, h, dpr);
-    if (ratio !== this._dpr) {
-      this._dpr = ratio;
-      this.renderer.setPixelRatio(ratio);
-    }
+    this._baseRatio = this._pixelRatioFor(w, h, dpr);
+    this._dpr = -1;                    // force _syncPixelRatio() to push the ratio through
+    const ratio = Math.max(0.2, Math.round(this._baseRatio * this._adaptive.scale * 1000) / 1000);
+    this._dpr = ratio;
+    this.renderer.setPixelRatio(ratio);
     this.renderer.setSize(w, h, true);
     this._size.w = w;
     this._size.h = h;
@@ -8214,6 +9224,11 @@ class Renderer {
     this.camera.aspect = w / h;
     this._setFov(this._fov, true);
     this._speedMat.uniforms.uAspect.value = w / h;
+    this._renderScale = this._adaptive.scale;
+    if (this._bloom) {
+      const size = this.renderer.getDrawingBufferSize(this._bufSize);
+      this._bloom.setSize(size.x, size.y);
+    }
   }
 
   // Apply a graphics preset ('pc' | 'laptop', see quality.js) live, without reload. Unknown names -> 'pc'.
@@ -8231,7 +9246,8 @@ class Renderer {
 
     // shadows: toggling castShadow changes the lights hash, and needsUpdate recompiles the receivers
     const r = this.renderer;
-    const shadowsChanged = !prev || prev.shadows !== q.shadows || prev.shadowMapSize !== q.shadowMapSize;
+    const shadowsChanged = !prev || prev.shadows !== q.shadows || prev.shadowMapSize !== q.shadowMapSize ||
+      prev.shadowExtent !== q.shadowExtent;
     if (shadowsChanged) {
       r.shadowMap.enabled = q.shadows;
       this.sun.castShadow = q.shadows;
@@ -8240,8 +9256,14 @@ class Renderer {
         this.sun.shadow.map = null;
       }
       if (q.shadows) {
-        this.sun.shadow.mapSize.set(q.shadowMapSize, q.shadowMapSize);
-        this._texel = (SHADOW_EXTENT * 2) / q.shadowMapSize;
+        const size = q.shadowMapSize || 1536;
+        this.sun.shadow.mapSize.set(size, size);
+        this._shadowExtent = q.shadowExtent || 32;
+        this._shadowLead = num(q.shadowLead, 11);
+        this._texel = (this._shadowExtent * 2) / size;
+        this._applyShadowFrustum();
+        this._shadowDirty = true;
+        this._shadowClock = 1e3;
         r.shadowMap.needsUpdate = true;
       }
       if (prev) {
@@ -8253,33 +9275,32 @@ class Renderer {
       }
     }
 
-    // view distance: far plane + fog; the sky dome shrinks to stay inside the far plane
+    // view distance: far plane + fog; the sky dome is a unit sphere scaled to sit inside the far plane,
+    // which is also what keeps it BEHIND the farthest skyline tower now that it is depth-tested.
     this.camera.far = q.cameraFar;
     this.camera.updateProjectionMatrix();
     this.scene.fog.density = q.fogDensity;
-    const skyScale = Math.min(1, (q.cameraFar * 0.9) / 1400);
-    this.sky.scale.setScalar(skyScale);
+    this.sky.scale.setScalar(q.cameraFar * 0.86);
     this._setSky(q.sky === 'cheap' ? 'cheap' : 'full');
+    this.shared.uWinGlint.value = q.windows === 'lit' ? 0.40 : 0;
+    this._applyCityMaterial();
 
-    // skyline: nearest-first geometry, so hiding far buildings is a draw range
-    const sky = this._skyline;
-    if (sky && sky.userData.skylineDists) {
-      const d = sky.userData.skylineDists;
-      let n = d.length;
-      if (Number.isFinite(q.skylineRange)) {
-        n = 0;
-        while (n < d.length && d[n] <= q.skylineRange) n++;
-      }
-      sky.geometry.setDrawRange(0, n * sky.userData.indicesPerEntry);
-      sky.visible = n > 0;
+    // skyline: nearest tower first, so hiding the far ones is a draw range. Each tower contributes a
+    // variable number of indices (shaft, setbacks, rooftop clutter), hence the running total.
+    this._cullCity(this._skyline, q.skylineRange);
+    this._cullCity(this._skylineDetail, q.clutterRange);
+
+    // bloom: PC only. It is a render target plus three small passes, so it is built on first use and
+    // thrown away the moment a preset turns it off (its buffers are the size of the drawing buffer).
+    if (q.bloom && !this._bloom) {
+      this._bloom = createBloom(THREE, {});
+      this._buildGlowScene();
+    } else if (!q.bloom && this._bloom) {
+      this._bloom.dispose();
+      this._bloom = null;
+      this._glow = null;
+      r.setRenderTarget(null);
     }
-
-    // grapple visuals: the same marker in both presets, quieter and with a coarser rope on laptop
-    this._aimGlow = num(q.grappleGlow, 1);
-    if (this._rope) this._rope.setSegments(num(q.ropeSegments, 26));
-    // the ghost: the same figure either way, a shorter trail and a coarser rope on laptop
-    if (this._ghost) this._ghost.setDetail(q.shading === 'cheap' ? 'cheap' : 'full');
-    if (this._ghostRope) this._ghostRope.setSegments(num(q.ropeSegments, 26));
 
     if (!q.speedLines) this._speedFx = 0;
     this._dpr = -1;                        // force resize() to re-apply the pixel ratio
@@ -8287,34 +9308,121 @@ class Renderer {
     return q.name;
   }
 
+  // Hide every city part past `range` metres from the course, by shortening the draw range. Each tower
+  // contributes a variable number of indices, hence the running total the builder recorded.
+  _cullCity(mesh, range) {
+    if (!mesh || !mesh.userData.skylineDists) return;
+    const d = mesh.userData.skylineDists;
+    const ends = mesh.userData.skylineEnds;
+    let n = d.length;
+    if (Number.isFinite(range)) {
+      n = 0;
+      while (n < d.length && d[n] <= range) n++;
+    }
+    mesh.geometry.setDrawRange(0, n > 0 ? ends[n - 1] : 0);
+    mesh.visible = n > 0;
+  }
+
+  // The glow pass draws its own scene: the sun (through the sky dome) and the city's windows as glow
+  // sources, and flat black stand-ins for everything solid that can get in front of them. Every mesh here
+  // SHARES the geometry of the one it stands for — including the skyline's, so the preset's draw range
+  // culls the far towers out of the glow too — so the whole thing costs a handful of objects and no VRAM.
+  _buildGlowScene() {
+    if (!this._bloom) return;
+    const scene = this._bloom.scene;
+    scene.clear();
+    const mats = createGlowMaterials(THREE, this.shared, {
+      sun: this._fullSkyMat.uniforms.uSun.value,
+      cosSun: this._fullSkyMat.uniforms.uCosSun.value,
+    });
+    this._glow = { mats, movers: [], sky: null };
+
+    const add = (source, material, name) => {
+      if (!source) return null;
+      const mesh = new THREE.Mesh(source.geometry, material);
+      mesh.name = 'glow-' + name;
+      mesh.matrixAutoUpdate = source.matrixAutoUpdate;
+      mesh.position.copy(source.position);
+      mesh.scale.copy(source.scale);
+      mesh.updateMatrix();
+      mesh.frustumCulled = source.frustumCulled;
+      scene.add(mesh);
+      return mesh;
+    };
+
+    // Glass is deliberately NOT an occluder: you can see the sunset through a pane, so the glow should
+    // come through it too.
+    for (const key of ['concrete', 'bounce']) add(this._staticMeshes[key], mats.occluder, key);
+    for (const mesh of this._moverList) this._glow.movers.push(add(mesh, mats.occluder, mesh.name));
+    add(this._staticMeshes.deco, mats.windowGlow, 'deco');
+    add(this._skyline, mats.windowGlow, 'skyline');
+    add(this._skylineDetail, mats.windowGlow, 'skyline-detail');
+    const sky = add(this.sky, mats.sunGlow, 'sky');
+    if (sky) sky.renderOrder = 1000;      // last, like the real dome, so it is depth-tested against the city
+    this._glow.sky = sky;
+  }
+
+  // Keep the glow stand-ins where their originals are. Allocation-free and only a few objects long.
+  _syncGlowScene() {
+    const g = this._glow;
+    if (!g) return;
+    if (g.sky) {
+      g.sky.position.copy(this.sky.position);
+      g.sky.scale.copy(this.sky.scale);
+      g.sky.updateMatrix();
+      g.sky.updateMatrixWorld();
+    }
+    const list = this._moverList;
+    for (let i = 0; i < g.movers.length; i++) {
+      const stand = g.movers[i];
+      if (stand) stand.position.copy(list[i].position);
+    }
+  }
+
   // Point every level mesh at one of the two surface material sets ('pbr' | 'cheap'). Both sets stay alive
   // for the life of the Renderer: there are six materials each, and rebuilding them on every preset switch
   // would recompile shaders (and leak programs) instead of saving anything.
   _setShading(kind) {
     if (this._shading === kind) return;
-    if (kind === 'cheap' && !this._cheapMaterials) {
-      if (!this._gridTex) this._gridTex = createGridTexture(THREE);
-      if (this._cheapLight.gridTexture === undefined) this._cheapLight.gridTexture = this._gridTex;
-      this._cheapMaterials = createCheapSurfaceMaterials(THREE, this.shared, this._cheapLight);
-    }
+    this._ensureCheapMaterials();
     const set = kind === 'cheap' ? this._cheapMaterials : this.materials;
     this._shading = kind;
     for (const key of Object.keys(this._staticMeshes)) {
       if (set[key]) this._staticMeshes[key].material = set[key];
     }
     for (const mesh of this._moverList) mesh.material = set.mover;
-    if (this._skyline) this._skyline.material = set.deco;
+    // THE CITY IS ALWAYS CHEAP-SHADED, on both presets. Every city box is a flat axis-aligned face, so the
+    // per-vertex sun + hemisphere term is exact for the diffuse part and all PBR adds is a specular lobe at
+    // roughness 0.96 that nobody can see through 400 m of haze. The city fills a large part of the frame on
+    // a rooftop game, so this is the single biggest per-pixel saving on the PC preset.
+    this._applyCityMaterial();
   }
 
-  // Sky dome shader: 'full' (pc, pow-based, drawn first with no depth test) or 'cheap' (laptop, pow-free
-  // and depth-tested last of the opaque objects, so pixels the level already covers are never shaded).
+  // The city's material is chosen by the preset's `windows` flag, not by the shading kind: 'lit' reads
+  // the window tile (and gets the raking-sun sheet), 'flat' works the same grid out arithmetically.
+  _applyCityMaterial() {
+    const set = this._cheapMaterials;
+    if (!set) return;
+    const deco = this._quality.windows === 'lit' ? set.deco : (set.decoFlat || set.deco);
+    if (this._skyline) this._skyline.material = deco;
+    if (this._skylineDetail) this._skylineDetail.material = deco;
+    if (this._staticMeshes.deco) this._staticMeshes.deco.material = deco;
+  }
+
+  _ensureCheapMaterials() {
+    if (this._cheapMaterials) return;
+    if (!this._gridTex) this._gridTex = createGridTexture(THREE);
+    if (this._cheapLight.gridTexture === undefined) this._cheapLight.gridTexture = this._gridTex;
+    this._cheapMaterials = createCheapSurfaceMaterials(THREE, this.shared, this._cheapLight);
+  }
+
+  // Sky dome shader: 'full' (analytic single scattering with a limb-darkened disc) or 'cheap' (the same
+  // colours through a gradient). Both are drawn last of the opaque objects with the depth test on.
   _setSky(kind) {
     if (this._skyKind === kind) return;
-    if (kind === 'cheap' && !this._cheapSkyMat) this._cheapSkyMat = createCheapSkyMaterial(THREE, SUN_DIR);
-    if (!this._fullSkyMat) this._fullSkyMat = this.sky.material;
+    if (kind === 'cheap' && !this._cheapSkyMat) this._cheapSkyMat = createSkyMaterial(THREE, SUN_DIR, true);
     this._skyKind = kind;
     this.sky.material = kind === 'cheap' ? this._cheapSkyMat : this._fullSkyMat;
-    this.sky.renderOrder = kind === 'cheap' ? 1000 : -1000;
   }
 
   // Frame stats for the FPS readout / auto-detect. calls + triangles cover the whole last frame (shadow pass included).
@@ -8327,6 +9435,9 @@ class Renderer {
     s.triangles = info.triangles;
     s.pixelRatio = this.renderer.getPixelRatio();
     s.shadows = !!(this.renderer.shadowMap.enabled && this.sun.castShadow);
+    s.renderScale = this._adaptive.scale;
+    s.shadowRenders = this._shadowRenders;
+    s.targetMs = this._frameTargetMs;
     return s;
   }
 
@@ -8344,6 +9455,9 @@ class Renderer {
       if (obj.geometry) obj.geometry.dispose();
     });
     if (this._gridTex) this._gridTex.dispose();
+    if (this._winTex) this._winTex.dispose();
+    if (this._bloom) this._bloom.dispose();
+    if (this._glow) for (const m of Object.values(this._glow.mats)) m.dispose();
     if (this._cheapSkyMat) this._cheapSkyMat.dispose();
     if (this._fullSkyMat) this._fullSkyMat.dispose();
     // The set that is not currently attached to a mesh is not reached by the traversal above.
@@ -8361,7 +9475,7 @@ return Object.freeze({ Renderer });
 })();
 
 // ---- js/audio-synth.js ----
-const __vl$m22_js_audio_synth = (function () {
+const __vl$m24_js_audio_synth = (function () {
 
 // Vaultline audio building blocks used by Sfx (js/audio.js): envelopes, param helpers, procedural noise buffers,
 // and the sustained sound graphs (slide scrape, wall-run patter, speed wind). WebAudio only, no DOM access.
@@ -8751,8 +9865,8 @@ return Object.freeze({ clamp, rand, env, glideTo, aimParam, aimWithHold, stopSou
 })();
 
 // ---- js/audio.js ----
-const __vl$m23_js_audio = (function () {
-const { clamp, rand, env, glideTo, aimParam, aimWithHold, disconnect, pannedOutput, makeNoiseBuffer, makeSoftClipCurve, fadeOutLoop, createSlideLoop, createWallrunLoop, createReelLoop, createWind } = __vl$m22_js_audio_synth;
+const __vl$m25_js_audio = (function () {
+const { clamp, rand, env, glideTo, aimParam, aimWithHold, disconnect, pannedOutput, makeNoiseBuffer, makeSoftClipCurve, fadeOutLoop, createSlideLoop, createWallrunLoop, createReelLoop, createWind } = __vl$m24_js_audio_synth;
 // Vaultline sound effects: fully synthesized WebAudio (no asset files).
 //
 // Graph:  one-shot voices ─┐
@@ -9507,7 +10621,7 @@ return Object.freeze({ Sfx });
 })();
 
 // ---- js/hud.js ----
-const __vl$m24_js_hud = (function () {
+const __vl$m26_js_hud = (function () {
 const { PHYS } = __vl$m0_js_config;
 // HUD + menu screens. DOM lives in index.html; every lookup is optional so a missing
 // element never throws. Only reads config for speed-bar scaling.
@@ -9562,6 +10676,7 @@ const IDS = [
   'ghost-delta', 'ghost-delta-label', 'ghost-delta-value',
   'settings', 'sens', 'sens-val', 'vol', 'vol-val',
   'quality-pc', 'quality-laptop', 'quality-help', 'show-fps', 'fps', 'fps-value',
+  'cap-30', 'cap-60', 'cap-120', 'cap-off', 'cap-help', 'adaptive-res',
   'screen-pause', 'pause-body', 'pause-time', 'pause-split', 'pause-settings-slot',
   'screen-finish', 'finish-body', 'finish-time', 'finish-pb', 'finish-compare', 'finish-splits',
   'finish-ghost', 'finish-ghost-time', 'finish-ghost-delta', 'finish-ghost-verdict',
@@ -9581,9 +10696,12 @@ const VIEW_FOCUS = { home: 'btn-play', tutorials: 'btn-tut-back', levels: 'btn-l
 const MAX_PIPS = 5;
 
 const QUALITY_HELP = {
-  pc: 'Full detail: sharp resolution, soft shadows, speed lines',
+  pc: 'Golden hour: sun, shadows, glowing towers, bloom',
   laptop: 'Smoother: lighter resolution, no shadows, shorter view distance',
 };
+
+// The frame cap's radio ids, in the order the segmented control shows them. 0 is 'Off' (uncapped).
+const FRAME_CAPS = [[30, 'cap-30'], [60, 'cap-60'], [120, 'cap-120'], [0, 'cap-off']];
 
 // ---------------------------------------------------------------- helpers
 
@@ -9704,8 +10822,13 @@ class Hud {
     /** Current graphics preset shown by the UI ('pc' | 'laptop') and FPS readout state. */
     this.quality = 'pc';
     this.showFps = false;
+    /** Frame pacing shown by the UI: cap in fps (0 = uncapped) and adaptive resolution on/off. */
+    this.frameCap = 60;
+    this.adaptive = true;
     this._qualityCbs = [];
     this._showFpsCbs = [];
+    this._capCbs = [];
+    this._adaptiveCbs = [];
     this._fpsText = '';
 
     /** The title screen's menu: which view is up, what the cards are, and which card is picked. */
@@ -10004,6 +11127,36 @@ class Hud {
     if (pc) pc.checked = q === 'pc';
     if (laptop) laptop.checked = q === 'laptop';
     this._setText(this.el['quality-help'], QUALITY_HELP[q]);
+  }
+
+  /** Register a listener for the frame cap: cb(30|60|120|0). Not fired by setFrameCap(). */
+  onFrameCapChange(cb) {
+    if (typeof cb === 'function') this._capCbs.push(cb);
+  }
+
+  /** Register a listener for the adaptive-resolution switch: cb(boolean). Not fired by setAdaptive(). */
+  onAdaptiveChange(cb) {
+    if (typeof cb === 'function') this._adaptiveCbs.push(cb);
+  }
+
+  /** Show a frame cap as the active one (no callback). 0 selects 'Off'. */
+  setFrameCap(cap) {
+    const known = FRAME_CAPS.some((c) => c[0] === cap);
+    this.frameCap = known ? cap : 60;
+    for (const [value, id] of FRAME_CAPS) {
+      const el = this.el[id];
+      if (el) el.checked = value === this.frameCap;
+    }
+    this._setText(this.el['cap-help'], this.frameCap > 0
+      ? 'Draws at most ' + this.frameCap + ' frames a second. A lower cap means a quieter, cooler machine.'
+      : 'Draws as fast as the display allows. Your machine will work hardest here.');
+  }
+
+  /** Tick or clear the adaptive-resolution checkbox (no callback). */
+  setAdaptive(on) {
+    this.adaptive = !!on;
+    const box = this.el['adaptive-res'];
+    if (box) box.checked = this.adaptive;
   }
 
   // ------------------------------------------------------------ the menu (title screen)
@@ -10873,8 +12026,33 @@ class Hud {
         for (const cb of this._showFpsCbs) cb(this.showFps);
       });
     }
+
+    let lastCap = { value: -1, at: 0 };
+    const pickCap = (value) => {
+      const now = Date.now();
+      if (lastCap.value === value && now - lastCap.at < 60) return;
+      lastCap = { value: value, at: now };
+      this.setFrameCap(value);
+      for (const cb of this._capCbs) cb(this.frameCap);
+    };
+    for (const [value, id] of FRAME_CAPS) {
+      const el = this.el[id];
+      if (!el) continue;
+      el.addEventListener('change', () => { if (el.checked) pickCap(value); });
+      el.addEventListener('click', () => { if (el.checked) pickCap(value); });
+    }
+    const adaptive = this.el['adaptive-res'];
+    if (adaptive) {
+      adaptive.addEventListener('change', () => {
+        this.setAdaptive(adaptive.checked);
+        for (const cb of this._adaptiveCbs) cb(this.adaptive);
+      });
+    }
+
     this.setQuality(this.quality);
     this.setShowFps(this.showFps);
+    this.setFrameCap(this.frameCap);
+    this.setAdaptive(this.adaptive);
   }
 
   // ------------------------------------------------------------ setup
@@ -11344,7 +12522,7 @@ return Object.freeze({ formatTime, formatDelta, Hud });
 })();
 
 // ---- js/game-flyover.js ----
-const __vl$m25_js_game_flyover = (function () {
+const __vl$m27_js_game_flyover = (function () {
 
 // Title-screen camera: a slow, smoothed flight along the course (spawn -> checkpoints -> finish).
 // No three.js here: it produces a fake "player" object that Renderer.update(dt, player) understands.
@@ -11451,7 +12629,7 @@ return Object.freeze({ Flyover });
 })();
 
 // ---- js/game-records.js ----
-const __vl$m26_js_game_records = (function () {
+const __vl$m28_js_game_records = (function () {
 
 // Personal-best bookkeeping for main.js.
 //
@@ -11565,7 +12743,7 @@ return Object.freeze({ LEGACY_PB_KEY, PB_PREFIX, pbKeyFor, migratePB, readPB, wr
 })();
 
 // ---- js/game-migrate.js ----
-const __vl$m27_js_game_migrate = (function () {
+const __vl$m29_js_game_migrate = (function () {
 
 // One-time rename of this browser's own records when a level's id changes.
 //
@@ -11675,11 +12853,21 @@ return Object.freeze({ DONE_KEY, PB_PREFIX, GHOST_PREFIX, GHOST_INDEX_KEY, ID_MA
 })();
 
 // ---- js/game-quality.js ----
-const __vl$m28_js_game_quality = (function () {
-const { QUALITY, QUALITY_KEY, SHOW_FPS_KEY, AUTO_SAMPLE_SEC, AUTO_SWITCH_MS, isQualityName, readStoredQuality } = __vl$m20_js_quality;
-// Graphics preset + FPS readout controller for main.js.
+const __vl$m30_js_game_quality = (function () {
+const { QUALITY, QUALITY_KEY, SHOW_FPS_KEY, AUTO_SAMPLE_SEC, AUTO_SWITCH_MS, isQualityName, readStoredQuality, isFrameCap, detectDefaultFrameCap, writeStoredFrameCap, detectDefaultAdaptive, writeStoredAdaptive, frameTargetMs } = __vl$m20_js_quality;
+const { FrameLimiter } = __vl$m21_js_render_adaptive;
+// Graphics preset + frame pacing + FPS readout controller for main.js.
 // Owns: the persisted choice ('vaultline.quality'), the one-time auto switch on first launch, applying the
-// preset to the Renderer (guarded: setQuality/getStats may be missing) and the ~4 Hz FPS readout.
+// preset to the Renderer (guarded: setQuality/getStats may be missing), the ~4 Hz FPS readout, and the two
+// frame-pacing settings that apply to both presets - the frame cap ('vaultline.fpscap') and adaptive
+// resolution ('vaultline.adaptive'). main.js asks shouldDraw() once per animation frame and skips the whole
+// render when it says no; the Renderer is told the frame time that cap implies so its adaptive scaler and
+// the cap are always aiming at the same number.
+
+
+
+
+
 
 
 const WARMUP_FRAMES = 12;      // skip shader compile / first uploads
@@ -11721,6 +12909,12 @@ class GraphicsControl {
     // The HUD (and its hint) is hidden while a screen is up, so the auto-switch hint waits for play.
     this.pendingHint = '';
 
+    // Frame pacing. The cap is what stops a machine burning a whole GPU to draw a menu at 240 fps; the
+    // limiter itself is pure maths (js/render-adaptive.js) so it is testable without a browser.
+    this.frameCap = detectDefaultFrameCap();
+    this.adaptive = detectDefaultAdaptive();
+    this.limiter = new FrameLimiter(this.frameCap);
+
     this.showFps = storeGet(SHOW_FPS_KEY) === '1';
     this._fpsFrames = 0;
     this._fpsTime = 0;
@@ -11728,13 +12922,63 @@ class GraphicsControl {
 
     hud.setQuality(this.name);
     hud.setShowFps(this.showFps);
+    hud.setFrameCap(this.frameCap);
+    hud.setAdaptive(this.adaptive);
     hud.onQualityChange((name) => this.choose(name));
     hud.onShowFpsChange((on) => this.setShowFps(on));
+    hud.onFrameCapChange((cap) => this.setFrameCap(cap));
+    hud.onAdaptiveChange((on) => this.setAdaptive(on));
   }
 
   attach(renderer) {
     this.renderer = renderer;
     this.apply();
+    this._applyPacing();
+  }
+
+  /**
+   * True when this animation frame should be drawn. Uncapped, or while the first-launch auto-detect is
+   * still measuring, every frame draws: the detector is judging how fast this machine renders, and a
+   * capped sample would tell it about the cap instead.
+   */
+  shouldDraw(nowMs) {
+    if (this.detecting) return true;
+    return this.limiter.shouldDraw(nowMs);
+  }
+
+  /** Frame cap in fps, 0 = uncapped. Persisted, and applied to the Renderer's frame-time target. */
+  setFrameCap(cap) {
+    if (!isFrameCap(cap) || cap === this.frameCap) return this.frameCap;
+    this.frameCap = cap;
+    writeStoredFrameCap(cap);
+    this.hud.setFrameCap(cap);
+    this._applyPacing();
+    return this.frameCap;
+  }
+
+  /** Adaptive resolution on/off. Persisted, and pushed to the Renderer. */
+  setAdaptive(on) {
+    const want = !!on;
+    if (want === this.adaptive) return this.adaptive;
+    this.adaptive = want;
+    writeStoredAdaptive(want);
+    this.hud.setAdaptive(want);
+    this._applyPacing();
+    return this.adaptive;
+  }
+
+  /** The scale the Renderer is currently drawing at (1 when it does not report one). */
+  get renderScale() {
+    const r = this.renderer;
+    return r && typeof r.getRenderScale === 'function' ? r.getRenderScale() : 1;
+  }
+
+  _applyPacing() {
+    this.limiter.setCap(this.frameCap);
+    const r = this.renderer;
+    if (!r) return;
+    if (typeof r.setFrameTarget === 'function') r.setFrameTarget(frameTargetMs(this.frameCap));
+    if (typeof r.setAdaptiveResolution === 'function') r.setAdaptiveResolution(this.adaptive);
   }
 
   apply() {
@@ -11745,6 +12989,7 @@ class GraphicsControl {
   // User pick from the UI: persist, cancel auto-detect, apply live.
   choose(name) {
     if (!isQualityName(name)) return;
+    if (this.detecting) this.limiter.reset();
     this.detecting = false;
     this.pendingHint = '';        // the player just chose: the auto-switch message would be stale
     storeSet(QUALITY_KEY, name);
@@ -11799,6 +13044,7 @@ class GraphicsControl {
     if (this._sumSec < AUTO_SAMPLE_SEC && this._wall < MAX_WAIT_SEC) return;
 
     this.detecting = false;
+    this.limiter.reset();               // the cap starts its schedule now that the sampling is over
     this.detectAvgMs = this._counted > 0
       ? this._sumMs / this._counted
       : this._wall * 1000 / Math.max(1, this._frames - WARMUP_FRAMES);
@@ -11824,7 +13070,7 @@ return Object.freeze({ GraphicsControl });
 })();
 
 // ---- js/level-codec.js ----
-const __vl$m29_js_level_codec = (function () {
+const __vl$m31_js_level_codec = (function () {
 
 // Level <-> link payload, shared by the game and the level designer so the two can never drift.
 //
@@ -12052,7 +13298,7 @@ return Object.freeze({ CODEC_VERSION, TAG_DEFLATE, TAG_PLAIN, LINK_WARN_LENGTH, 
 })();
 
 // ---- js/levels/tutorial2.js ----
-const __vl$m30_js_levels_tutorial2 = (function () {
+const __vl$m32_js_levels_tutorial2 = (function () {
 
 // CHALLENGE LEVEL 1 — PROVING GROUND. A longer tutorial that picks up where the campaign stops:
 // precise mantling -> slide-jump chains -> wall-run into wall-jump -> the grappling hook (E ropes, F reels).
@@ -12213,7 +13459,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/wallrun.js ----
-const __vl$m31_js_levels_wallrun = (function () {
+const __vl$m33_js_levels_wallrun = (function () {
 
 // CHALLENGE LEVEL 2 — YELLOW LINE.  WALL-RUN ONLY: every gap and every metre of climb is crossed by running
 // on the yellow walls and kicking off them. There is not one grapple anchor in the level, and no gap is
@@ -12369,7 +13615,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/slide.js ----
-const __vl$m32_js_levels_slide = (function () {
+const __vl$m34_js_levels_slide = (function () {
 
 // CHALLENGE LEVEL 4 — THE UNDERPASS.  SLIDE ONLY: ducts with 1.1 m of headroom, lips that end in gaps no
 // standing jump can clear, and a serpentine you have to steer through on your back. Hold C from the first
@@ -12497,7 +13743,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/grapple.js ----
-const __vl$m33_js_levels_grapple = (function () {
+const __vl$m35_js_levels_grapple = (function () {
 
 // CHALLENGE LEVEL 3 — SKYHOOK.  GRAPPLE ONLY: a line of small decks strung over an open void, crossed on
 // the underside of the sky-bridges that span it. Every gap is 18 .. 20 m — two and a half times a sprint
@@ -12619,7 +13865,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/gauntlet.js ----
-const __vl$m34_js_levels_gauntlet = (function () {
+const __vl$m36_js_levels_gauntlet = (function () {
 
 // CHALLENGE LEVEL 5 — THE GAUNTLET.  The last unlock: every move in the game, back to back, with the
 // tolerances the other levels give you spent. Pure data: no imports, no DOM.
@@ -12766,7 +14012,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/tut-move.js ----
-const __vl$m35_js_levels_tut_move = (function () {
+const __vl$m37_js_levels_tut_move = (function () {
 
 // TUTORIAL 1 — FIRST STEPS.  One skill: getting around on foot.  Walk and look, jump a small gap, sprint a
 // wide one, step up a curb, mantle a ledge. Nothing here can kill you: every gap has a floor a metre and a
@@ -12882,7 +14128,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/tut-slide.js ----
-const __vl$m36_js_levels_tut_slide = (function () {
+const __vl$m38_js_levels_tut_slide = (function () {
 
 // TUTORIAL 2 — GET LOW.  One skill: the crouch-slide.  Sprint, tap C, and you drop onto your back with a
 // 3.5 m/s boost that carries you under a ceiling no standing runner fits through — and off the far lip
@@ -12989,7 +14235,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/tut-wall.js ----
-const __vl$m37_js_levels_tut_wall = (function () {
+const __vl$m39_js_levels_tut_wall = (function () {
 
 // TUTORIAL 3 — OFF THE WALL.  One skill: the yellow walls.  Sprint at one, jump into it and hold W and you
 // run along it; press SPACE again and you kick off it. The first wall stands beside ordinary ground with
@@ -13113,7 +14359,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/tut-swing.js ----
-const __vl$m38_js_levels_tut_swing = (function () {
+const __vl$m40_js_levels_tut_swing = (function () {
 
 // TUTORIAL 4 — ON THE ROPE.  One skill: E.  E throws a rope at whatever the crosshair is on and the rope
 // HOLDS for as long as E is held — look away, spin around, it stays. It never pulls: it is a pure
@@ -13218,7 +14464,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/tut-shoot.js ----
-const __vl$m39_js_levels_tut_shoot = (function () {
+const __vl$m41_js_levels_tut_shoot = (function () {
 
 // TUTORIAL 5 — THE REEL.  One skill: F.  Throw the rope with E, then hold F and the rope stops being a
 // constraint and becomes an engine: it hauls you at the anchor and winds itself in, and when it runs out of
@@ -13319,7 +14565,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/tut-final.js ----
-const __vl$m40_js_levels_tut_final = (function () {
+const __vl$m42_js_levels_tut_final = (function () {
 
 // TUTORIAL 6 — GRADUATION.  Every lesson in the pack, once each, in the order they were taught: a sprint gap
 // and a 2.4 m mantle, a duct and a slide-jump, a yellow wall over 10 m of air, a rope swing, and one reel
@@ -13436,13 +14682,13 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/pack-tutorials.js ----
-const __vl$m41_js_levels_pack_tutorials = (function () {
-const { LEVEL: MOVE } = __vl$m35_js_levels_tut_move;
-const { LEVEL: SLIDE } = __vl$m36_js_levels_tut_slide;
-const { LEVEL: WALL } = __vl$m37_js_levels_tut_wall;
-const { LEVEL: SWING } = __vl$m38_js_levels_tut_swing;
-const { LEVEL: SHOOT } = __vl$m39_js_levels_tut_shoot;
-const { LEVEL: FINAL } = __vl$m40_js_levels_tut_final;
+const __vl$m43_js_levels_pack_tutorials = (function () {
+const { LEVEL: MOVE } = __vl$m37_js_levels_tut_move;
+const { LEVEL: SLIDE } = __vl$m38_js_levels_tut_slide;
+const { LEVEL: WALL } = __vl$m39_js_levels_tut_wall;
+const { LEVEL: SWING } = __vl$m40_js_levels_tut_swing;
+const { LEVEL: SHOOT } = __vl$m41_js_levels_tut_shoot;
+const { LEVEL: FINAL } = __vl$m42_js_levels_tut_final;
 // The TUTORIALS pack: six short lessons, one skill each, for a player who has never played.
 // Pure data + imports: no DOM, no side effects. A level-select screen can read this directly —
 // `level` is the LEVEL object itself, in exactly the js/level-data.js shape, ready for `new World(level)`.
@@ -13519,7 +14765,7 @@ return Object.freeze({ TUTORIALS_PACK });
 })();
 
 // ---- js/levels/tut-dash.js ----
-const __vl$m42_js_levels_tut_dash = (function () {
+const __vl$m44_js_levels_tut_dash = (function () {
 
 // TUTORIAL 7 — DEAD AIR.  One skill: the air dash.  Q (or the right mouse button) spends the one charge you
 // carry and throws you flat and fast in whatever direction you are holding — distance, never height. It is
@@ -13625,7 +14871,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/tut-climb.js ----
-const __vl$m43_js_levels_tut_climb = (function () {
+const __vl$m45_js_levels_tut_climb = (function () {
 
 // TUTORIAL 8 — UP THE FACE.  One skill: the wall-climb.  Walk into a wall too tall to pull yourself up,
 // hold W, and press SPACE: you run 3 m straight up it, and if a lip comes inside reach on the way the
@@ -13734,9 +14980,9 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/pack-moves.js ----
-const __vl$m44_js_levels_pack_moves = (function () {
-const { LEVEL: DASH } = __vl$m42_js_levels_tut_dash;
-const { LEVEL: CLIMB } = __vl$m43_js_levels_tut_climb;
+const __vl$m46_js_levels_pack_moves = (function () {
+const { LEVEL: DASH } = __vl$m44_js_levels_tut_dash;
+const { LEVEL: CLIMB } = __vl$m45_js_levels_tut_climb;
 // The MOVES pack: two lessons for the two moves that need teaching, the air dash and the wall-climb.
 // Pure data + imports: no DOM, no side effects. A level-select screen can read this directly —
 // `level` is the LEVEL object itself, in exactly the js/level-data.js shape, ready for `new World(level)`.
@@ -13777,7 +15023,7 @@ return Object.freeze({ MOVES_PACK });
 })();
 
 // ---- js/levels/skyline.js ----
-const __vl$m45_js_levels_skyline = (function () {
+const __vl$m47_js_levels_skyline = (function () {
 
 // PACK LEVEL 1 — SKYLINE MILE.  A long, flowing rooftop sprint: nothing here is hard on its own, the whole
 // level is about holding 11 m/s for 588 m. Every jump is 3.5 .. 4.5 m against REACH.gapSprint 5.0, the steps
@@ -13928,7 +15174,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/floodway.js ----
-const __vl$m46_js_levels_floodway = (function () {
+const __vl$m48_js_levels_floodway = (function () {
 
 // PACK LEVEL 2 — THE FLOODWAY.  A storm channel run on your back: bays of concrete with a 1.1 m ceiling over
 // them (REACH.slideClearance), spillway holes between the bays, and a roof that stops covering the whole
@@ -14087,7 +15333,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/freight.js ----
-const __vl$m47_js_levels_freight = (function () {
+const __vl$m49_js_levels_freight = (function () {
 
 // PACK LEVEL 3 — FREIGHT YARD.  Almost every metre forward is taken standing on something that is moving:
 // forward ferries, sideways ferries that hand you across to each other, and two gantry lifts that carry you
@@ -14205,7 +15451,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/canyon.js ----
-const __vl$m48_js_levels_canyon = (function () {
+const __vl$m50_js_levels_canyon = (function () {
 
 // PACK LEVEL 4 — HOOK CANYON.  Fifteen ledges cut into the two walls of a canyon, and nothing between them
 // but green anchors and 16 .. 18 m of air — more than twice the 9.5 m a sprint jump carries, so every one of
@@ -14336,7 +15582,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/ascent.js ----
-const __vl$m49_js_levels_ascent = (function () {
+const __vl$m51_js_levels_ascent = (function () {
 
 // PACK LEVEL 5 — THE ASCENT.  A tower under scaffolding, climbed from y 10 to y 76.5 without ever turning
 // back: every unit of this level gains height and gives up as little ground as it can. Four things carry you
@@ -14531,7 +15777,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/crosstown.js ----
-const __vl$m50_js_levels_crosstown = (function () {
+const __vl$m52_js_levels_crosstown = (function () {
 
 // PACK LEVEL 6 — CROSSTOWN.  Every move in the pack, in the order the pack taught them, with the city built
 // so that there is nearly always more than one way through: a duct beside an open stair, an anchor over a
@@ -14741,13 +15987,13 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/pack-levels.js ----
-const __vl$m51_js_levels_pack_levels = (function () {
-const { LEVEL: SKYLINE } = __vl$m45_js_levels_skyline;
-const { LEVEL: FLOODWAY } = __vl$m46_js_levels_floodway;
-const { LEVEL: FREIGHT } = __vl$m47_js_levels_freight;
-const { LEVEL: CANYON } = __vl$m48_js_levels_canyon;
-const { LEVEL: ASCENT } = __vl$m49_js_levels_ascent;
-const { LEVEL: CROSSTOWN } = __vl$m50_js_levels_crosstown;
+const __vl$m53_js_levels_pack_levels = (function () {
+const { LEVEL: SKYLINE } = __vl$m47_js_levels_skyline;
+const { LEVEL: FLOODWAY } = __vl$m48_js_levels_floodway;
+const { LEVEL: FREIGHT } = __vl$m49_js_levels_freight;
+const { LEVEL: CANYON } = __vl$m50_js_levels_canyon;
+const { LEVEL: ASCENT } = __vl$m51_js_levels_ascent;
+const { LEVEL: CROSSTOWN } = __vl$m52_js_levels_crosstown;
 // The six-level pack, in intended play order. Pure data + imports: no DOM, no side effects.
 // Same shape as js/levels/catalog.js, so a level-select screen can read either list:
 //
@@ -14819,7 +16065,7 @@ return Object.freeze({ LEVELS_PACK });
 })();
 
 // ---- js/levels/razor.js ----
-const __vl$m52_js_levels_razor = (function () {
+const __vl$m54_js_levels_razor = (function () {
 
 // EXTREME LEVEL 1 — RAZOR EDGE.  Flat rooftops, nothing to hold on to, and every gap cut to within a few
 // tenths of what the physics can actually do. Pure data: no imports, no DOM.
@@ -14932,7 +16178,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/spine.js ----
-const __vl$m53_js_levels_spine = (function () {
+const __vl$m55_js_levels_spine = (function () {
 
 // EXTREME LEVEL 2 — THE SPINE.  One yellow line down the length of a trench: wall-runs near the longest
 // the physics allows, a wall-jump ladder that climbs while it crosses, and two machines you have to read
@@ -15060,7 +16306,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/lastlight.js ----
-const __vl$m54_js_levels_lastlight = (function () {
+const __vl$m56_js_levels_lastlight = (function () {
 
 // EXTREME LEVEL 3 — LAST LIGHT.  Grapple only, and every anchor is hung at the far end of the hook's
 // useful range: five hops over a canyon with nothing under them. Pure data: no imports, no DOM.
@@ -15162,10 +16408,10 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/pack-extreme.js ----
-const __vl$m55_js_levels_pack_extreme = (function () {
-const { LEVEL: RAZOR } = __vl$m52_js_levels_razor;
-const { LEVEL: SPINE } = __vl$m53_js_levels_spine;
-const { LEVEL: LASTLIGHT } = __vl$m54_js_levels_lastlight;
+const __vl$m57_js_levels_pack_extreme = (function () {
+const { LEVEL: RAZOR } = __vl$m54_js_levels_razor;
+const { LEVEL: SPINE } = __vl$m55_js_levels_spine;
+const { LEVEL: LASTLIGHT } = __vl$m56_js_levels_lastlight;
 // THE EXTREME PACK — three difficulty-5 courses for players who have finished THE GAUNTLET.
 // Pure data + imports: no DOM, no side effects. Same shape as js/levels/catalog.js, so a level-select
 // screen can read this directly: `level` is the LEVEL object itself, ready for `new World(level)`.
@@ -15218,7 +16464,7 @@ return Object.freeze({ EXTREME_PACK });
 })();
 
 // ---- js/levels/hairline.js ----
-const __vl$m56_js_levels_hairline = (function () {
+const __vl$m58_js_levels_hairline = (function () {
 
 // NIGHTMARE LEVEL 1 — HAIRLINE.  Nothing but flat ledges and open air: no walls, no bounce pads, no
 // hook. Every landing is one stride deep, so a gap cannot be re-lined-up on a runway — it is taken with
@@ -15341,7 +16587,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/sheer.js ----
-const __vl$m57_js_levels_sheer = (function () {
+const __vl$m59_js_levels_sheer = (function () {
 
 // NIGHTMARE LEVEL 2 — SHEER.  A trench with a yellow wall down each side and almost no floor: every
 // gap is crossed on the wall, every metre of height is taken by kicking off one. Pure data: no
@@ -15505,7 +16751,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/metronome.js ----
-const __vl$m58_js_levels_metronome = (function () {
+const __vl$m60_js_levels_metronome = (function () {
 
 // NIGHTMARE LEVEL 3 — METRONOME.  Nothing in this level stands still. The floor is wherever the machine
 // happens to be, and it is only there for about a third of a second at a time. Pure data: no imports,
@@ -15647,7 +16893,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/piano-wire.js ----
-const __vl$m59_js_levels_piano_wire = (function () {
+const __vl$m61_js_levels_piano_wire = (function () {
 
 // NIGHTMARE LEVEL 4 — PIANO WIRE.  Grapple only, over six hundred metres of nothing, and every deck it
 // strings between is five metres deep. LAST LIGHT's decks were fourteen to eighteen; here the whole
@@ -15757,11 +17003,11 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/pack-nightmare.js ----
-const __vl$m60_js_levels_pack_nightmare = (function () {
-const { LEVEL: HAIRLINE } = __vl$m56_js_levels_hairline;
-const { LEVEL: SHEER } = __vl$m57_js_levels_sheer;
-const { LEVEL: METRONOME } = __vl$m58_js_levels_metronome;
-const { LEVEL: PIANO_WIRE } = __vl$m59_js_levels_piano_wire;
+const __vl$m62_js_levels_pack_nightmare = (function () {
+const { LEVEL: HAIRLINE } = __vl$m58_js_levels_hairline;
+const { LEVEL: SHEER } = __vl$m59_js_levels_sheer;
+const { LEVEL: METRONOME } = __vl$m60_js_levels_metronome;
+const { LEVEL: PIANO_WIRE } = __vl$m61_js_levels_piano_wire;
 // THE NIGHTMARE PACK — four difficulty-5 courses for a player who finished THE EXTREME PACK first try.
 // Pure data + imports: no DOM, no side effects. Same shape as js/levels/catalog.js, so a level-select
 // screen can read this directly: `level` is the LEVEL object itself, ready for `new World(level)`.
@@ -15833,17 +17079,17 @@ return Object.freeze({ NIGHTMARE_PACK });
 })();
 
 // ---- js/levels/catalog.js ----
-const __vl$m61_js_levels_catalog = (function () {
-const { LEVEL: TUTORIAL2 } = __vl$m30_js_levels_tutorial2;
-const { LEVEL: WALLRUN } = __vl$m31_js_levels_wallrun;
-const { LEVEL: SLIDE } = __vl$m32_js_levels_slide;
-const { LEVEL: GRAPPLE } = __vl$m33_js_levels_grapple;
-const { LEVEL: GAUNTLET } = __vl$m34_js_levels_gauntlet;
-const { TUTORIALS_PACK } = __vl$m41_js_levels_pack_tutorials;
-const { MOVES_PACK } = __vl$m44_js_levels_pack_moves;
-const { LEVELS_PACK } = __vl$m51_js_levels_pack_levels;
-const { EXTREME_PACK } = __vl$m55_js_levels_pack_extreme;
-const { NIGHTMARE_PACK } = __vl$m60_js_levels_pack_nightmare;
+const __vl$m63_js_levels_catalog = (function () {
+const { LEVEL: TUTORIAL2 } = __vl$m32_js_levels_tutorial2;
+const { LEVEL: WALLRUN } = __vl$m33_js_levels_wallrun;
+const { LEVEL: SLIDE } = __vl$m34_js_levels_slide;
+const { LEVEL: GRAPPLE } = __vl$m35_js_levels_grapple;
+const { LEVEL: GAUNTLET } = __vl$m36_js_levels_gauntlet;
+const { TUTORIALS_PACK } = __vl$m43_js_levels_pack_tutorials;
+const { MOVES_PACK } = __vl$m46_js_levels_pack_moves;
+const { LEVELS_PACK } = __vl$m53_js_levels_pack_levels;
+const { EXTREME_PACK } = __vl$m57_js_levels_pack_extreme;
+const { NIGHTMARE_PACK } = __vl$m62_js_levels_pack_nightmare;
 // Catalogue of the standalone challenge levels, in intended play order (easiest first, the gauntlet last).
 // Pure data + imports: no DOM, no side effects. A level-select screen can read this directly —
 // `level` is the LEVEL object itself, in exactly the js/level-data.js shape, ready for `new World(level)`.
@@ -15923,7 +17169,7 @@ return Object.freeze({ CHALLENGE_LEVELS });
 })();
 
 // ---- js/editor/ed-store.js ----
-const __vl$m62_js_editor_ed_store = (function () {
+const __vl$m64_js_editor_ed_store = (function () {
 
 // Named levels in localStorage. Every access is wrapped in try/catch: the editor also runs from file://
 // and inside sandboxed iframes, where storage can be missing, blocked or full.
@@ -16058,7 +17304,7 @@ return Object.freeze({ PREFIX, INDEX_KEY, LAST_KEY, storageAvailable, cleanName,
 })();
 
 // ---- js/editor/ed-doc.js ----
-const __vl$m63_js_editor_ed_doc = (function () {
+const __vl$m65_js_editor_ed_doc = (function () {
 
 // Vaultline level designer — the document model.
 //
@@ -16521,10 +17767,10 @@ return Object.freeze({ GRID, MIN_SIZE, BOX_KINDS, ENTITY_TYPES, KIND_INFO, snap,
 })();
 
 // ---- js/editor/ed-validate.js ----
-const __vl$m64_js_editor_ed_validate = (function () {
+const __vl$m66_js_editor_ed_validate = (function () {
 const { PHYS, REACH, GRAPPLE } = __vl$m0_js_config;
 const { World } = __vl$m10_js_world;
-const { toLevel, entityBounds, moverBoundsAt, entityLabel } = __vl$m63_js_editor_ed_doc;
+const { toLevel, entityBounds, moverBoundsAt, entityLabel } = __vl$m65_js_editor_ed_doc;
 // Level validity, checked against the game's own rules.
 //
 // Everything here is measured with the real World (js/world.js builds the collider list, so 'deco' is
@@ -16863,12 +18109,12 @@ return Object.freeze({ validate });
 })();
 
 // ---- js/level-source.js ----
-const __vl$m65_js_level_source = (function () {
-const { levelId, blockCount, decodeLevel, readHashPayload } = __vl$m29_js_level_codec;
-const { CHALLENGE_LEVELS } = __vl$m61_js_levels_catalog;
-const { listLevels, loadLevel } = __vl$m62_js_editor_ed_store;
-const { docFromLevel } = __vl$m63_js_editor_ed_doc;
-const { validate } = __vl$m64_js_editor_ed_validate;
+const __vl$m67_js_level_source = (function () {
+const { levelId, blockCount, decodeLevel, readHashPayload } = __vl$m31_js_level_codec;
+const { CHALLENGE_LEVELS } = __vl$m63_js_levels_catalog;
+const { listLevels, loadLevel } = __vl$m64_js_editor_ed_store;
+const { docFromLevel } = __vl$m65_js_editor_ed_doc;
+const { validate } = __vl$m66_js_editor_ed_validate;
 // Where a playable level can come from.
 //
 // The campaign in js/level-data.js is still the default and is never touched. On top of it the game can
@@ -16992,7 +18238,7 @@ return Object.freeze({ checkLevel, campaignEntry, challengeEntries, storedEntrie
 })();
 
 // ---- js/ghost.js ----
-const __vl$m66_js_ghost = (function () {
+const __vl$m68_js_ghost = (function () {
 
 // Ghost runs: record the player's motion, replay it, and measure how far ahead or behind you are.
 //
@@ -17370,9 +18616,9 @@ return Object.freeze({ GHOST_VERSION, GHOST_RATE, GHOST_STATES, ANGLE_UNITS, MAX
 })();
 
 // ---- js/ghost-codec.js ----
-const __vl$m67_js_ghost_codec = (function () {
-const { encodeBytes, decodeBytes, readHashParam, HASH_PARAM, LINK_WARN_LENGTH } = __vl$m29_js_level_codec;
-const { GHOST_VERSION, GHOST_RATE, GHOST_STATES, ANGLE_UNITS, MAX_GHOST_SECONDS, MIN_GHOST_FRAMES, isGhost } = __vl$m66_js_ghost;
+const __vl$m69_js_ghost_codec = (function () {
+const { encodeBytes, decodeBytes, readHashParam, HASH_PARAM, LINK_WARN_LENGTH } = __vl$m31_js_level_codec;
+const { GHOST_VERSION, GHOST_RATE, GHOST_STATES, ANGLE_UNITS, MAX_GHOST_SECONDS, MIN_GHOST_FRAMES, isGhost } = __vl$m68_js_ghost;
 // A ghost run, packed small enough to ride in a URL next to the level it belongs to.
 //
 // The envelope is the level codec's: js/level-codec.js encodeBytes/decodeBytes give the same
@@ -17706,7 +18952,7 @@ return Object.freeze({ GHOST_PARAM, GHOST_MAGIC, GHOST_WARN_LENGTH, LINK_MAX_LEN
 })();
 
 // ---- js/ghost-store.js ----
-const __vl$m68_js_ghost_store = (function () {
+const __vl$m70_js_ghost_store = (function () {
 
 // Where the best ghost of each level is kept: localStorage, bounded, and never able to break a run.
 //
@@ -17882,7 +19128,7 @@ return Object.freeze({ GHOST_PREFIX, GHOST_INDEX_KEY, MAX_TOTAL_BYTES, MAX_ONE_B
 })();
 
 // ---- js/board.js ----
-const __vl$m69_js_board = (function () {
+const __vl$m71_js_board = (function () {
 
 // The public leaderboard: where a posted run lives, and how the game reads it back.
 //
@@ -18106,8 +19352,8 @@ return Object.freeze({ BOARD_ORIGIN, BOARD_PATH, BOARD_URL, BOARD_REPO, ISSUE_TE
 })();
 
 // ---- js/spectate.js ----
-const __vl$m70_js_spectate = (function () {
-const { samplePose, makePose, ghostDuration, frameCount, isGhost, GHOST_RATE } = __vl$m66_js_ghost;
+const __vl$m72_js_spectate = (function () {
+const { samplePose, makePose, ghostDuration, frameCount, isGhost, GHOST_RATE } = __vl$m68_js_ghost;
 // Watching somebody else's run: play a ghost back with a camera that chases it.
 //
 // This is the spectator half of the leaderboard. Nothing here is a run: there is no Player, no input
@@ -18270,26 +19516,26 @@ return Object.freeze({ CHASE_BACK, CHASE_UP, CHASE_LOOK, CHASE_EASE, CHASE_TURN,
 })();
 
 // ---- js/main.js ----
-const __vl$m71_js_main = (function () {
+const __vl$m73_js_main = (function () {
 const { PHYS, DASH } = __vl$m0_js_config;
 const { LEVEL } = __vl$m9_js_level_data;
 const { World } = __vl$m10_js_world;
 const { Player } = __vl$m12_js_player;
 const { Input } = __vl$m13_js_input;
-const { Renderer } = __vl$m21_js_render;
-const { Sfx } = __vl$m23_js_audio;
-const { Hud } = __vl$m24_js_hud;
-const { Flyover } = __vl$m25_js_game_flyover;
-const { readPB, writePB, finishData, migratePB, pbKeyFor, bestFor } = __vl$m26_js_game_records;
-const { migrateRecords } = __vl$m27_js_game_migrate;
-const { GraphicsControl } = __vl$m28_js_game_quality;
-const { levelId, encodeLevel, LINK_WARN_LENGTH } = __vl$m29_js_level_codec;
-const { collectSources, campaignEntry, linkEntry } = __vl$m65_js_level_source;
-const { GhostRecorder, GhostTracker, samplePose, makePose, ghostSplit, isGhost } = __vl$m66_js_ghost;
-const { encodeGhost, decodeGhost, readGhostPayload, raceHashFor, LINK_MAX_LENGTH } = __vl$m67_js_ghost_codec;
-const { loadGhost, saveGhost, removeGhost, ghostTimeFor } = __vl$m68_js_ghost_store;
-const { hasBoard, fetchBoard, fetchGhost, postUrl, OFFLINE_NOTE, EMPTY_NOTE, PASTE_NOTE, POSTED_NOTE } = __vl$m69_js_board;
-const { Spectate, END_HOLD } = __vl$m70_js_spectate;
+const { Renderer } = __vl$m23_js_render;
+const { Sfx } = __vl$m25_js_audio;
+const { Hud } = __vl$m26_js_hud;
+const { Flyover } = __vl$m27_js_game_flyover;
+const { readPB, writePB, finishData, migratePB, pbKeyFor, bestFor } = __vl$m28_js_game_records;
+const { migrateRecords } = __vl$m29_js_game_migrate;
+const { GraphicsControl } = __vl$m30_js_game_quality;
+const { levelId, encodeLevel, LINK_WARN_LENGTH } = __vl$m31_js_level_codec;
+const { collectSources, campaignEntry, linkEntry } = __vl$m67_js_level_source;
+const { GhostRecorder, GhostTracker, samplePose, makePose, ghostSplit, isGhost } = __vl$m68_js_ghost;
+const { encodeGhost, decodeGhost, readGhostPayload, raceHashFor, LINK_MAX_LENGTH } = __vl$m69_js_ghost_codec;
+const { loadGhost, saveGhost, removeGhost, ghostTimeFor } = __vl$m70_js_ghost_store;
+const { hasBoard, fetchBoard, fetchGhost, postUrl, OFFLINE_NOTE, EMPTY_NOTE, PASTE_NOTE, POSTED_NOTE } = __vl$m71_js_board;
+const { Spectate, END_HOLD } = __vl$m72_js_spectate;
 // Vaultline boot + game loop: wires Renderer, World, Player, Input, Sfx, Hud.
 // States: 'title' -> 'playing' <-> 'paused' -> 'finished'. Fixed-step physics at PHYS.dt (max 8 steps/frame).
 //
@@ -19264,6 +20510,10 @@ function syncGhost(dt) {
   }
 }
 
+// Wall time banked since the last DRAWN frame: with a frame cap in place, several animation frames can
+// pass between two renders, and the camera has to be given all of it.
+let drawDt = 0;
+
 function frame(now) {
   requestAnimationFrame(frame);
   const dt = lastFrame < 0 ? 0 : Math.min(Math.max((now - lastFrame) / 1000, 0), MAX_FRAME_DT);
@@ -19301,14 +20551,22 @@ function frame(now) {
 
   graphics.frame(dt, state);
 
-  if (!renderer) return;
+  // The frame cap gates the DRAWING, never the simulation: physics keeps its fixed step above and the run
+  // timer keeps wall time, so a capped frame rate cannot change a single thing about how the game plays.
+  // It is only the GPU that gets the night off.
+  drawDt += dt;
+  if (!renderer || !graphics.shouldDraw(now)) return;
+  // Everything the camera and the visual effects integrate gets the time since the last DRAWN frame, not
+  // since the last animation frame: a bounce pad's rings must travel at the same speed at 30 and at 120.
+  const vdt = drawDt;
+  drawDt = 0;
   renderer.syncMovers(world);
-  const view = state === 'title' ? flyover.update(dt)
+  const view = state === 'title' ? flyover.update(vdt)
     : state === 'watching' && spectate ? spectate.view
       : player;
-  renderer.update(dt, view);
+  renderer.update(vdt, view);
   syncGrapple();   // after update(): the camera position is the rope's muzzle end
-  syncGhost(dt);   // same reason: the trail and the ghost's rope are sized against this camera
+  syncGhost(vdt);  // same reason: the trail and the ghost's rope are sized against this camera
   renderer.render();
 }
 

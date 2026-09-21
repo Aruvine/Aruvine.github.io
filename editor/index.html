@@ -3620,15 +3620,27 @@ const PALETTE = {
   moverEdge: '#F2B705',
   glass: '#9FD8E8',
   glassFrame: '#E3F5FA',
-  decoDark: '#7C8994',
-  decoLight: '#A7B2BB',
+  decoDark: '#828E99',
+  decoLight: '#B6BEC5',
   decoLine: '#6C7984',
-  skyHorizon: '#C9D6DE',
-  skyZenith: '#5F7F98',
-  skyWarm: '#E6D2BF',
-  sun: '#FFE2B8',
-  hemiSky: '#BFD3E3',
-  hemiGround: '#8E99A3',
+  // --- golden hour ---------------------------------------------------------
+  // The sky is built from three colours and a phase function rather than a gradient: `skyZenith` is the
+  // Rayleigh end of the sky, `skyHorizon` the thick-atmosphere end, `skyGlow` the Mie glow round the sun.
+  skyHorizon: '#FBD3A2',
+  skyHorizonCool: '#C9C2D2',
+  skyZenith: '#3C6BA8',
+  skyGlow: '#FFA45C',
+  skyWarm: '#FFC58A',
+  sun: '#FFD199',
+  sunDisc: '#FFE8C4',
+  // Aerial perspective: the haze a distant surface is seen through is the sky in that direction.
+  hazeAway: '#A3B6C9',
+  hazeSun: '#E6BC92',
+  hazeHigh: '#7E9CBD',
+  // Warm key, cool fill: a low sun plus a blue sky above and a warm bounce off the rooftops.
+  hemiSky: '#AECBE8',
+  hemiGround: '#B4A28C',
+  window: '#FFC078',
   beam: '#7FE3FF',
   beamReached: '#F2B705',
   ink: '#0F1B26',
@@ -3636,7 +3648,6 @@ const PALETTE = {
   signal: '#F2B705',
   pylon: '#2A3B4C',
 };
-
 // ---------------------------------------------------------------------------
 // Shared GLSL (injected into MeshStandardMaterial / MeshBasicMaterial programs)
 // ---------------------------------------------------------------------------
@@ -3659,6 +3670,49 @@ vlFace = aFace;
 vlExtra = aExtra;
 `;
 
+// Aerial perspective. The haze a distant surface is seen through is the sky along that ray, so it turns
+// gold towards a low sun and stays cool blue away from it and overhead. The sun-ward factor is split out
+// on its own because the laptop path interpolates THAT (one float) from its vertex shader rather than
+// running a normalize() on every pixel of every surface.
+const HAZE_K_GLSL = /* glsl */ `
+uniform vec3 uSunDir;
+float vlHazeK( vec3 viewDir ) {
+  float sd = max( dot( viewDir, uSunDir ), 0.0 );
+  float s2 = sd * sd;
+  return s2 * s2 * 0.78;
+}
+`;
+
+const HAZE_COLORS_GLSL = /* glsl */ `
+uniform vec3 uHazeAway;
+uniform vec3 uHazeSun;
+`;
+
+const HAZE_GLSL = HAZE_K_GLSL + HAZE_COLORS_GLSL + /* glsl */ `
+uniform vec3 uHazeHigh;
+vec3 vlHaze( vec3 viewDir ) {
+  vec3 col = mix( uHazeAway, uHazeSun, vlHazeK( viewDir ) );
+  return mix( col, uHazeHigh, clamp( viewDir.y * 1.7, 0.0, 1.0 ) );
+}
+`;
+
+// Cheap ambient occlusion. Every level box is an axis-aligned box, so the only thing that can occlude a
+// point on one of its flat faces is whatever meets that face at its border: the distance to the nearest
+// border IS the occlusion term, with no samples and no texture. The second term is the contact shadow
+// where a wall meets the deck, which is the one a runner actually reads as "that is solid".
+const AO_GLSL = /* glsl */ `
+float vlBoxAO( vec4 face ) {
+  vec2 d = min( face.xy, face.zw - face.xy );
+  float e = 1.0 - clamp( min( d.x, d.y ) * 2.1, 0.0, 1.0 );
+  return e * e;
+}
+float vlBoxAOLit( vec4 face, vec3 n ) {
+  float wall = 1.0 - abs( n.y );
+  float foot = wall * ( 1.0 - clamp( face.y * 1.35, 0.0, 1.0 ) );
+  return 1.0 - 0.17 * vlBoxAO( face ) - 0.28 * foot * foot;
+}
+`;
+
 const FRAG_PARS = /* glsl */ `
 uniform float uTime;
 uniform float uVoidTop;
@@ -3670,11 +3724,16 @@ uniform float uShadowExtent;
 uniform vec3 uColA;
 uniform vec3 uColB;
 uniform vec3 uColC;
+uniform sampler2D uWinTex;
+uniform vec2 uWinScale;
+uniform vec3 uWinWarm;
+uniform float uWinGlint;
 varying vec3 vlWorldPos;
 varying vec3 vlWorldNormal;
 varying vec3 vlLocalPos;
 varying vec4 vlFace;
 varying vec3 vlExtra;
+` + HAZE_GLSL + AO_GLSL + `
 
 // Anti-aliased line of given half width (meters) repeating every 'spacing' meters.
 // Lines narrower than a pixel are widened but dimmed, and fade out entirely before they moire.
@@ -3727,7 +3786,11 @@ float getShadow( sampler2D shadowMap, vec2 shadowMapSize, float shadowIntensity,
 #endif
 `;
 
-const FOG_FRAGMENT = /* glsl */ `
+// Fog, void fade and aerial perspective in one blend. `haze` is the expression that yields the haze
+// colour: the PBR path evaluates vlHaze() per pixel, the laptop path hands in a colour its vertex shader
+// worked out, because a normalize() per pixel is exactly the kind of thing that path exists to avoid.
+function fogFragment(haze) {
+  return /* glsl */ `
 #ifdef USE_FOG
   #ifdef FOG_EXP2
     float vlFogF = 1.0 - exp( - fogDensity * fogDensity * vFogDepth * vFogDepth );
@@ -3736,9 +3799,12 @@ const FOG_FRAGMENT = /* glsl */ `
   #endif
   float vlVoid = 1.0 - smoothstep( uVoidBottom, uVoidTop, vlWorldPos.y );
   vlFogF = max( vlFogF, vlVoid );
-  gl_FragColor.rgb = mix( gl_FragColor.rgb, fogColor, vlFogF );
+  gl_FragColor.rgb = mix( gl_FragColor.rgb, ` + haze + `, vlFogF );
 #endif
 `;
+}
+
+const FOG_FRAGMENT = fogFragment('vlHaze( normalize( vlWorldPos - cameraPosition ) )');
 
 // Per-mode surface pattern code. Runs right after <color_fragment>; may modify diffuseColor and vlEmissive.
 const MODE_COLOR = {
@@ -3751,7 +3817,7 @@ const MODE_COLOR = {
     col = mix( col, uColA, minor );
     col = mix( col, uColA * 0.86, major );
     col = mix( col, uColB, edge * 0.85 );
-    diffuseColor.rgb = col;
+    diffuseColor.rgb = col * vlBoxAOLit( vlFace, vlWorldNormal );
   `,
   CHEVRON: /* glsl */ `
     // vlExtra.xy = run direction (unit, XZ). vlExtra.z = 1 on climb walls: chevrons point up instead.
@@ -3773,7 +3839,7 @@ const MODE_COLOR = {
     float chev = stripe * band * sideFace;
     float edge = vlEdge( vlFace, 0.05 );
     float mask = max( chev, edge * 0.9 );
-    diffuseColor.rgb = mix( diffuseColor.rgb, uColA, mask );
+    diffuseColor.rgb = mix( diffuseColor.rgb, uColA, mask ) * vlBoxAOLit( vlFace, vlWorldNormal );
     vlEmissive = uColC * 0.07 * ( 1.0 - mask );
   `,
   RINGS: /* glsl */ `
@@ -3800,7 +3866,7 @@ const MODE_COLOR = {
     float edge = vlEdge( vlFace, 0.085 );
     vec3 col = mix( diffuseColor.rgb, uColB, minor * 0.7 );
     col = mix( col, uColA, edge );
-    diffuseColor.rgb = col;
+    diffuseColor.rgb = col * ( 1.0 - 0.14 * vlBoxAO( vlFace ) );
     vlEmissive = uColA * edge * 0.22;
   `,
   GLASS: /* glsl */ `
@@ -3809,15 +3875,22 @@ const MODE_COLOR = {
     vlGlassEdge = edge;
   `,
   DECO: /* glsl */ `
+    // City massing: the same box shader the course uses, plus a window grid read from one small tiling
+    // texture (R = pane mask, G = which panes are already lit from inside). Two texture fetches were four
+    // fwidth+smoothstep chains before, so the towers gained windows and got cheaper doing it.
     float vert = 1.0 - step( 0.5, abs( vlWorldNormal.y ) );
     vec2 gp = vlPlanar( vlWorldPos, vlWorldNormal );
-    float floors = vlLine( vlWorldPos.y, 3.6, 0.22 ) * vert;
-    float mull = vlLine( gp.x, 6.0, 0.18 ) * vert;
+    vec3 win = texture2D( uWinTex, gp * uWinScale ).rgb;
+    float pane = win.r * vert;
     vec3 col = diffuseColor.rgb;
-    col = mix( col, uColA, floors * 0.35 + mull * 0.18 );
+    col = mix( col, uColB, pane * 0.40 );            // glass sits darker than its concrete frame
+    col *= 1.0 - 0.16 * vlBoxAO( vlFace );
     diffuseColor.rgb = col;
-    // neutral grey fill lifts the shade sides so city massing stays a cool grey (never mover-blue)
-    vlEmissive = uColC * mix( 0.2, 0.08, max( dot( vlWorldNormal, vec3( 0.0, 1.0, 0.0 ) ), 0.0 ) );
+    // A low sun rakes across the glass: a warm sheet of glints on the faces that can see it, plus the
+    // handful of panes lit from inside. uColC is the neutral fill that keeps the shade sides cool grey.
+    float faceSun = max( dot( vlWorldNormal, uSunDir ), 0.0 );
+    float glint = pane * ( faceSun * faceSun * faceSun * uWinGlint + step( 0.86, win.g ) * ( 0.05 + win.b * 0.10 ) );
+    vlEmissive = uColC * mix( 0.20, 0.08, max( vlWorldNormal.y, 0.0 ) ) + uWinWarm * glint;
   `,
 };
 
@@ -3829,6 +3902,14 @@ function patchShader(shader, mode, shared, colors) {
   shader.uniforms.uShadowAxisX = shared.uShadowAxisX;
   shader.uniforms.uShadowAxisY = shared.uShadowAxisY;
   shader.uniforms.uShadowExtent = shared.uShadowExtent;
+  shader.uniforms.uSunDir = shared.uSunDir;
+  shader.uniforms.uHazeAway = shared.uHazeAway;
+  shader.uniforms.uHazeSun = shared.uHazeSun;
+  shader.uniforms.uHazeHigh = shared.uHazeHigh;
+  shader.uniforms.uWinTex = shared.uWinTex;
+  shader.uniforms.uWinScale = shared.uWinScale;
+  shader.uniforms.uWinWarm = shared.uWinWarm;
+  shader.uniforms.uWinGlint = shared.uWinGlint;
   shader.uniforms.uColA = { value: colors.a };
   shader.uniforms.uColB = { value: colors.b };
   shader.uniforms.uColC = { value: colors.c };
@@ -3875,7 +3956,19 @@ function applyPatch(material, mode, shared, colors) {
 
 // Shared uniforms object; values updated by the Renderer each frame.
 // shadow = { center, axisX, axisY } (THREE.Vector3, referenced live) and extent (half-size of the shadow frustum, m).
-function createSharedUniforms(voidTop, voidBottom, shadow) {
+function createSharedUniforms(voidTop, voidBottom, shadow, sky) {
+  // Numeric fallbacks so a caller that forgets the sky block still gets a shader that compiles and draws
+  // something sane rather than uploading undefined. Both real callers pass the block.
+  const s = Object.assign({
+    sunDir: [0.62, 0.23, 0.75],
+    hazeAway: [0.38, 0.49, 0.60],
+    hazeSun: [0.79, 0.50, 0.29],
+    hazeHigh: [0.21, 0.32, 0.50],
+    windowTexture: null,
+    windowScale: [1 / 14.4, 1 / 28.8],
+    windowWarm: [1.0, 0.52, 0.19],
+    windowGlint: 1,
+  }, sky || {});
   return {
     uTime: { value: 0 },
     uVoidTop: { value: voidTop },
@@ -3884,6 +3977,16 @@ function createSharedUniforms(voidTop, voidBottom, shadow) {
     uShadowAxisX: { value: shadow.axisX },
     uShadowAxisY: { value: shadow.axisY },
     uShadowExtent: { value: shadow.extent },
+    // Golden hour. `sunDir` points TOWARDS the sun; the three haze colours are the sky the aerial
+    // perspective is sampled from, and the window uniforms drive the city's glass.
+    uSunDir: { value: s.sunDir },
+    uHazeAway: { value: s.hazeAway },
+    uHazeSun: { value: s.hazeSun },
+    uHazeHigh: { value: s.hazeHigh },
+    uWinTex: { value: s.windowTexture || null },
+    uWinScale: { value: s.windowScale },
+    uWinWarm: { value: s.windowWarm },
+    uWinGlint: { value: s.windowGlint },
   };
 }
 
@@ -3946,52 +4049,146 @@ function patchBasicFog(material, shared, keySuffix) {
 // Sky dome
 // ---------------------------------------------------------------------------
 
-function createSkyMaterial(THREE, sunDir) {
+// The golden-hour sky is analytic rather than a gradient: single-scattering along the view ray with a
+// Rayleigh phase for the blue and a Henyey-Greenstein phase for the Mie glow around a low sun, plus the
+// sun's own disc with limb darkening. It costs one inversesqrt, one sqrt and no pow() at all — the old
+// dome ran three pow() calls — and, unlike the old one, it is drawn LAST of the opaque objects with the
+// depth test on, so the pixels the city already covers are never shaded at all.
+function createSkyMaterial(THREE, sunDir, cheap) {
+  const MIE_G = 0.76;
   return new THREE.ShaderMaterial({
-    name: 'VaultlineSky',
+    name: cheap ? 'VaultlineSkyCheap' : 'VaultlineSky',
+    defines: cheap ? { VL_SKY_CHEAP: '' } : {},
     uniforms: {
       uHorizon: { value: new THREE.Color(PALETTE.skyHorizon) },
+      uHorizonCool: { value: new THREE.Color(PALETTE.skyHorizonCool) },
       uZenith: { value: new THREE.Color(PALETTE.skyZenith) },
+      uGlow: { value: new THREE.Color(PALETTE.skyGlow) },
       uWarm: { value: new THREE.Color(PALETTE.skyWarm) },
-      uSun: { value: new THREE.Color(PALETTE.sun) },
+      uSun: { value: new THREE.Color(PALETTE.sunDisc) },
+      uGround: { value: new THREE.Color(PALETTE.hazeAway) },
       uSunDir: { value: sunDir.clone().normalize() },
+      uMieG: { value: MIE_G },
+      uCosSun: { value: Math.cos(0.021) },      // a 1.2 degree disc: the real one is a pixel wide
     },
     vertexShader: /* glsl */ `
       varying vec3 vDir;
       void main() {
         vDir = position;
-        vec4 mv = modelViewMatrix * vec4( position, 1.0 );
-        gl_Position = projectionMatrix * mv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
       }
     `,
     fragmentShader: /* glsl */ `
       uniform vec3 uHorizon;
+      uniform vec3 uHorizonCool;
       uniform vec3 uZenith;
+      uniform vec3 uGlow;
       uniform vec3 uWarm;
       uniform vec3 uSun;
+      uniform vec3 uGround;
       uniform vec3 uSunDir;
+      uniform float uMieG;
+      uniform float uCosSun;
       varying vec3 vDir;
       void main() {
         vec3 d = normalize( vDir );
         float h = d.y;
-        float g = pow( clamp( h, 0.0, 1.0 ), 0.5 );
-        vec3 col = mix( uHorizon, uZenith, smoothstep( 0.0, 1.0, g ) );
-        float sd = max( dot( d, uSunDir ), 0.0 );
-        float nearHorizon = 1.0 - smoothstep( 0.0, 0.45, abs( h ) );
-        col = mix( col, uWarm, pow( sd, 4.0 ) * nearHorizon * 0.45 );
-        float above = smoothstep( -0.01, 0.01, h );
-        col += uSun * ( pow( sd, 28.0 ) * 0.22 + pow( sd, 1400.0 ) * 1.6 ) * above;
-        col = mix( uHorizon, col, smoothstep( -0.09, 0.0, h ) );
+        float cosT = dot( d, uSunDir );
+
+        // Air mass along this ray: 1 straight up, ~8 at the horizon, clamped so it stays finite below it.
+        float depth = clamp( 0.24 / ( max( h, 0.0 ) + 0.12 ), 0.0, 1.0 );
+
+
+        #ifdef VL_SKY_CHEAP
+          // Laptop inherits the same colours through a gradient: no phase functions, no disc maths, and
+          // the horizon is the warm one everywhere rather than turning with the sun - the cool side of
+          // the sky is behind 260 m of this preset's fog anyway.
+          float s2 = cosT * cosT;
+          vec3 col = mix( uZenith, uHorizon, depth );
+          col = mix( col, uWarm, max( cosT, 0.0 ) * s2 * depth * 0.5 );
+          float glow = max( cosT, 0.0 );
+          glow = glow * glow;
+          col += uGlow * glow * glow * depth * 0.22;
+          col += uSun * smoothstep( uCosSun - 0.004, uCosSun, cosT ) * 2.6;
+        #else
+          // Rayleigh phase: 3/4 (1 + cos^2). It is what keeps the sky opposite the sun cool and deep.
+          float ray = 0.75 * ( 1.0 + cosT * cosT );
+          // Henyey-Greenstein, written so the 3/2 power is one sqrt instead of a pow().
+          float g2 = uMieG * uMieG;
+          float den = max( 1.0 + g2 - 2.0 * uMieG * cosT, 1e-4 );
+          float mie = ( 1.0 - g2 ) / ( den * sqrt( den ) );
+
+          // The horizon is not one colour: gold where the sun is going down, cool dusty mauve round the
+          // back. One mix, and the city stops looking lit from everywhere at once.
+          vec3 horizon = mix( uHorizonCool, uHorizon, smoothstep( -0.25, 0.72, cosT ) );
+          vec3 col = mix( uZenith, horizon, depth );
+          col *= 0.74 + 0.26 * ray;
+          col = mix( col, uWarm, clamp( mie * 0.03, 0.0, 0.40 ) * depth );
+          col += uGlow * clamp( mie * 0.010, 0.0, 0.7 ) * depth;
+
+          // The disc, with limb darkening: I(r) = 1 - u(1 - sqrt(1 - r^2)) at the classic u = 0.6.
+          float disc = smoothstep( uCosSun - 0.0009, uCosSun + 0.0002, cosT );
+          float r = clamp( ( 1.0 - cosT ) / max( 1.0 - uCosSun, 1e-5 ), 0.0, 1.0 );
+          float limb = 0.4 + 0.6 * sqrt( max( 1.0 - r * r, 0.0 ) );
+          col += uSun * disc * limb * 5.0;
+        #endif
+
+        // Below the horizon there is only haze: the city's own fog colour, so the two never disagree.
+        col = mix( uGround, col, smoothstep( -0.06, 0.015, h ) );
         gl_FragColor = vec4( col, 1.0 );
         #include <colorspace_fragment>
       }
     `,
     side: THREE.BackSide,
     depthWrite: false,
-    depthTest: false,
+    depthTest: true,
     fog: false,
     toneMapped: false,
   });
+}
+
+// One small tiling texture for every window in the city: R = pane mask, G = a per-pane random value
+// (which panes are lit from inside), B = a second one (how brightly). PANES x FLOORS windows per tile at
+// WIN_W x WIN_H metres, so the shader's only work is world position * a scale.
+const WINDOW_TILE = { panes: 8, floors: 8, width: 14.4, height: 28.8 };
+
+function createWindowTexture(THREE) {
+  const N = 128;                       // 16 texels per window: enough for a crisp mullion, 64 KB of VRAM
+  const cell = N / WINDOW_TILE.panes;
+  const canvas = document.createElement('canvas');
+  canvas.width = N;
+  canvas.height = N;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#000000';
+  ctx.fillRect(0, 0, N, N);
+  // Deterministic: the same city every load, same as the skyline's own PRNG.
+  let seed = 0x9E3779B9;
+  const rand = () => {
+    seed = (Math.imul(seed ^ (seed >>> 15), seed | 1) + 0x6D2B79F5) >>> 0;
+    return ((seed ^ (seed >>> 14)) >>> 0) / 4294967296;
+  };
+  const inset = Math.max(1, Math.round(cell * 0.17));
+  for (let fy = 0; fy < WINDOW_TILE.floors; fy++) {
+    for (let px = 0; px < WINDOW_TILE.panes; px++) {
+      const g = Math.round(rand() * 255);
+      const b = Math.round(rand() * 255);
+      ctx.fillStyle = 'rgb(255,' + g + ',' + b + ')';
+      ctx.fillRect(px * cell + inset, fy * cell + inset, cell - inset * 2, cell - inset * 2.4);
+    }
+  }
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.name = 'VaultlineWindowTile';
+  tex.colorSpace = THREE.NoColorSpace;    // three masks, not a colour
+  tex.wrapS = THREE.RepeatWrapping;
+  tex.wrapT = THREE.RepeatWrapping;
+  tex.magFilter = THREE.LinearFilter;
+  // Bilinear on ONE mip, not trilinear across two: half the taps, and a window tile has no detail that
+  // survives a mip transition anyway.
+  tex.minFilter = THREE.LinearMipmapNearestFilter;
+  tex.generateMipmaps = true;
+  tex.anisotropy = 1;
+  tex.needsUpdate = true;
+  return tex;
 }
 
 // ---------------------------------------------------------------------------
@@ -4120,7 +4317,7 @@ function createSpeedLinesMaterial(THREE) {
     toneMapped: false,
   });
 }
-return Object.freeze({ PALETTE, VERT_PARS, VERT_MAIN, FRAG_PARS, FOG_FRAGMENT, MODE_COLOR, createSharedUniforms, createSurfaceMaterials, patchBasicFog, createSkyMaterial, createBeamMaterial, createSpeedLinesMaterial });
+return Object.freeze({ PALETTE, VERT_PARS, VERT_MAIN, HAZE_K_GLSL, HAZE_COLORS_GLSL, HAZE_GLSL, AO_GLSL, FRAG_PARS, fogFragment, FOG_FRAGMENT, MODE_COLOR, createSharedUniforms, createSurfaceMaterials, patchBasicFog, createSkyMaterial, WINDOW_TILE, createWindowTexture, createBeamMaterial, createSpeedLinesMaterial });
 })();
 
 // ---- js/render-build.js ----
@@ -4373,8 +4570,10 @@ function buildStaticMeshes(THREE, level, materials, path) {
   const group = new THREE.Group();
   group.name = 'static-level';
   const meshes = {};
+  // [castShadow, receiveShadow]. The city blocks cast (their shadows fall across the course) but do not
+  // receive: they are drawn with the unlit city material, which has no shadow term to spend pixels on.
   const shadowSettings = {
-    concrete: [true, true], bounce: [true, true], glass: [false, true], deco: [true, true],
+    concrete: [true, true], bounce: [true, true], glass: [false, true], deco: [true, false],
   };
   for (const key of Object.keys(groups)) {
     if (groups[key].length === 0) continue;
@@ -4410,7 +4609,19 @@ function buildMoverMeshes(THREE, level, material) {
   return { group, byId };
 }
 
-// Distant city massing in cool greys, sunk into the fog void below the course.
+// The distant city, in two meshes. Each tower is a STACK of boxes rather than one slab: a shaft, an
+// optional setback and an optional crown make the MASSING, and one to three pieces of rooftop clutter
+// (plant room, tank, mast) make the DETAIL. They are two meshes and not one because they want different
+// view distances: on a game that is pixel-bound, a plant room is pure overdraw sitting on top of a roof,
+// and a preset that cannot afford it should be able to drop every one of them without losing a silhouette.
+//
+// Within each mesh everything is merged, so the whole city is two draw calls and one material. On this
+// geometry an InstancedMesh per silhouette would have bought four draw calls' worth of nothing and cost
+// the ability to cull by distance with a draw range, which is where the real saving is.
+//
+// Nearest tower first, with each tower's index count recorded, so a preset drops the far ones by
+// shortening the draw range (see Renderer.setQuality). The city never casts shadows: at this distance a
+// shadow map has nothing to catch it on, and it would double the depth pass for free.
 function buildSkyline(THREE, bounds, material, seed) {
   const rand = mulberry32(seed || 0x5A17);
   const inner = 90;
@@ -4422,10 +4633,15 @@ function buildSkyline(THREE, bounds, material, seed) {
   const dark = new THREE.Color(PALETTE.decoDark);
   const light = new THREE.Color(PALETTE.decoLight);
   const tmp = new THREE.Color();
-  const entries = [];
+  const towers = [];
+
+  const shade = (k) => {
+    tmp.lerpColors(dark, light, Math.min(1, Math.max(0, k)));
+    return [tmp.r, tmp.g, tmp.b];
+  };
 
   let tries = 0;
-  while (entries.length < 300 && tries < 8000) {
+  while (towers.length < 240 && tries < 9000) {
     tries++;
     const w = 14 + rand() * 34;
     const d = 14 + rand() * 34;
@@ -4434,41 +4650,89 @@ function buildSkyline(THREE, bounds, material, seed) {
     const gapX = Math.max(bounds.min[0] - inner - (x + w / 2), (x - w / 2) - (bounds.max[0] + inner), 0);
     const gapZ = Math.max(bounds.min[2] - inner - (z + d / 2), (z - d / 2) - (bounds.max[2] + inner), 0);
     if (gapX === 0 && gapZ === 0) continue;
-    const far = Math.min(Math.hypot(gapX, gapZ) / 450, 1);
-    const top = midY - 34 + Math.pow(rand(), 1.6) * (62 + far * 70);
-    tmp.lerpColors(dark, light, Math.min(1, rand() * 0.65 + far * 0.35));
-    const color = [tmp.r, tmp.g, tmp.b];
-    entries.push({ min: [x - w / 2, baseY, z - d / 2], max: [x + w / 2, top, z + d / 2], color, skipBottom: true });
-    if (rand() < 0.32) {
-      const sw = w * (0.45 + rand() * 0.25);
-      const sd = d * (0.45 + rand() * 0.25);
-      const sh = 5 + rand() * 18;
-      tmp.lerpColors(dark, light, Math.min(1, rand() * 0.5 + far * 0.4));
-      entries.push({
-        min: [x - sw / 2, top, z - sd / 2], max: [x + sw / 2, top + sh, z + sd / 2],
-        color: [tmp.r, tmp.g, tmp.b], skipBottom: true,
+    const gap = Math.hypot(gapX, gapZ);
+    const far = Math.min(gap / 450, 1);
+    const tone = Math.min(1, rand() * 0.6 + far * 0.4);
+
+    const massing = [];
+    const detail = [];
+    // The shaft. Its height still grows with distance, so the far ring reads as the deep city.
+    let top = midY - 34 + Math.pow(rand(), 1.6) * (62 + far * 70);
+    let hw = w / 2, hd = d / 2;
+    massing.push({ min: [x - hw, baseY, z - hd], max: [x + hw, top, z + hd], color: shade(tone), skipBottom: true });
+
+    // Silhouette. Below 0.42 the tower is a plain slab; above it the shaft steps back once, and above
+    // 0.76 again into a crown. Every step is narrower and the colour lifts, which is what reads as depth.
+    const style = rand();
+    if (style > 0.42) {
+      const k = 0.62 + rand() * 0.2;
+      hw *= k; hd *= k;
+      const rise = 8 + rand() * 24;
+      massing.push({ min: [x - hw, top, z - hd], max: [x + hw, top + rise, z + hd], color: shade(tone + 0.1), skipBottom: true });
+      top += rise;
+    }
+    if (style > 0.76) {
+      const k = 0.55 + rand() * 0.2;
+      hw *= k; hd *= k;
+      const rise = 6 + rand() * 16;
+      massing.push({ min: [x - hw, top, z - hd], max: [x + hw, top + rise, z + hd], color: shade(tone + 0.18), skipBottom: true });
+      top += rise;
+    }
+
+    // Rooftop clutter: plant rooms, tanks, and a mast on some of the near ones. Past about 320 m a plant
+    // room is a texel, so the deep city gets clean crowns instead and never pays for them.
+    const clutterTone = Math.max(0, tone - 0.18);
+    const pieces = gap < 320 ? 1 + Math.floor(rand() * 2) : 0;
+    for (let i = 0; i < pieces; i++) {
+      const cw = hw * (0.16 + rand() * 0.34);
+      const cd = hd * (0.16 + rand() * 0.34);
+      const ch = 1.6 + rand() * 5.5;
+      const ox = (rand() - 0.5) * (hw - cw) * 1.7;
+      const oz = (rand() - 0.5) * (hd - cd) * 1.7;
+      detail.push({
+        min: [x + ox - cw, top, z + oz - cd], max: [x + ox + cw, top + ch, z + oz + cd],
+        color: shade(clutterTone), skipBottom: true,
       });
     }
+    if (gap < 220 && rand() < 0.35) {
+      const mh = 6 + rand() * 16;
+      detail.push({
+        min: [x - 0.5, top, z - 0.5], max: [x + 0.5, top + mh, z + 0.5],
+        color: shade(clutterTone), skipBottom: true,
+      });
+    }
+
+    towers.push({ dist: gap, massing, detail });
   }
 
-  // Nearest buildings first so a quality preset can hide distant ones with geometry.setDrawRange (every
-  // skyline entry has 5 faces = 30 indices). Same set of opaque boxes either way, so PC looks identical.
-  const distOf = (e) => Math.hypot(
-    Math.max(bounds.min[0] - e.max[0], e.min[0] - bounds.max[0], 0),
-    Math.max(bounds.min[2] - e.max[2], e.min[2] - bounds.max[2], 0)
-  );
-  for (const e of entries) e.dist = distOf(e);
-  entries.sort((a, b) => a.dist - b.dist);
+  towers.sort((a, b) => a.dist - b.dist);
 
-  const mesh = new THREE.Mesh(buildBoxGeometry(THREE, entries), material);
-  mesh.userData.skylineDists = Float32Array.from(entries, (e) => e.dist);
-  mesh.userData.indicesPerEntry = 30;
-  mesh.name = 'skyline';
-  mesh.castShadow = false;
-  mesh.receiveShadow = false;
-  mesh.matrixAutoUpdate = false;
-  mesh.updateMatrix();
-  return mesh;
+  // One mesh per part, each with its own nearest-first ordering and its own running index total.
+  const build = (key, name) => {
+    const entries = [];
+    const dists = [];
+    const ends = [];
+    let indices = 0;
+    for (const tower of towers) {
+      const boxes = tower[key];
+      if (boxes.length === 0) continue;
+      for (const b of boxes) entries.push(b);
+      indices += boxes.length * 30;     // 5 faces x 6 indices (skipBottom everywhere)
+      dists.push(tower.dist);
+      ends.push(indices);
+    }
+    const mesh = new THREE.Mesh(buildBoxGeometry(THREE, entries), material);
+    mesh.userData.skylineDists = Float32Array.from(dists);
+    mesh.userData.skylineEnds = Uint32Array.from(ends);
+    mesh.name = name;
+    mesh.castShadow = false;
+    mesh.receiveShadow = false;
+    mesh.matrixAutoUpdate = false;
+    mesh.updateMatrix();
+    return mesh;
+  };
+
+  return { massing: build('massing', 'skyline'), detail: build('detail', 'skyline-detail') };
 }
 
 // ---------------------------------------------------------------------------
@@ -5128,7 +5392,7 @@ return Object.freeze({ whenFontsReady, createSign, createFinishGate });
 // ---- js/editor/ed-render.js ----
 const __vl$m21_js_editor_ed_render = (function () {
 const { PHYS } = __vl$m0_js_config;
-const { PALETTE, createSharedUniforms, createSurfaceMaterials, createSkyMaterial } = __vl$m17_js_render_materials;
+const { PALETTE, WINDOW_TILE, createSharedUniforms, createSurfaceMaterials, createSkyMaterial, createWindowTexture } = __vl$m17_js_render_materials;
 const { levelBounds, buildCoursePath, courseDirectionAt, supportTopAt, buildStaticMeshes, buildMoverMeshes, buildCheckpointBeacon } = __vl$m18_js_render_build;
 const { createAimMarker, createGrappleRope } = __vl$m19_js_render_grapple;
 const { createSign, createFinishGate, whenFontsReady } = __vl$m20_js_render_text;
@@ -5157,9 +5421,9 @@ const { toLevel, entityBounds, moverBoundsAt, sortedBounds } = __vl$m10_js_edito
 
 
 
-const SUN_DIR = new THREE.Vector3(0.55, 0.42, 0.72).normalize();
-const SUN_INTENSITY = 4.2;
-const HEMI_INTENSITY = 2.9;
+const SUN_DIR = new THREE.Vector3(0.62, 0.23, 0.75).normalize();   // the game's golden-hour sun
+const SUN_INTENSITY = 5.6;         // matches js/render.js: a low sun needs a stronger key
+const HEMI_INTENSITY = 2.8;
 const FOG_DENSITY = 0.0016;        // lighter than the game's: a designer needs to see the whole course
 const BASE_FOV = 90;
 const REF_ASPECT = 4 / 3;
@@ -5229,15 +5493,15 @@ class EdRender {
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1;
     this.renderer.shadowMap.enabled = false;      // a tool wants clarity and framerate, not soft shadows
-    this.renderer.setClearColor(new THREE.Color(PALETTE.skyHorizon), 1);
+    this.renderer.setClearColor(new THREE.Color(PALETTE.hazeAway), 1);
 
     this.scene = new THREE.Scene();
-    this.scene.fog = new THREE.FogExp2(new THREE.Color(PALETTE.skyHorizon), FOG_DENSITY);
+    this.scene.fog = new THREE.FogExp2(new THREE.Color(PALETTE.hazeAway), FOG_DENSITY);
 
     this.camera = new THREE.PerspectiveCamera(70, 16 / 9, 0.06, 6000);
     this.camera.rotation.order = 'YXZ';
 
-    this.sky = new THREE.Mesh(new THREE.SphereGeometry(2400, 32, 18), createSkyMaterial(THREE, SUN_DIR));
+    this.sky = new THREE.Mesh(new THREE.SphereGeometry(2400, 32, 18), createSkyMaterial(THREE, SUN_DIR, false));
     this.sky.frustumCulled = false;
     this.sky.renderOrder = -1000;
     this.scene.add(this.sky);
@@ -5255,7 +5519,19 @@ class EdRender {
       axisY: new THREE.Vector3(0, 0, 1),
       extent: 1e6,
     };
-    this.shared = createSharedUniforms(-1e5, -1e5 - 50, this._shadow);
+    // The same golden-hour block the game hands its surface shaders: the sun direction the aerial
+    // perspective is measured against, the three haze colours, and the window tile the city is drawn with.
+    this._winTex = createWindowTexture(THREE);
+    this.shared = createSharedUniforms(-1e5, -1e5 - 50, this._shadow, {
+      sunDir: SUN_DIR,
+      hazeAway: new THREE.Color(PALETTE.hazeAway),
+      hazeSun: new THREE.Color(PALETTE.hazeSun),
+      hazeHigh: new THREE.Color(PALETTE.hazeHigh),
+      windowTexture: this._winTex,
+      windowScale: new THREE.Vector2(1 / WINDOW_TILE.width, 1 / WINDOW_TILE.height),
+      windowWarm: new THREE.Color(PALETTE.window),
+      windowGlint: 0.4,
+    });
     this.materials = createSurfaceMaterials(THREE, this.shared);
     this._anisotropy = Math.min(8, this.renderer.capabilities.getMaxAnisotropy());
 
