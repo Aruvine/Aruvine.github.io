@@ -58,6 +58,51 @@ const PHYS = {
   bounceVel: 17,          // apex ≈ 5.5 m
 };
 
+// Bunny-hop. No new key: it is the jump, landed and pressed again inside `window`. A clean hop keeps every
+// metre per second the landing carried (no friction, no overspeed bleed that step) and adds `gain` on top,
+// up to sprintSpeed * maxFactor. Miss the window and it is an ordinary jump: the chain is broken and the
+// speed above sprintSpeed bleeds back at `bleed` (the number the controller has always used for excess
+// ground speed), which empties the whole bank in about a second.
+const HOP = {
+  window: 0.12,           // s after touching down in which a jump still counts as a clean hop (= jumpBuffer)
+  gain: 0.55,             // m/s added by each clean hop
+  maxFactor: 1.35,        // ceiling as a multiple of sprintSpeed: 14.85 m/s, reached on the 8th clean hop
+  minSpeed: 6,            // slower than this a hop adds nothing: there is no hopping up from a standstill
+  bleed: 3.5,             // 1/s: ground speed above the input target decays exponentially at this rate
+};
+
+// Air dash. Q (or the right mouse button): one charge, airborne only, a flat burst in the direction held
+// (forward when nothing is). It is distance, never height — the vertical velocity is pinned to zero for the
+// whole burst, so a dash can only ever lower the arc it is fired from. The charge comes back on landing, on
+// catching a wall (wall-run or wall-jump) or on tying the rope on, never in mid-air on its own.
+const DASH = {
+  speed: 24,              // m/s of flat burst (2.2x sprintSpeed)
+  time: 0.16,             // s the burst lasts: 3.84 m of travel, ~2.1 m more than sprinting through it
+  cooldown: 0.35,         // s after a dash before the next one may start, however the charge came back
+  charges: 1,             // charges held at once
+  exitDecay: 14,          // m/s^2: the raised speed cap bleeds back to airMaxSpeed once the burst ends
+  minFall: -30,           // m/s: no dash while falling faster than this (it is a burst, not a parachute)
+};
+
+// Wall-climb. No new key either: face a wall with forward held and jump, and you run straight up it. One
+// climb per wall contact — touching the ground, or catching a different wall, hands it back. A wall-run
+// wins whenever you are actually moving ALONG the wall, so this is the move you get by stopping at a face
+// instead of skimming it. The mantle does the rest: if a lip comes inside PHYS.mantleMaxHeight on the way
+// up, the ordinary ledge climb catches it and puts you on top.
+const CLIMB = {
+  height: 3.0,            // m gained by a full climb
+  time: 0.6,              // s it takes: 5 m/s straight up
+  minFacing: 0.6,         // the view must point into the wall at least this much (cos of the angle)
+  maxFoot: 0.4,           // m the wall's base may sit above the feet: you run up a FACE, never up a soffit
+                          // hanging over your head, so a duct roof is still not a thing you can start on
+  maxAlong: 6,            // m/s along the wall above which the wall-run owns the contact (= wallrunMinSpeed)
+  maxStrafe: 0.5,         // lateral input above this means you are doing something else -- kicking up a
+                          // chimney, leaning into a wall-run -- so the climb stands aside. Square up to it.
+  stick: 1.5,             // m/s pressed into the wall so the contact never flickers
+  exitUp: 2,              // m/s left over at the top, so a lip just out of reach is still mantled
+  cooldown: 0.25,         // s after a climb ends before another may start
+};
+
 // Level-design limits derived from PHYS, with safety margin. Level data must stay inside these.
 const REACH = {
   gapWalk: 3.5,           // horizontal gap (edge to edge) crossable from a walking jump
@@ -93,7 +138,7 @@ const GRAPPLE = {
   jumpKick: 3.2,          // m/s of extra lift when you release by jumping
   keepDecay: 6,           // m/s^2: the raised horizontal speed cap bleeds back to airMaxSpeed after release
 };
-return Object.freeze({ PHYS, REACH, GRAPPLE });
+return Object.freeze({ PHYS, HOP, DASH, CLIMB, REACH, GRAPPLE });
 })();
 
 // ---- js/level/anchors.js ----
@@ -2582,8 +2627,266 @@ const TUTORIALS_PACK = [
 return Object.freeze({ TUTORIALS_PACK });
 })();
 
+// ---- js/levels/tut-dash.js ----
+const __vl$m22_js_levels_tut_dash = (function () {
+
+// TUTORIAL 7 — DEAD AIR.  One skill: the air dash.  Q (or the right mouse button) spends the one charge you
+// carry and throws you flat and fast in whatever direction you are holding — distance, never height. It is
+// the move for a gap no jump reaches: sprint, jump, and press Q once you are off the lip. The charge comes
+// back the moment you land, so the lesson is a chain of gaps with landings between them, each one wider than
+// the 9.45 m a sprint jump can manage at any timing.
+// Pure data: no imports, no DOM. Exactly the js/level-data.js LEVEL shape.
+//
+//   A  THE BURST    z    6 ..  -70   an 11 m gap with a catch floor 1.4 m under it. Miss the dash and you
+//                                    drop a metre and a half and climb out.                  [checkpoint 0]
+//   B  ONE EACH     z  -70 .. -132   two 11 m gaps with a 12 m pad between them: one dash per landing, and
+//                                    the pad is the landing. Catch floors under both.        [checkpoint 1]
+//   C  THE LONG ONE z -132 .. -172   13 m of open air. Nothing under it.                     [checkpoint 2]
+//   D  THE LAST ONE z -172 .. -206   15 m, 78% of the 19.2 m a dashed sprint jump measures, onto the finish.
+//
+// Rails stop at every lip: a wall-run along the glass would cross these gaps without the dash, and that is
+// the one thing this lesson must not allow.
+
+const ID = 'tut-dash';
+const boxes = [];
+function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
+
+const KILL_Y = -10;
+const W = 5;                       // corridor half width
+const Y0 = 10;                     // the running deck
+function gate(id, name, z, respawn) {
+  return { id, name, min: [-40, KILL_Y - 10, z - 2], max: [40, 60, z + 2], respawn };
+}
+const floor = (id, z0, z1) => add(id, 'floor', [-W, Y0 - 1, z1], [W, Y0, z0]);
+// a catch floor 1.4 m under a gap, reaching 0.5 m under each lip so a short dash still finds it
+const catcher = (id, z0, z1) => add(id, 'floor', [-W, Y0 - 2.4, z1 - 0.5], [W, Y0 - 1.4, z0 + 0.5]);
+// glass rails, only ever beside a floor: over a gap they would be a wall-run across it
+const rails = (id, z0, z1) => {
+  add(id + '-l', 'glass', [-W - 0.3, Y0, z1], [-W, Y0 + 3, z0]);
+  add(id + '-r', 'glass', [W, Y0, z1], [W + 0.3, Y0 + 3, z0]);
+};
+
+// ------------------------------------------------------------------------------- A  THE BURST  (11 m)
+add('pad-start', 'floor', [-W, Y0 - 1, -6], [W, Y0, 6]);
+floor('a-run', -6, -30);
+catcher('a-catch', -30, -41);
+floor('a-land', -41, -70);
+rails('r-a1', 6, -30);
+rails('r-a2', -41, -70);
+
+// ------------------------------------------------------------------------------- B  ONE EACH  (11 + 11)
+catcher('b-catch1', -70, -81);
+floor('b-pad', -81, -93);
+catcher('b-catch2', -93, -104);
+floor('b-land', -104, -132);
+rails('r-b1', -81, -93);
+rails('r-b2', -104, -132);
+
+// ------------------------------------------------------------------------------- C  THE LONG ONE  (13 m)
+floor('c-land', -145, -172);
+rails('r-c', -145, -172);
+
+// ------------------------------------------------------------------------------- D  THE LAST ONE  (15 m)
+floor('d-fin', -187, -206);
+add('d-back', 'wall', [-W, Y0, -207], [W, Y0 + 4, -206]);
+rails('r-d', -187, -206);
+
+// ------------------------------------------------------------------------------- deco
+add('deco-1', 'deco', [-W, -60, -70], [W, Y0 - 2.4, 6]);
+add('deco-2', 'deco', [-W, -60, -132], [W, Y0 - 2.4, -70]);
+add('deco-3', 'deco', [-W, -60, -172], [W, Y0 - 1, -132]);
+add('deco-4', 'deco', [-W, -60, -206], [W, Y0 - 1, -172]);
+add('deco-sky-l1', 'deco', [-32, -60, -80], [-13, 19, -14]);
+add('deco-sky-r1', 'deco', [13, -60, -140], [30, 15, -60]);
+add('deco-sky-l2', 'deco', [-29, -60, -200], [-12, 24, -120]);
+add('deco-sky-r2', 'deco', [14, -60, -215], [33, 27, -160]);
+
+const LEVEL = {
+  name: 'LESSON 7 — DEAD AIR',
+  spawn: { pos: [0, Y0 + 0.01, 0], yaw: 0 },
+  killY: KILL_Y,
+  boxes,
+  movers: [],
+  anchors: [],
+  checkpoints: [
+    gate(ID + '-cp0', 'THE BURST', -52, { pos: [0, Y0 + 0.01, -56], yaw: 0 }),
+    gate(ID + '-cp1', 'ONE EACH', -114, { pos: [0, Y0 + 0.01, -118], yaw: 0 }),
+    gate(ID + '-cp2', 'THE LONG ONE', -156, { pos: [0, Y0 + 0.01, -160], yaw: 0 }),
+  ],
+  finish: { min: [-40, Y0 - 1, -206], max: [40, Y0 + 39, -187] },
+  signs: [
+    { pos: [0, Y0 + 2.6, -5.5], yaw: 0, text: 'LESSON 7 — DEAD AIR\nQ IN THE AIR. ONE CHARGE.' },
+    { pos: [-3.6, Y0 + 1.4, -12], yaw: 0, text: 'Q — AIR DASH\nRIGHT MOUSE DOES IT TOO' },
+    { pos: [3.6, Y0 + 1.4, -18], yaw: 0, text: 'FLAT AND FAST\nIT BUYS DISTANCE, NEVER HEIGHT' },
+    { pos: [-3.6, Y0 + 2.4, -26], yaw: 0, text: '11 M. SPRINT, SPACE, THEN Q' },
+    { pos: [3.6, Y0 + 1.4, -44], yaw: 0, text: 'DROPPED IN?\nTHE FLOOR BELOW IS THERE TO CATCH YOU' },
+    { pos: [-3.6, Y0 + 1.4, -60], yaw: 0, text: 'THE PIP BY THE SPEED READOUT\nIS YOUR CHARGE' },
+    { pos: [3.6, Y0 + 2.4, -66], yaw: 0, text: 'TWO GAPS. ONE DASH EACH.' },
+    { pos: [-3.6, Y0 + 1.4, -86], yaw: 0, text: 'LANDING GIVES IT BACK\nSO DOES A WALL, OR THE ROPE' },
+    { pos: [3.6, Y0 + 1.4, -108], yaw: 0, text: 'NEVER IN MID-AIR ON ITS OWN' },
+    { pos: [-3.6, Y0 + 2.4, -128], yaw: 0, text: 'NO FLOOR FROM HERE ON' },
+    { pos: [3.6, Y0 + 1.4, -136], yaw: 0, text: '13 M OF AIR\nDASH LATE, NOT EARLY' },
+    { pos: [-3.6, Y0 + 2.4, -150], yaw: 0, text: 'THAT IS THE MOVE' },
+    { pos: [3.6, Y0 + 1.4, -168], yaw: 0, text: 'LAST ONE: 15 M\nEVERYTHING YOU HAVE' },
+  ],
+};
+return Object.freeze({ LEVEL });
+})();
+
+// ---- js/levels/tut-climb.js ----
+const __vl$m23_js_levels_tut_climb = (function () {
+
+// TUTORIAL 8 — UP THE FACE.  One skill: the wall-climb.  Walk into a wall too tall to pull yourself up,
+// hold W, and press SPACE: you run 3 m straight up it, and if a lip comes inside reach on the way the
+// ordinary ledge climb finishes the move and puts you on top. No new key — the jump is the climb when you
+// are square to a face and standing still against it.
+// Pure data: no imports, no DOM. Exactly the js/level-data.js LEVEL shape.
+//
+// The whole lesson is a staircase of decks, each one a face taller than the 2.98 m a jump and a ledge catch
+// manage from standing, and all of them inside the 4.6 m a climb and the ledge catch reach together:
+//
+//   A  THE FACE     z    6 ..  -44   a 3.2 m face. Miss it and you are standing where you started. [cp 0]
+//   B  HIGHER       z  -44 ..  -80   4.0 m, 87% of the limit.                                      [cp 1]
+//   C  TWO IN A ROW z  -80 .. -128   3.0 m, then 3.0 m again: the floor between hands the climb back.
+//                                                                                                  [cp 2]
+//   D  ALONG OR UP  z -128 .. -178   a 4.5 m sprint gap under a wall-run wall — run ALONG it and it is a
+//                                    wall-run, stop square to the 3.4 m face at the end and it is a climb.
+//
+// Nothing in A, B or C can kill you: every miss leaves you on the deck you started from. Only D is over air.
+
+const ID = 'tut-climb';
+const boxes = [];
+function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
+
+const KILL_Y = -10;
+const W = 5;                       // corridor half width
+const Y0 = 10;                     // the first deck
+function gate(id, name, z, respawn) {
+  return { id, name, min: [-40, KILL_Y - 10, z - 2], max: [40, 60, z + 2], respawn };
+}
+// A deck: top at `top`, base one metre under the deck behind it, so its front is one solid face.
+const deck = (id, top, base, z0, z1) => add(id, 'floor', [-W, base, z1], [W, top, z0]);
+const rails = (id, top, z0, z1) => {
+  add(id + '-l', 'glass', [-W - 0.3, top, z1], [-W, top + 3, z0]);
+  add(id + '-r', 'glass', [W, top, z1], [W + 0.3, top + 3, z0]);
+};
+
+// ------------------------------------------------------------------------------- A  THE FACE  (3.2 m)
+add('pad-start', 'floor', [-W, Y0 - 1, -6], [W, Y0, 6]);
+deck('a-run', Y0, Y0 - 1, -6, -20);
+deck('a-deck', 13.2, Y0 - 1, -20, -44);
+rails('r-a1', Y0, 6, -20);
+rails('r-a2', 13.2, -20, -44);
+
+// ------------------------------------------------------------------------------- B  HIGHER  (4.0 m)
+deck('b-deck', 17.2, 12.2, -44, -80);
+rails('r-b', 17.2, -44, -80);
+
+// ------------------------------------------------------------------------------- C  TWO IN A ROW  (3.0 + 3.0)
+deck('c-1', 20.2, 16.2, -80, -104);
+deck('c-2', 23.2, 19.2, -104, -128);
+rails('r-c1', 20.2, -80, -104);
+rails('r-c2', 23.2, -104, -128);
+
+// ------------------------------------------------------------------------------- D  ALONG OR UP
+deck('d-run', 23.2, 19.2, -128, -142);
+deck('d-land', 23.2, 19.2, -146.5, -160);
+deck('d-fin', 26.6, 22.2, -160, -178);
+add('d-back', 'wall', [-W, 26.6, -179], [W, 30.6, -178]);
+// the wall-run wall: ten metres of it beside the run-up and the gap, in place of the right-hand rail
+add('d-wall', 'wallrun', [W, 23.2, -160], [W + 0.6, 33.2, -142]);
+add('r-d1-l', 'glass', [-W - 0.3, 23.2, -142], [-W, 26.2, -128]);
+add('r-d1-r', 'glass', [W, 23.2, -142], [W + 0.3, 26.2, -128]);
+add('r-d2-l', 'glass', [-W - 0.3, 23.2, -160], [-W, 26.2, -142]);
+rails('r-d3', 26.6, -160, -178);
+
+// ------------------------------------------------------------------------------- deco
+add('deco-1', 'deco', [-W, -60, -44], [W, Y0 - 1, 6]);
+add('deco-2', 'deco', [-W, -60, -80], [W, 12.2, -44]);
+add('deco-3', 'deco', [-W, -60, -128], [W, 16.2, -80]);
+add('deco-4', 'deco', [-W, -60, -178], [W, 19.2, -128]);
+add('deco-sky-l1', 'deco', [-33, -60, -70], [-14, 22, -10]);
+add('deco-sky-r1', 'deco', [14, -60, -120], [31, 18, -50]);
+add('deco-sky-l2', 'deco', [-30, -60, -180], [-13, 31, -110]);
+add('deco-sky-r2', 'deco', [15, -60, -190], [34, 35, -150]);
+
+const LEVEL = {
+  name: 'LESSON 8 — UP THE FACE',
+  spawn: { pos: [0, Y0 + 0.01, 0], yaw: 0 },
+  killY: KILL_Y,
+  boxes,
+  movers: [],
+  anchors: [],
+  checkpoints: [
+    gate(ID + '-cp0', 'THE FACE', -34, { pos: [0, 13.21, -38], yaw: 0 }),
+    gate(ID + '-cp1', 'HIGHER', -62, { pos: [0, 17.21, -66], yaw: 0 }),
+    gate(ID + '-cp2', 'TWO IN A ROW', -116, { pos: [0, 23.21, -120], yaw: 0 }),
+  ],
+  finish: { min: [-40, 25.6, -178], max: [40, 65.6, -160] },
+  signs: [
+    { pos: [0, Y0 + 2.6, -5.5], yaw: 0, text: 'LESSON 8 — UP THE FACE\nWALK INTO IT, HOLD W, PRESS SPACE' },
+    { pos: [-3.6, Y0 + 1.4, -12], yaw: 0, text: 'NO NEW KEY\nTHE JUMP IS THE CLIMB AT A WALL' },
+    { pos: [3.6, Y0 + 1.4, -17], yaw: 0, text: '3.2 M\nTOO TALL TO PULL YOURSELF UP' },
+    { pos: [-3.6, 13.2 + 2.4, -26], yaw: 0, text: 'THREE METRES OF RUN\nTHEN THE LIP DOES THE REST' },
+    { pos: [3.6, 13.2 + 1.4, -40], yaw: 0, text: 'SQUARE TO THE WALL\nOR IT WILL NOT TAKE' },
+    { pos: [-3.6, 17.2 + 1.4, -50], yaw: 0, text: '4.0 M — NEAR THE LIMIT\n4.6 AND THE LIP IS GONE' },
+    { pos: [3.6, 17.2 + 2.4, -74], yaw: 0, text: 'TWO IN A ROW NEXT' },
+    { pos: [-3.6, 20.2 + 1.4, -86], yaw: 0, text: 'ONE CLIMB PER WALL\nTHE FLOOR HANDS IT BACK' },
+    { pos: [3.6, 23.2 + 1.4, -110], yaw: 0, text: 'AND SO DOES A DIFFERENT WALL' },
+    { pos: [-3.6, 23.2 + 2.4, -124], yaw: 0, text: 'LAST SECTION: MIND THE GAP' },
+    { pos: [3.6, 23.2 + 1.4, -134], yaw: 0, text: 'RUN ALONG THAT WALL\nAND IT IS A WALL-RUN, NOT A CLIMB' },
+    { pos: [-3.6, 23.2 + 1.4, -150], yaw: 0, text: '4.5 M OF AIR\nA SPRINT JUMP IS ENOUGH' },
+    { pos: [3.6, 23.2 + 2.4, -157], yaw: 0, text: 'ONE MORE FACE: 3.4 M' },
+  ],
+};
+return Object.freeze({ LEVEL });
+})();
+
+// ---- js/levels/pack-moves.js ----
+const __vl$m24_js_levels_pack_moves = (function () {
+const { LEVEL: DASH } = __vl$m22_js_levels_tut_dash;
+const { LEVEL: CLIMB } = __vl$m23_js_levels_tut_climb;
+// The MOVES pack: two lessons for the two moves that need teaching, the air dash and the wall-climb.
+// Pure data + imports: no DOM, no side effects. A level-select screen can read this directly —
+// `level` is the LEVEL object itself, in exactly the js/level-data.js shape, ready for `new World(level)`.
+// The shape matches js/levels/catalog.js entry for entry, plus a `category`, so the same row renderer works.
+//
+//   id          the module name under js/levels/ (also the prefix of every box id in that level)
+//   name        the level's own LEVEL.name, as it should appear on the card
+//   blurb       one line: the single skill the lesson teaches
+//   difficulty  1 for both — they carry on from the six TUTORIALS lessons, they are not a ladder
+//   category    'tutorial'
+//   level       the LEVEL data
+//
+// The third new move, the bunny-hop, has no lesson of its own on purpose: it is the jump, landed and
+// pressed again on the beat, so it is taught by every level that already asks you to keep your speed.
+
+
+
+
+const MOVES_PACK = [
+  {
+    id: 'tut-dash',
+    name: DASH.name,
+    blurb: 'Q in the air: one flat, fast charge that buys distance and never height, across gaps no jump reaches.',
+    difficulty: 1,
+    category: 'tutorial',
+    level: DASH,
+  },
+  {
+    id: 'tut-climb',
+    name: CLIMB.name,
+    blurb: 'Square up to a wall too tall to mantle, hold W and jump: you run 3 m up it and the lip does the rest.',
+    difficulty: 1,
+    category: 'tutorial',
+    level: CLIMB,
+  },
+];
+return Object.freeze({ MOVES_PACK });
+})();
+
 // ---- js/levels/skyline.js ----
-const __vl$m22_js_levels_skyline = (function () {
+const __vl$m25_js_levels_skyline = (function () {
 
 // PACK LEVEL 1 — SKYLINE MILE.  A long, flowing rooftop sprint: nothing here is hard on its own, the whole
 // level is about holding 11 m/s for 588 m. Every jump is 3.5 .. 4.5 m against REACH.gapSprint 5.0, the steps
@@ -2734,7 +3037,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/floodway.js ----
-const __vl$m23_js_levels_floodway = (function () {
+const __vl$m26_js_levels_floodway = (function () {
 
 // PACK LEVEL 2 — THE FLOODWAY.  A storm channel run on your back: bays of concrete with a 1.1 m ceiling over
 // them (REACH.slideClearance), spillway holes between the bays, and a roof that stops covering the whole
@@ -2893,7 +3196,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/freight.js ----
-const __vl$m24_js_levels_freight = (function () {
+const __vl$m27_js_levels_freight = (function () {
 
 // PACK LEVEL 3 — FREIGHT YARD.  Almost every metre forward is taken standing on something that is moving:
 // forward ferries, sideways ferries that hand you across to each other, and two gantry lifts that carry you
@@ -3011,7 +3314,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/canyon.js ----
-const __vl$m25_js_levels_canyon = (function () {
+const __vl$m28_js_levels_canyon = (function () {
 
 // PACK LEVEL 4 — HOOK CANYON.  Fifteen ledges cut into the two walls of a canyon, and nothing between them
 // but green anchors and 16 .. 18 m of air — more than twice the 9.5 m a sprint jump carries, so every one of
@@ -3142,7 +3445,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/ascent.js ----
-const __vl$m26_js_levels_ascent = (function () {
+const __vl$m29_js_levels_ascent = (function () {
 
 // PACK LEVEL 5 — THE ASCENT.  A tower under scaffolding, climbed from y 10 to y 76.5 without ever turning
 // back: every unit of this level gains height and gives up as little ground as it can. Four things carry you
@@ -3337,7 +3640,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/crosstown.js ----
-const __vl$m27_js_levels_crosstown = (function () {
+const __vl$m30_js_levels_crosstown = (function () {
 
 // PACK LEVEL 6 — CROSSTOWN.  Every move in the pack, in the order the pack taught them, with the city built
 // so that there is nearly always more than one way through: a duct beside an open stair, an anchor over a
@@ -3547,13 +3850,13 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/pack-levels.js ----
-const __vl$m28_js_levels_pack_levels = (function () {
-const { LEVEL: SKYLINE } = __vl$m22_js_levels_skyline;
-const { LEVEL: FLOODWAY } = __vl$m23_js_levels_floodway;
-const { LEVEL: FREIGHT } = __vl$m24_js_levels_freight;
-const { LEVEL: CANYON } = __vl$m25_js_levels_canyon;
-const { LEVEL: ASCENT } = __vl$m26_js_levels_ascent;
-const { LEVEL: CROSSTOWN } = __vl$m27_js_levels_crosstown;
+const __vl$m31_js_levels_pack_levels = (function () {
+const { LEVEL: SKYLINE } = __vl$m25_js_levels_skyline;
+const { LEVEL: FLOODWAY } = __vl$m26_js_levels_floodway;
+const { LEVEL: FREIGHT } = __vl$m27_js_levels_freight;
+const { LEVEL: CANYON } = __vl$m28_js_levels_canyon;
+const { LEVEL: ASCENT } = __vl$m29_js_levels_ascent;
+const { LEVEL: CROSSTOWN } = __vl$m30_js_levels_crosstown;
 // The six-level pack, in intended play order. Pure data + imports: no DOM, no side effects.
 // Same shape as js/levels/catalog.js, so a level-select screen can read either list:
 //
@@ -3625,7 +3928,7 @@ return Object.freeze({ LEVELS_PACK });
 })();
 
 // ---- js/levels/razor.js ----
-const __vl$m29_js_levels_razor = (function () {
+const __vl$m32_js_levels_razor = (function () {
 
 // EXTREME LEVEL 1 — RAZOR EDGE.  Flat rooftops, nothing to hold on to, and every gap cut to within a few
 // tenths of what the physics can actually do. Pure data: no imports, no DOM.
@@ -3738,7 +4041,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/spine.js ----
-const __vl$m30_js_levels_spine = (function () {
+const __vl$m33_js_levels_spine = (function () {
 
 // EXTREME LEVEL 2 — THE SPINE.  One yellow line down the length of a trench: wall-runs near the longest
 // the physics allows, a wall-jump ladder that climbs while it crosses, and two machines you have to read
@@ -3866,7 +4169,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/lastlight.js ----
-const __vl$m31_js_levels_lastlight = (function () {
+const __vl$m34_js_levels_lastlight = (function () {
 
 // EXTREME LEVEL 3 — LAST LIGHT.  Grapple only, and every anchor is hung at the far end of the hook's
 // useful range: five hops over a canyon with nothing under them. Pure data: no imports, no DOM.
@@ -3968,10 +4271,10 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/pack-extreme.js ----
-const __vl$m32_js_levels_pack_extreme = (function () {
-const { LEVEL: RAZOR } = __vl$m29_js_levels_razor;
-const { LEVEL: SPINE } = __vl$m30_js_levels_spine;
-const { LEVEL: LASTLIGHT } = __vl$m31_js_levels_lastlight;
+const __vl$m35_js_levels_pack_extreme = (function () {
+const { LEVEL: RAZOR } = __vl$m32_js_levels_razor;
+const { LEVEL: SPINE } = __vl$m33_js_levels_spine;
+const { LEVEL: LASTLIGHT } = __vl$m34_js_levels_lastlight;
 // THE EXTREME PACK — three difficulty-5 courses for players who have finished THE GAUNTLET.
 // Pure data + imports: no DOM, no side effects. Same shape as js/levels/catalog.js, so a level-select
 // screen can read this directly: `level` is the LEVEL object itself, ready for `new World(level)`.
@@ -4024,7 +4327,7 @@ return Object.freeze({ EXTREME_PACK });
 })();
 
 // ---- js/levels/hairline.js ----
-const __vl$m33_js_levels_hairline = (function () {
+const __vl$m36_js_levels_hairline = (function () {
 
 // NIGHTMARE LEVEL 1 — HAIRLINE.  Nothing but flat ledges and open air: no walls, no bounce pads, no
 // hook. Every landing is one stride deep, so a gap cannot be re-lined-up on a runway — it is taken with
@@ -4147,7 +4450,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/sheer.js ----
-const __vl$m34_js_levels_sheer = (function () {
+const __vl$m37_js_levels_sheer = (function () {
 
 // NIGHTMARE LEVEL 2 — SHEER.  A trench with a yellow wall down each side and almost no floor: every
 // gap is crossed on the wall, every metre of height is taken by kicking off one. Pure data: no
@@ -4311,7 +4614,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/metronome.js ----
-const __vl$m35_js_levels_metronome = (function () {
+const __vl$m38_js_levels_metronome = (function () {
 
 // NIGHTMARE LEVEL 3 — METRONOME.  Nothing in this level stands still. The floor is wherever the machine
 // happens to be, and it is only there for about a third of a second at a time. Pure data: no imports,
@@ -4453,7 +4756,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/piano-wire.js ----
-const __vl$m36_js_levels_piano_wire = (function () {
+const __vl$m39_js_levels_piano_wire = (function () {
 
 // NIGHTMARE LEVEL 4 — PIANO WIRE.  Grapple only, over six hundred metres of nothing, and every deck it
 // strings between is five metres deep. LAST LIGHT's decks were fourteen to eighteen; here the whole
@@ -4563,11 +4866,11 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/pack-nightmare.js ----
-const __vl$m37_js_levels_pack_nightmare = (function () {
-const { LEVEL: HAIRLINE } = __vl$m33_js_levels_hairline;
-const { LEVEL: SHEER } = __vl$m34_js_levels_sheer;
-const { LEVEL: METRONOME } = __vl$m35_js_levels_metronome;
-const { LEVEL: PIANO_WIRE } = __vl$m36_js_levels_piano_wire;
+const __vl$m40_js_levels_pack_nightmare = (function () {
+const { LEVEL: HAIRLINE } = __vl$m36_js_levels_hairline;
+const { LEVEL: SHEER } = __vl$m37_js_levels_sheer;
+const { LEVEL: METRONOME } = __vl$m38_js_levels_metronome;
+const { LEVEL: PIANO_WIRE } = __vl$m39_js_levels_piano_wire;
 // THE NIGHTMARE PACK — four difficulty-5 courses for a player who finished THE EXTREME PACK first try.
 // Pure data + imports: no DOM, no side effects. Same shape as js/levels/catalog.js, so a level-select
 // screen can read this directly: `level` is the LEVEL object itself, ready for `new World(level)`.
@@ -4639,16 +4942,17 @@ return Object.freeze({ NIGHTMARE_PACK });
 })();
 
 // ---- js/levels/catalog.js ----
-const __vl$m38_js_levels_catalog = (function () {
+const __vl$m41_js_levels_catalog = (function () {
 const { LEVEL: TUTORIAL2 } = __vl$m10_js_levels_tutorial2;
 const { LEVEL: WALLRUN } = __vl$m11_js_levels_wallrun;
 const { LEVEL: SLIDE } = __vl$m12_js_levels_slide;
 const { LEVEL: GRAPPLE } = __vl$m13_js_levels_grapple;
 const { LEVEL: GAUNTLET } = __vl$m14_js_levels_gauntlet;
 const { TUTORIALS_PACK } = __vl$m21_js_levels_pack_tutorials;
-const { LEVELS_PACK } = __vl$m28_js_levels_pack_levels;
-const { EXTREME_PACK } = __vl$m32_js_levels_pack_extreme;
-const { NIGHTMARE_PACK } = __vl$m37_js_levels_pack_nightmare;
+const { MOVES_PACK } = __vl$m24_js_levels_pack_moves;
+const { LEVELS_PACK } = __vl$m31_js_levels_pack_levels;
+const { EXTREME_PACK } = __vl$m35_js_levels_pack_extreme;
+const { NIGHTMARE_PACK } = __vl$m40_js_levels_pack_nightmare;
 // Catalogue of the standalone challenge levels, in intended play order (easiest first, the gauntlet last).
 // Pure data + imports: no DOM, no side effects. A level-select screen can read this directly —
 // `level` is the LEVEL object itself, in exactly the js/level-data.js shape, ready for `new World(level)`.
@@ -4662,6 +4966,7 @@ const { NIGHTMARE_PACK } = __vl$m37_js_levels_pack_nightmare;
 //
 // The menu reads `category` to decide which list an entry belongs in — Tutorials or Levels — and
 // `difficulty` to sort within a list and to draw the pips on the card.
+
 
 
 
@@ -4718,16 +5023,16 @@ const CORE_LEVELS = [
   },
 ];
 
-// Everything the menu lists after the campaign: the core five, then the six lessons, the six-level
-// pack, the three difficulty-5 levels and the four nightmare courses. The menu sorts within each
-// list by difficulty.
-const CHALLENGE_LEVELS = [...CORE_LEVELS, ...TUTORIALS_PACK, ...LEVELS_PACK, ...EXTREME_PACK,
-  ...NIGHTMARE_PACK];
+// Everything the menu lists after the campaign: the core five, then the six lessons, the two lessons
+// for the air dash and the wall-climb, the six-level pack, the three difficulty-5 levels and the four
+// nightmare courses. The menu sorts within each list by difficulty.
+const CHALLENGE_LEVELS = [...CORE_LEVELS, ...TUTORIALS_PACK, ...MOVES_PACK, ...LEVELS_PACK,
+  ...EXTREME_PACK, ...NIGHTMARE_PACK];
 return Object.freeze({ CHALLENGE_LEVELS });
 })();
 
 // ---- js/level-codec.js ----
-const __vl$m39_js_level_codec = (function () {
+const __vl$m42_js_level_codec = (function () {
 
 // Level <-> link payload, shared by the game and the level designer so the two can never drift.
 //
@@ -4955,7 +5260,7 @@ return Object.freeze({ CODEC_VERSION, TAG_DEFLATE, TAG_PLAIN, LINK_WARN_LENGTH, 
 })();
 
 // ---- js/ghost.js ----
-const __vl$m40_js_ghost = (function () {
+const __vl$m43_js_ghost = (function () {
 
 // Ghost runs: record the player's motion, replay it, and measure how far ahead or behind you are.
 //
@@ -5333,9 +5638,9 @@ return Object.freeze({ GHOST_VERSION, GHOST_RATE, GHOST_STATES, ANGLE_UNITS, MAX
 })();
 
 // ---- js/ghost-codec.js ----
-const __vl$m41_js_ghost_codec = (function () {
-const { encodeBytes, decodeBytes, readHashParam, HASH_PARAM, LINK_WARN_LENGTH } = __vl$m39_js_level_codec;
-const { GHOST_VERSION, GHOST_RATE, GHOST_STATES, ANGLE_UNITS, MAX_GHOST_SECONDS, MIN_GHOST_FRAMES, isGhost } = __vl$m40_js_ghost;
+const __vl$m44_js_ghost_codec = (function () {
+const { encodeBytes, decodeBytes, readHashParam, HASH_PARAM, LINK_WARN_LENGTH } = __vl$m42_js_level_codec;
+const { GHOST_VERSION, GHOST_RATE, GHOST_STATES, ANGLE_UNITS, MAX_GHOST_SECONDS, MIN_GHOST_FRAMES, isGhost } = __vl$m43_js_ghost;
 // A ghost run, packed small enough to ride in a URL next to the level it belongs to.
 //
 // The envelope is the level codec's: js/level-codec.js encodeBytes/decodeBytes give the same
@@ -5669,14 +5974,14 @@ return Object.freeze({ GHOST_PARAM, GHOST_MAGIC, GHOST_WARN_LENGTH, LINK_MAX_LEN
 })();
 
 // ---- tools/validate-run.mjs ----
-const __vl$m42_tools_validate_run = (function () {
+const __vl$m45_tools_validate_run = (function () {
 const { readFileSync } = __vl$n0_node_fs;
 const { PHYS, GRAPPLE } = __vl$m0_js_config;
 const { LEVEL: CAMPAIGN } = __vl$m9_js_level_data;
-const { CHALLENGE_LEVELS } = __vl$m38_js_levels_catalog;
-const { levelId } = __vl$m39_js_level_codec;
-const { decodeGhost } = __vl$m41_js_ghost_codec;
-const { frameCount, ghostDuration, isGhost, GHOST_RATE } = __vl$m40_js_ghost;
+const { CHALLENGE_LEVELS } = __vl$m41_js_levels_catalog;
+const { levelId } = __vl$m42_js_level_codec;
+const { decodeGhost } = __vl$m44_js_ghost_codec;
+const { frameCount, ghostDuration, isGhost, GHOST_RATE } = __vl$m43_js_ghost;
 // The leaderboard's referee: does this ghost really run this course in this time?
 //
 // A run is posted as a GitHub issue carrying three fields — the level id, the claimed time and the
@@ -6048,23 +6353,23 @@ return Object.freeze({ TIME_TOLERANCE, SPEED_TOLERANCE, SPEED_LIMIT, RESPAWN_RAD
 })();
 
 // ---- tools/validate-run.mjs: exports + command line ----
-export const TIME_TOLERANCE = __vl$m42_tools_validate_run.TIME_TOLERANCE;
-export const SPEED_TOLERANCE = __vl$m42_tools_validate_run.SPEED_TOLERANCE;
-export const SPEED_LIMIT = __vl$m42_tools_validate_run.SPEED_LIMIT;
-export const RESPAWN_RADIUS = __vl$m42_tools_validate_run.RESPAWN_RADIUS;
-export const SUBSTEP = __vl$m42_tools_validate_run.SUBSTEP;
-export const FINISH_WINDOW = __vl$m42_tools_validate_run.FINISH_WINDOW;
-export const ABSOLUTE_FLOOR = __vl$m42_tools_validate_run.ABSOLUTE_FLOOR;
-export const builtinLevels = __vl$m42_tools_validate_run.builtinLevels;
-export const levelFor = __vl$m42_tools_validate_run.levelFor;
-export const respawnPoints = __vl$m42_tools_validate_run.respawnPoints;
-export const timeFloor = __vl$m42_tools_validate_run.timeFloor;
-export const walkPath = __vl$m42_tools_validate_run.walkPath;
-export const findTeleport = __vl$m42_tools_validate_run.findTeleport;
-export const validateRun = __vl$m42_tools_validate_run.validateRun;
-export const parseIssueBody = __vl$m42_tools_validate_run.parseIssueBody;
-export const runCli = __vl$m42_tools_validate_run.runCli;
+export const TIME_TOLERANCE = __vl$m45_tools_validate_run.TIME_TOLERANCE;
+export const SPEED_TOLERANCE = __vl$m45_tools_validate_run.SPEED_TOLERANCE;
+export const SPEED_LIMIT = __vl$m45_tools_validate_run.SPEED_LIMIT;
+export const RESPAWN_RADIUS = __vl$m45_tools_validate_run.RESPAWN_RADIUS;
+export const SUBSTEP = __vl$m45_tools_validate_run.SUBSTEP;
+export const FINISH_WINDOW = __vl$m45_tools_validate_run.FINISH_WINDOW;
+export const ABSOLUTE_FLOOR = __vl$m45_tools_validate_run.ABSOLUTE_FLOOR;
+export const builtinLevels = __vl$m45_tools_validate_run.builtinLevels;
+export const levelFor = __vl$m45_tools_validate_run.levelFor;
+export const respawnPoints = __vl$m45_tools_validate_run.respawnPoints;
+export const timeFloor = __vl$m45_tools_validate_run.timeFloor;
+export const walkPath = __vl$m45_tools_validate_run.walkPath;
+export const findTeleport = __vl$m45_tools_validate_run.findTeleport;
+export const validateRun = __vl$m45_tools_validate_run.validateRun;
+export const parseIssueBody = __vl$m45_tools_validate_run.parseIssueBody;
+export const runCli = __vl$m45_tools_validate_run.runCli;
 const __vl$argv = typeof process !== 'undefined' && Array.isArray(process.argv) ? process.argv : [];
 if (__vl$argv[1] && /validate-run\.mjs$/.test(__vl$argv[1].replace(/\\/g, '/'))) {
-  __vl$m42_tools_validate_run.runCli(__vl$argv.slice(2));
+  __vl$m45_tools_validate_run.runCli(__vl$argv.slice(2));
 }

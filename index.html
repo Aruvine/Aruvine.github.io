@@ -484,6 +484,27 @@
     height: 9px;
     background: rgba(232, 237, 241, 0.6);
   }
+  .dash {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    margin-top: 9px;
+    font-family: var(--f-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(232, 237, 241, 0.72);
+  }
+  .dash-pip {
+    width: 16px;
+    height: 4px;
+    background: rgba(232, 237, 241, 0.22);
+    transition: background-color 140ms ease, opacity 140ms ease;
+  }
+  .dash.is-ready .dash-pip { background: #7FD1FF; }
+  .dash.is-ready .dash-label { color: #7FD1FF; }
+  .dash.is-cooling .dash-pip { background: rgba(232, 237, 241, 0.45); }
 
   /* ---------- screens ---------- */
   .screen {
@@ -1358,6 +1379,7 @@
       <i id="speed-tick-walk" class="speed-tick" style="left:37.5%"></i>
       <i id="speed-tick-sprint" class="speed-tick" style="left:55%"></i>
     </div>
+    <div id="dash" class="dash" aria-label="Air dash charge"><span id="dash-label" class="dash-label">Dash</span><i id="dash-pip" class="dash-pip"></i></div>
   </div>
 </div>
 
@@ -1396,6 +1418,9 @@
                 <li><span class="caps"><kbd>Space</kbd></span><span class="label">Jump</span></li>
                 <li><span class="caps"><kbd>Shift</kbd></span><span class="label">Sprint</span></li>
                 <li><span class="caps"><kbd>C</kbd></span><span class="label">Slide</span></li>
+                <li><span class="caps"><kbd>Space</kbd></span><span class="label">Land and jump again on the beat to bunny-hop: every clean hop is a little faster</span></li>
+                <li><span class="caps"><kbd>W</kbd><kbd>Space</kbd></span><span class="label">Wall-climb — face a wall head-on and jump to run 3 m up it</span></li>
+                <li><span class="caps"><kbd>Q</kbd><kbd>RMB</kbd></span><span class="label">Air dash — one charge in the air, flat and fast; land, catch a wall or hook up to get it back</span></li>
                 <li><span class="caps"><kbd>E</kbd></span><span class="label">Grapple — hold to swing from any surface</span></li>
                 <li><span class="caps"><kbd>F</kbd></span><span class="label">Shoot at what you are looking at, or reel in on the rope</span></li>
                 <li><span class="caps"><kbd>R</kbd></span><span class="label">Restart</span></li>
@@ -1664,6 +1689,51 @@ const PHYS = {
   bounceVel: 17,          // apex ≈ 5.5 m
 };
 
+// Bunny-hop. No new key: it is the jump, landed and pressed again inside `window`. A clean hop keeps every
+// metre per second the landing carried (no friction, no overspeed bleed that step) and adds `gain` on top,
+// up to sprintSpeed * maxFactor. Miss the window and it is an ordinary jump: the chain is broken and the
+// speed above sprintSpeed bleeds back at `bleed` (the number the controller has always used for excess
+// ground speed), which empties the whole bank in about a second.
+const HOP = {
+  window: 0.12,           // s after touching down in which a jump still counts as a clean hop (= jumpBuffer)
+  gain: 0.55,             // m/s added by each clean hop
+  maxFactor: 1.35,        // ceiling as a multiple of sprintSpeed: 14.85 m/s, reached on the 8th clean hop
+  minSpeed: 6,            // slower than this a hop adds nothing: there is no hopping up from a standstill
+  bleed: 3.5,             // 1/s: ground speed above the input target decays exponentially at this rate
+};
+
+// Air dash. Q (or the right mouse button): one charge, airborne only, a flat burst in the direction held
+// (forward when nothing is). It is distance, never height — the vertical velocity is pinned to zero for the
+// whole burst, so a dash can only ever lower the arc it is fired from. The charge comes back on landing, on
+// catching a wall (wall-run or wall-jump) or on tying the rope on, never in mid-air on its own.
+const DASH = {
+  speed: 24,              // m/s of flat burst (2.2x sprintSpeed)
+  time: 0.16,             // s the burst lasts: 3.84 m of travel, ~2.1 m more than sprinting through it
+  cooldown: 0.35,         // s after a dash before the next one may start, however the charge came back
+  charges: 1,             // charges held at once
+  exitDecay: 14,          // m/s^2: the raised speed cap bleeds back to airMaxSpeed once the burst ends
+  minFall: -30,           // m/s: no dash while falling faster than this (it is a burst, not a parachute)
+};
+
+// Wall-climb. No new key either: face a wall with forward held and jump, and you run straight up it. One
+// climb per wall contact — touching the ground, or catching a different wall, hands it back. A wall-run
+// wins whenever you are actually moving ALONG the wall, so this is the move you get by stopping at a face
+// instead of skimming it. The mantle does the rest: if a lip comes inside PHYS.mantleMaxHeight on the way
+// up, the ordinary ledge climb catches it and puts you on top.
+const CLIMB = {
+  height: 3.0,            // m gained by a full climb
+  time: 0.6,              // s it takes: 5 m/s straight up
+  minFacing: 0.6,         // the view must point into the wall at least this much (cos of the angle)
+  maxFoot: 0.4,           // m the wall's base may sit above the feet: you run up a FACE, never up a soffit
+                          // hanging over your head, so a duct roof is still not a thing you can start on
+  maxAlong: 6,            // m/s along the wall above which the wall-run owns the contact (= wallrunMinSpeed)
+  maxStrafe: 0.5,         // lateral input above this means you are doing something else -- kicking up a
+                          // chimney, leaning into a wall-run -- so the climb stands aside. Square up to it.
+  stick: 1.5,             // m/s pressed into the wall so the contact never flickers
+  exitUp: 2,              // m/s left over at the top, so a lip just out of reach is still mantled
+  cooldown: 0.25,         // s after a climb ends before another may start
+};
+
 // Level-design limits derived from PHYS, with safety margin. Level data must stay inside these.
 const REACH = {
   gapWalk: 3.5,           // horizontal gap (edge to edge) crossable from a walking jump
@@ -1699,7 +1769,7 @@ const GRAPPLE = {
   jumpKick: 3.2,          // m/s of extra lift when you release by jumping
   keepDecay: 6,           // m/s^2: the raised horizontal speed cap bleeds back to airMaxSpeed after release
 };
-return Object.freeze({ PHYS, REACH, GRAPPLE });
+return Object.freeze({ PHYS, HOP, DASH, CLIMB, REACH, GRAPPLE });
 })();
 
 // ---- js/level/anchors.js ----
@@ -3312,7 +3382,7 @@ return Object.freeze({ EPS, gatherNear, overlapsBox, firstOverlap, sweepAxis, hi
 
 // ---- js/player.js ----
 const __vl$m12_js_player = (function () {
-const { PHYS, GRAPPLE } = __vl$m0_js_config;
+const { PHYS, GRAPPLE, HOP, DASH, CLIMB } = __vl$m0_js_config;
 const { EPS, gatherNear, overlapsBox, firstOverlap, highestOverlap, sweepAxis, faceToward, faceCoord, pushOutCandidates } = __vl$m11_js_player_collide;
 // Player: first-person parkour controller (SPEC "js/player.js").
 // Swept per-axis AABB collision (Y, then X, then Z) against World.colliders with auto step-up.
@@ -3325,7 +3395,7 @@ const FULL = PHYS.height;
 
 // ---- controller feel (level-design limits live in config.js REACH; these only shape feel) ----
 const CRAWL_FACTOR = 0.45;          // crouch-walk speed as a fraction of walkSpeed
-const OVERSPEED_DECAY = 3.5;        // 1/s: ground speed above the input target bleeds off exponentially
+const OVERSPEED_DECAY = HOP.bleed;  // 1/s: ground speed above the input target bleeds off exponentially
 const OVERSPEED_TURN = 5;           // turn rate factor while carrying excess ground speed
 const STOP_DECEL = 5;               // m/s^2 minimum braking without input
 const HARDLAND_KEEP = 0.65;         // horizontal speed kept after a hard landing (crouch on impact to roll instead)
@@ -3393,6 +3463,11 @@ class Player {
     this.onGround = false;
     this.ground = null;             // collider stood on
     this.slideBoosting = false;     // true during an actual slide; state 'slide' without it = crouch-walk
+    this.dashCharges = DASH.charges; // air dashes in hand (read-only for the HUD)
+    this.dashT = 0;                 // s left of the current dash burst, 0 when not dashing
+    this.dashCooldownT = 0;         // s before the next dash may start
+    this.hopChain = 0;              // clean bunny-hops landed back to back (read-only)
+    this.climbT = 0;                // s left of the current wall-climb, 0 when not climbing
     this.grappleAnchor = null;      // surface target the rope is tied to, or null
     this.reeling = false;           // true while F is reeling us in
     this.reelT = 0;                 // s since F was pressed (the reel kick window)
@@ -3415,6 +3490,8 @@ class Player {
     this._dt = PHYS.dt;
     this.wallN = [0, 0];
     this.wallTouch = { c: null, nx: 0, nz: 0 };
+    this.dashDir = [0, 0];
+    this.climbN = [0, 0];
     this.respawn(spawn);
   }
 
@@ -3452,6 +3529,17 @@ class Player {
     this.mantleCooldownT = 0;
     this.stepDist = 0;
 
+    this.hopT = HOP.window + 1;     // s on the ground since landing; over HOP.window = the chain is cold
+    this.hopChain = 0;
+    this.dashT = 0;
+    this.dashDir[0] = 0; this.dashDir[1] = 0;
+    this.dashCharges = DASH.charges;
+    this.dashCooldownT = 0;
+    this.climbT = 0;
+    this.climbCooldownT = 0;
+    this.climbWall = null;          // the collider the last climb used: one climb per wall contact
+    this.climbN[0] = 0; this.climbN[1] = 0;
+
     this.grappleAnchor = null;
     this.aimedAnchor = null;
     this.ropeLen = 0;
@@ -3461,7 +3549,8 @@ class Player {
     this.reeling = false;
     this.reelT = 0;
     this.grappleCooldownT = 0;
-    this._hsCap = PHYS.airMaxSpeed;  // horizontal speed cap; raised while grappling, bleeds back after release
+    this._hsCap = PHYS.airMaxSpeed;  // horizontal speed cap; raised by the rope and the dash, bleeds back after
+    this._capDecay = GRAPPLE.keepDecay;
 
     this._eyeBase = PHYS.eyeHeight;
     this._eyeDip = 0;
@@ -3511,10 +3600,12 @@ class Player {
     k.grapplePressed = !!inp.grapplePressed;
     k.grappleHeld = !!inp.grappleHeld;
     k.reelHeld = !!inp.reelHeld;      // F: reels hard toward the anchor while attached
+    k.dashPressed = !!inp.dashPressed; // Q / right mouse: the air dash
 
     this.grappleCooldownT = Math.max(0, this.grappleCooldownT - dt);
     if (this.grappleAnchor) this._hsCap = Math.max(P.airMaxSpeed, GRAPPLE.maxSpeed);
-    else this._hsCap = Math.max(P.airMaxSpeed, this._hsCap - GRAPPLE.keepDecay * dt);
+    else if (this.dashT > 0) this._hsCap = Math.max(P.airMaxSpeed, DASH.speed);
+    else this._hsCap = Math.max(P.airMaxSpeed, this._hsCap - this._capDecay * dt);
 
     this.jumpBufferT = inp.jumpPressed ? P.jumpBuffer : Math.max(0, this.jumpBufferT - dt);
     this.crouchBufferT = inp.crouchPressed ? P.jumpBuffer : Math.max(0, this.crouchBufferT - dt);
@@ -3523,6 +3614,10 @@ class Player {
     this.wallJumpT = Math.max(0, this.wallJumpT - dt);
     this.mantleCooldownT = Math.max(0, this.mantleCooldownT - dt);
     this.slideCooldownT = Math.max(0, this.slideCooldownT - dt);
+    this.dashCooldownT = Math.max(0, this.dashCooldownT - dt);
+    this.climbCooldownT = Math.max(0, this.climbCooldownT - dt);
+    // the bunny-hop window: time spent standing since the landing that opened it
+    if (this.onGround) this.hopT += dt;
     const cds = this._cooldowns;
     for (let i = cds.length - 1; i >= 0; i--) {
       cds[i].t -= dt;
@@ -3563,8 +3658,9 @@ class Player {
     // 2b. grapple: release checks before any pull this step
     if (this.grappleAnchor) this._grappleTick(dt, ev, k);
 
-    // 3. gravity and speed limits
-    v[1] -= (this.state === 'wallrun' ? P.wallrunGravity : P.gravity) * dt;
+    // 3. gravity and speed limits. A dash burst and a wall-climb are scripted in the vertical: they own
+    // v[1] outright, which is exactly why a dash can never become a second jump.
+    if (this.dashT <= 0 && this.climbT <= 0) v[1] -= (this.state === 'wallrun' ? P.wallrunGravity : P.gravity) * dt;
     if (v[1] < -P.maxFallSpeed) v[1] = -P.maxFallSpeed;
     if (this.grappleAnchor) this._grappleVel(dt);
     const cap = this._hsCap;
@@ -3586,6 +3682,10 @@ class Player {
     if (hm.hx) v[0] = 0;
     if (hm.hz) v[2] = 0;
     if (hm.stepGround) { groundHit = hm.stepGround; if (v[1] < 0) v[1] = 0; }
+    // a dash into something solid is spent there rather than hovering against it
+    if (this.dashT > 0 && ((hm.hx && Math.abs(this.dashDir[0]) > 0.3) || (hm.hz && Math.abs(this.dashDir[1]) > 0.3))) {
+      this.dashT = 0;
+    }
 
     // 5. ground bookkeeping
     if (groundHit) {
@@ -3621,7 +3721,7 @@ class Player {
 
     // 7. wall-run
     if (this.state === 'wallrun') this._wallrunPost(ev, hm);
-    else if (this.state === 'air' && !this.grappleAnchor) this._tryWallrun(ev, k, preVx, preVz, preHs);
+    else if (this.state === 'air' && !this.grappleAnchor && this.climbT <= 0) this._tryWallrun(ev, k, preVx, preVz, preHs);
 
     if (this.onGround) this.airTime = 0;
     else this.airTime += dt;
@@ -3631,7 +3731,11 @@ class Player {
 
   _groundLogic(dt, ev, k) {
     const P = PHYS;
-    if (this.jumpBufferT > 0 && this._jump(ev)) return;
+    if (this.hopT > HOP.window) this.hopChain = 0;      // stood around: the chain is broken, the bank bleeds
+    if (this.jumpBufferT > 0) {
+      if (this._tryWallClimb(ev, k)) return;
+      if (this._jump(ev)) return;
+    }
 
     if (this.state === 'ground') {
       if (this.crouchBufferT > 0) {
@@ -3668,6 +3772,10 @@ class Player {
       this._airMove(dt, k);
       return;
     }
+    // Scripted bursts own the body while they last. Both are still plain 'air' to everything outside this
+    // file, so the ghost, the renderer and the referee see a jump like any other.
+    if (this.climbT > 0) { this._climbTick(dt, ev, k); return; }
+    if (this.dashT > 0) { this._dashTick(dt); return; }
     const touch = this._findWall(PHYS.wallProbe, 0, 0, 'touch');
     if (touch) {
       const wt = this.wallTouch;
@@ -3675,6 +3783,9 @@ class Player {
       this.wallCoyoteT = P.coyoteTime;
     }
     if (this.jumpBufferT > 0) {
+      // A face straight ahead with W held is a climb, not a kick: the kick is what you get off a wall you
+      // are travelling along, and that case is refused by _tryWallClimb.
+      if (this._tryWallClimb(ev, k)) return;
       let jumped = this.coyoteT > 0 && this._jump(ev);
       const wt = this.wallTouch;
       if (!jumped && this.wallCoyoteT > 0 && wt.c && !(wt.c === this.lastWallJump && this.wallJumpT > 0)) {
@@ -3682,6 +3793,8 @@ class Player {
         jumped = true;
       }
     }
+    if (k.dashPressed) this._tryDash(ev, k);
+    if (this.dashT > 0) { this._dashTick(dt); return; }
     if (this.height < FULL - 1e-6 && !k.crouchHeld && this._canStand()) this.height = FULL;
     this._airMove(dt, k);
   }
@@ -3719,13 +3832,18 @@ class Player {
   _groundMove(dt, k, target) {
     const P = PHYS, v = this.vel;
     const hs = Math.hypot(v[0], v[2]);
+    // The bunny-hop window. For HOP.window after touching down, a runner still holding a direction keeps
+    // every metre per second the landing had: the overspeed bleed (this controller's ground friction for
+    // anyone moving faster than they are asking to) is switched off, so a jump pressed on the beat leaves
+    // with all of it. Let go of the stick and ordinary friction still stops you dead.
+    const fresh = this.hopT <= HOP.window && k.wmag > 1e-3;
     if (k.wmag > 1e-3) {
       const want = target * k.wmag;
       const dx = k.wx / k.wmag, dz = k.wz / k.wmag;
       const acc = P.groundAccel * dt;
       if (hs > want + 1e-6 && v[0] * dx + v[2] * dz > 0.5 * hs) {
         // faster than the input asks but heading roughly that way: steer, and let the excess bleed off gently
-        const ns = want + (hs - want) * Math.exp(-OVERSPEED_DECAY * dt);
+        const ns = fresh ? hs : want + (hs - want) * Math.exp(-OVERSPEED_DECAY * dt);
         const blend = Math.min(1, OVERSPEED_TURN * dt);
         let ux = v[0] / hs + (dx - v[0] / hs) * blend;
         let uz = v[2] / hs + (dz - v[2] / hs) * blend;
@@ -3789,8 +3907,10 @@ class Player {
       this.height = FULL;
     }
     if (this.slideBoosting) this._endSlide(ev);
+    const clean = this.onGround && this.hopT <= HOP.window;
     const platformVy = this.onGround ? this._inheritPlatform(this.ground) : 0;
     v[1] = P.jumpVel + Math.max(0, platformVy);
+    if (clean) this._hop(ev);
     this.state = 'air';
     this.onGround = false;
     this.ground = null;
@@ -3851,6 +3971,11 @@ class Player {
     this.wallTouch.c = null;
     this.blockedPlane = null;
     this.state = 'ground';
+    this.hopT = 0;                            // the bunny-hop window opens here
+    this.dashT = 0;
+    this.dashCharges = DASH.charges;          // the floor hands the dash back
+    this.climbWall = null;                    // and so does it hand back the climb
+    this.climbT = 0;
     if (c.kind === 'bounce') return;          // _bounce runs right after
 
     const impact = Math.max(0, -preVy);
@@ -3884,6 +4009,131 @@ class Player {
     this.airTime = 0;
     if (this.height < FULL - 1e-6 && this._canStand()) this.height = FULL;
     ev.push('bounce');
+  }
+
+  // ================================================================== bunny-hop / air dash / wall-climb
+
+  // A jump pressed inside HOP.window of touching down. The window itself is what keeps the speed (see
+  // _groundMove); this only adds the bonus on top and counts the chain. Below HOP.minSpeed it adds
+  // nothing, so there is no hopping up from a standstill — and a hop pressed late never gets here at all,
+  // which is what makes a mistimed hop an ordinary jump.
+  _hop(ev) {
+    const P = PHYS, v = this.vel;
+    const hs = Math.hypot(v[0], v[2]);
+    if (hs < HOP.minSpeed) return;
+    this.hopChain++;
+    const cap = P.sprintSpeed * HOP.maxFactor;
+    const ns = Math.min(cap, hs + HOP.gain);
+    if (ns > hs) { v[0] *= ns / hs; v[2] *= ns / hs; }
+    ev.push('hop');
+  }
+
+  // Q / right mouse. One charge, airborne only, never on the rope: a flat burst in the direction held
+  // (forward when nothing is). v[1] is pinned to 0 for the whole burst and gravity is skipped, so the
+  // dash buys distance and can only ever lower the arc it was fired from.
+  _tryDash(ev, k) {
+    const v = this.vel;
+    if (this.onGround || this.grappleAnchor || this.state === 'mantle' || this.state === 'wallrun') return false;
+    if (this.dashT > 0 || this.dashCooldownT > 0 || this.dashCharges <= 0) return false;
+    if (v[1] < DASH.minFall) return false;
+    let dx, dz;
+    if (k.wmag > 1e-3) { dx = k.wx / k.wmag; dz = k.wz / k.wmag; } else { dx = k.fx; dz = k.fz; }
+    if (this.height < FULL - 1e-6 && this._canStand()) this.height = FULL;
+    this.dashDir[0] = dx; this.dashDir[1] = dz;
+    this.dashT = DASH.time;
+    this.dashCharges--;
+    this.dashCooldownT = DASH.time + DASH.cooldown;
+    this._capDecay = DASH.exitDecay;          // the raised cap bleeds back faster than the rope's does
+    v[0] = dx * DASH.speed;
+    v[2] = dz * DASH.speed;
+    v[1] = 0;
+    this.coyoteT = 0;
+    this.jumpBufferT = 0;
+    ev.push('dash');
+    return true;
+  }
+
+  // The burst itself: the direction is locked in, so air control cannot steer a dash into a second jump.
+  _dashTick(dt) {
+    const v = this.vel;
+    this.dashT -= dt;
+    v[0] = this.dashDir[0] * DASH.speed;
+    v[2] = this.dashDir[1] * DASH.speed;
+    v[1] = 0;
+    if (this.dashT <= 0) this.dashT = 0;
+  }
+
+  // Facing a wall with W held and pressing jump. Refused when a wall-run owns the contact (you are moving
+  // along the face), when the top is already inside mantle reach (that is the ledge climb's job, unchanged)
+  // and when this is the same wall the last climb used — one climb per wall contact, handed back by the
+  // ground or by catching a different wall.
+  _tryWallClimb(ev, k) {
+    const P = PHYS, v = this.vel;
+    if (!k.forward || this.grappleAnchor || this.climbT > 0 || this.climbCooldownT > 0) return false;
+    if (this.state === 'mantle' || this.state === 'wallrun') return false;
+    if (Math.abs(k.moveX) > CLIMB.maxStrafe) return false;    // strafing: that press belongs to another move
+    const w = this._findWall(P.wallProbe, k.fx, k.fz, 'climb');
+    if (!w || w.c === this.climbWall) return false;
+    if (-(k.fx * w.nx + k.fz * w.nz) < CLIMB.minFacing) return false;
+    if (w.c.min[1] > this.pos[1] + CLIMB.maxFoot) return false;
+    if (w.c.max[1] <= this.pos[1] + P.mantleMaxHeight + 1e-6) return false;
+    if (Math.abs(v[0] * -w.nz + v[2] * w.nx) >= CLIMB.maxAlong) return false;
+    if (this.height < FULL - 1e-6) {
+      if (!this._canStand()) return false;
+      this.height = FULL;
+    }
+    if (this.slideBoosting) this._endSlide(ev);
+    this.climbT = CLIMB.time;
+    this.climbN[0] = w.nx; this.climbN[1] = w.nz;
+    this.climbWall = w.c;
+    this.dashT = 0;
+    this.state = 'air';
+    this.onGround = false;
+    this.ground = null;
+    this.jumpBufferT = 0;
+    this.coyoteT = 0;
+    this.wallCoyoteT = 0;
+    this.airTime = 0;
+    v[1] = CLIMB.height / CLIMB.time;
+    v[0] = -w.nx * CLIMB.stick;
+    v[2] = -w.nz * CLIMB.stick;
+    ev.push('wallclimb');
+    return true;
+  }
+
+  // Running up the face. The mantle in _stepPhysics is what finishes the move when a lip comes inside
+  // PHYS.mantleMaxHeight; without one the climb simply runs out of its CLIMB.height and you drop off.
+  _climbTick(dt, ev, k) {
+    const P = PHYS, v = this.vel;
+    const nx = this.climbN[0], nz = this.climbN[1];
+    if (this.jumpBufferT > 0 && this.climbWall) {   // a second press kicks off the face instead
+      const c = this.climbWall;
+      this._stopClimb();
+      this._wallJump(c, nx, nz, ev);
+      return;
+    }
+    const w = this._findWall(P.wallProbe, -nx, -nz, 'climb');
+    if (!k.forward || !w || w.nx !== nx || w.nz !== nz) {
+      this._stopClimb();
+      this._airMove(dt, k);
+      return;
+    }
+    this.climbWall = w.c;                           // hand-over between boxes on the same face
+    this.climbT -= dt;
+    v[1] = CLIMB.height / CLIMB.time;
+    v[0] = -nx * CLIMB.stick;
+    v[2] = -nz * CLIMB.stick;
+    if (this.climbT <= 0) {
+      this._stopClimb();
+      v[1] = CLIMB.exitUp;                          // a lip just out of reach is still mantled
+    }
+  }
+
+  _stopClimb() {
+    if (this.climbT <= 0) return;
+    this.climbT = 0;
+    this.climbCooldownT = CLIMB.cooldown;
+    this.state = 'air';
   }
 
   // ================================================================== wall-run / wall-jump
@@ -3978,6 +4228,8 @@ class Player {
         this.blockedPlane = null;
       }
       const speed = Math.max(Math.abs(along), Math.min(preHs, P.wallrunSpeed));
+      this.dashT = 0;
+      this.dashCharges = DASH.charges;        // catching a wall hands the dash back
       this.state = 'wallrun';
       this.wall = w.c;
       this.wallN[0] = w.nx;
@@ -4050,6 +4302,8 @@ class Player {
     this.onGround = false;
     this.ground = null;
     this._setCooldown(c, P.wallrunCooldown);
+    this.dashT = 0;
+    this.dashCharges = DASH.charges;          // so does kicking off one
     this.lastWallJump = c;
     this.wallJumpT = WALLJUMP_REPEAT;
     this.wallTouch.c = null;
@@ -4098,6 +4352,8 @@ class Player {
 
       if (this.state === 'wallrun') this._endWallrun(ev, 0, false);
       if (this.slideBoosting) this._endSlide(ev);
+      this._stopClimb();                       // the lip is the top of the climb
+      this.dashT = 0;
       this.mantle = {
         sx: p[0], sy: p[1], sz: p[2],
         ex: axis === 0 ? target : p[0], ey: top, ez: axis === 2 ? target : p[2],
@@ -4158,6 +4414,9 @@ class Player {
       this.onGround = true;
       this.ground = hit;
       this.stepDist = 0;
+      this.hopT = 0;
+      this.dashCharges = DASH.charges;
+      this.climbWall = null;
     } else {
       p[1] = y0;
       this.onGround = false;
@@ -4231,6 +4490,9 @@ class Player {
     if (this.state === 'wallrun') this._endWallrun(ev, 0, false);
     if (this.slideBoosting) this._endSlide(ev);
     if (this.height < FULL - 1e-6 && this._canStand()) this.height = FULL;
+    this._stopClimb();
+    this.dashT = 0;
+    this.dashCharges = DASH.charges;          // and so does tying the rope on
     this.grappleAnchor = a;
     this.aimedAnchor = a;
     this.ropeLen = Math.max(G.minRopeLen, d);
@@ -4263,6 +4525,7 @@ class Player {
     this.grappleAirT = 0;
     this._gBlockT = 0;
     this.grappleCooldownT = GRAPPLE.cooldown;
+    this._capDecay = GRAPPLE.keepDecay;
     this._hsCap = Math.max(this._hsCap, Math.min(GRAPPLE.maxSpeed, Math.hypot(v[0], v[2])));
     if (jumped) v[1] += GRAPPLE.jumpKick;
     ev.push('grappleRelease');
@@ -4498,8 +4761,9 @@ const __vl$m13_js_input = (function () {
 // without allow-pointer-lock, API missing, permission denied, no answer) the class switches to `fallbackDrag`:
 // holding the primary button on the canvas and dragging looks around.
 //
-// Keyboard is tracked by physical key (KeyboardEvent.code). Edge-triggered actions (jump, crouch) are latched on
-// keydown and consumed by sample(), so a tap shorter than one fixed physics step is never lost.
+// Keyboard is tracked by physical key (KeyboardEvent.code). Edge-triggered actions (jump, crouch, grapple, reel,
+// dash) are latched on keydown and consumed by sample(), so a tap shorter than one fixed physics step is never
+// lost. The air dash also answers the right mouse button, and the context menu is suppressed on the canvas.
 
 const SENS_KEY = 'vaultline.sens';
 const DEFAULT_SENS = 0.0022;
@@ -4520,9 +4784,10 @@ const LEFT = ['KeyA', 'ArrowLeft'];
 const RIGHT = ['KeyD', 'ArrowRight'];
 const JUMP = ['Space'];
 const SPRINT = ['ShiftLeft', 'ShiftRight'];
-const CROUCH = ['KeyC', 'ControlLeft', 'ControlRight', 'KeyQ'];
+const CROUCH = ['KeyC', 'ControlLeft', 'ControlRight'];
 const GRAPPLE = ['KeyE'];
 const REEL = ['KeyF'];
+const DASH = ['KeyQ'];             // Q is the air dash now; the right mouse button fires it too
 
 const PAUSE_CODES = new Set(['Escape', 'KeyP']);
 const RESTART_CODES = new Set(['KeyR']);
@@ -4531,10 +4796,12 @@ const JUMP_CODES = new Set(JUMP);
 const CROUCH_CODES = new Set(CROUCH);
 const GRAPPLE_CODES = new Set(GRAPPLE);
 const REEL_CODES = new Set(REEL);
+const DASH_CODES = new Set(DASH);
+const DASH_BUTTON = 2;             // right mouse button
 
 // Keys whose browser default (scrolling, focus moves, quick-find, menu bar, back navigation) must not fire mid-run.
 const PREVENT_CODES = new Set([
-  ...FORWARD, ...BACK, ...LEFT, ...RIGHT, ...JUMP, ...SPRINT, ...CROUCH, ...GRAPPLE, ...REEL,
+  ...FORWARD, ...BACK, ...LEFT, ...RIGHT, ...JUMP, ...SPRINT, ...CROUCH, ...GRAPPLE, ...REEL, ...DASH,
   'KeyP', 'KeyR', 'KeyT', 'Backspace', 'Tab', 'AltLeft', 'AltRight', 'Slash', 'Quote',
   'PageUp', 'PageDown', 'Home', 'End',
 ]);
@@ -4619,6 +4886,7 @@ class Input {
     this._crouchLatch = false;
     this._grappleLatch = false;
     this._reelLatch = false;
+    this._dashLatch = false;
     this._lockedEmitted = false;
     this._baseCursor = canvas && canvas.style ? canvas.style.cursor : '';
     this._listeners = [];
@@ -4675,6 +4943,7 @@ class Input {
       grappleHeld: on && this._any(GRAPPLE),
       reelPressed: on && this._reelLatch,
       reelHeld: on && this._any(REEL),
+      dashPressed: on && this._dashLatch,
       yaw: this.yaw,
       pitch: this.pitch,
     };
@@ -4682,6 +4951,7 @@ class Input {
     this._crouchLatch = false;
     this._grappleLatch = false;
     this._reelLatch = false;
+    this._dashLatch = false;
     return out;
   }
 
@@ -4909,6 +5179,12 @@ class Input {
   }
 
   _onPointerDown(e) {
+    // The right button is the dash wherever the mouse is: under pointer lock the canvas is still the
+    // event target, and in the drag-look fallback it is the button that is not the look drag.
+    if (e.button === DASH_BUTTON && e.pointerType !== 'touch') {
+      if (this._enabled && this.locked) this._dashLatch = true;
+      return;
+    }
     if (!this._dragActive() || this._drag) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     if (e.isPrimary === false) return;
@@ -4956,8 +5232,10 @@ class Input {
     this._updateCursor();
   }
 
+  // Never on the canvas: the right button is a game key there, and a menu over the viewport eats the
+  // pointer lock with it.
   _onContextMenu(e) {
-    if (this._enabled && this.locked) e.preventDefault();
+    e.preventDefault();
   }
 
   _updateCursor() {
@@ -4980,6 +5258,7 @@ class Input {
     this._crouchLatch = false;
     this._grappleLatch = false;
     this._reelLatch = false;
+    this._dashLatch = false;
   }
 
   _onKeyDown(e) {
@@ -5010,6 +5289,7 @@ class Input {
     if (CROUCH_CODES.has(code)) this._crouchLatch = true;
     if (GRAPPLE_CODES.has(code)) this._grappleLatch = true;
     if (REEL_CODES.has(code)) this._reelLatch = true;
+    if (DASH_CODES.has(code)) this._dashLatch = true;
   }
 
   _onKeyUp(e) {
@@ -8498,6 +8778,7 @@ const WIND_HOLD = 0.45;      // s: wind fades out if setWind() stops being calle
 // Minimum spacing per sound so event bursts (several steps in one frame) do not stack.
 const MIN_GAP = {
   step: 0.05, jump: 0.05, land: 0.07, hardland: 0.1, walljump: 0.06, mantle: 0.1, bounce: 0.08,
+  hop: 0.05, dash: 0.1, wallclimb: 0.15,
   checkpoint: 0.2, finish: 0.5, death: 0.3, uiClick: 0.03,
   grappleFire: 0.06, grappleAttach: 0.08, grappleMiss: 0.08, grappleRelease: 0.06,
 };
@@ -8569,8 +8850,8 @@ class Sfx {
     if (this._master && this.ctx) glideTo(this._master.gain, volumeGain(this.volume), this.ctx.currentTime, 0.03);
   }
 
-  // name: a player event ('jump','land','hardland','step','slideStart','slideEnd','wallrunStart','wallrunEnd',
-  // 'walljump','mantle','bounce','grappleFire','grappleAttach','grappleMiss','grappleRelease',
+  // name: a player event ('jump','land','hardland','step','hop','dash','wallclimb','slideStart','slideEnd',
+  // 'wallrunStart','wallrunEnd','walljump','mantle','bounce','grappleFire','grappleAttach','grappleMiss','grappleRelease',
   // 'grappleReelStart','grappleReelEnd') or
   // 'checkpoint','finish','death','uiClick'. Unknown names are ignored.
   // opts.pan (-1..1) optionally places the sound (e.g. wall side for wall-run).
@@ -8599,6 +8880,9 @@ class Sfx {
         case 'land': this._land(pan); break;
         case 'hardland': this._hardland(pan); break;
         case 'walljump': this._walljump(pan); break;
+        case 'hop': this._hop(pan); break;
+        case 'dash': this._dash(pan); break;
+        case 'wallclimb': this._wallclimb(pan); break;
         case 'mantle': this._mantle(pan); break;
         case 'bounce': this._bounce(pan); break;
         case 'grappleFire': this._grappleFire(pan); break;
@@ -8985,6 +9269,40 @@ class Sfx {
     this._seal(v);
   }
 
+  // A clean bunny-hop: a bright tick on top of the ordinary jump, so a chain you are keeping alive is
+  // audibly different from one you have just dropped.
+  _hop(pan) {
+    const v = this._voice(0.22, pan);
+    if (!v) return;
+    const t = v.t;
+    this._tone(v, t, { type: 'triangle', from: 660, to: 1180, glide: 0.05, attack: 0.002, peak: 0.16, decay: 0.09 });
+    this._burst(v, t, { type: 'highpass', freq: 2600, q: 0.8, peak: 0.12, decay: 0.05 });
+    this._seal(v);
+  }
+
+  // The dash: air cracking past, no impact at either end.
+  _dash(pan) {
+    const v = this._voice(0.5, pan);
+    if (!v) return;
+    const t = v.t;
+    this._burst(v, t, { freq: 400, sweepTo: 3600, q: 1.1, attack: 0.012, peak: 0.7, decay: 0.16 });
+    this._burst(v, t + 0.02, { type: 'highpass', freq: 3000, q: 0.7, peak: 0.3, decay: 0.12 });
+    this._tone(v, t, { from: 210, to: 90, glide: 0.14, attack: 0.003, peak: 0.24, decay: 0.16 });
+    this._seal(v);
+  }
+
+  // Running up a face: boots hammering concrete, rising with you.
+  _wallclimb(pan) {
+    const v = this._voice(0.75, pan);
+    if (!v) return;
+    const t = v.t;
+    this._tone(v, t, { type: 'triangle', from: 120, to: 260, glide: 0.55, attack: 0.02, peak: 0.16, decay: 0.6 });
+    for (let i = 0; i < 6; i++) {
+      this._burst(v, t + i * 0.1, { type: 'lowpass', freq: 700 + i * 180, q: 0.9, peak: 0.34, decay: 0.07, buffer: this._noise.pink });
+    }
+    this._seal(v);
+  }
+
   _mantle(pan) {
     const v = this._voice(0.45, pan);
     if (!v) return;
@@ -9232,6 +9550,7 @@ const IDS = [
   'hud', 'timer', 'timer-digits', 'splits', 'crosshair',
   'toast', 'toast-index', 'toast-name', 'toast-split', 'toast-delta', 'toast-ghost',
   'hint', 'speed', 'speed-value', 'speed-bar', 'speed-tick-walk', 'speed-tick-sprint',
+  'dash', 'dash-label', 'dash-pip',
   'screen-title', 'title-body', 'title-pb', 'title-pb-time', 'touch-note', 'title-settings-slot',
   'menu', 'view-home', 'view-tutorials', 'view-levels', 'title-level', 'title-level-name',
   'levels-list', 'levels-note', 'levels-empty', 'tutorials-list', 'tutorials-empty',
@@ -9410,6 +9729,7 @@ class Hud {
     this._speedText = '';
     this._speedScale = -1;
     this._speedFast = false;
+    this._dashState = '';
     this._aimState = '';
 
     // Records are per level: main.js points this at 'vaultline.pb.<level id>' as soon as it knows
@@ -9493,6 +9813,21 @@ class Hud {
       this._speedFast = fast;
       this._setClass(this.el.speed, 'is-fast', fast);
     }
+  }
+
+  /**
+   * Air-dash charge, shown as a pip beside the speed readout. `charges` is how many are in hand and
+   * `cooling` says the dash is inside DASH.cooldown even though a charge is back — three states:
+   * 'ready' (lit), 'cooling' (dim but coming back) and 'spent' (dark).
+   */
+  setDash(charges, cooling) {
+    const s = charges > 0 ? (cooling ? 'cooling' : 'ready') : 'spent';
+    if (s === this._dashState) return;
+    this._dashState = s;
+    this._setClass(this.el.dash, 'is-ready', s === 'ready');
+    this._setClass(this.el.dash, 'is-cooling', s === 'cooling');
+    const el = this.el.dash;
+    if (el && el.setAttribute) el.setAttribute('data-dash', s);
   }
 
   /**
@@ -13183,8 +13518,266 @@ const TUTORIALS_PACK = [
 return Object.freeze({ TUTORIALS_PACK });
 })();
 
+// ---- js/levels/tut-dash.js ----
+const __vl$m42_js_levels_tut_dash = (function () {
+
+// TUTORIAL 7 — DEAD AIR.  One skill: the air dash.  Q (or the right mouse button) spends the one charge you
+// carry and throws you flat and fast in whatever direction you are holding — distance, never height. It is
+// the move for a gap no jump reaches: sprint, jump, and press Q once you are off the lip. The charge comes
+// back the moment you land, so the lesson is a chain of gaps with landings between them, each one wider than
+// the 9.45 m a sprint jump can manage at any timing.
+// Pure data: no imports, no DOM. Exactly the js/level-data.js LEVEL shape.
+//
+//   A  THE BURST    z    6 ..  -70   an 11 m gap with a catch floor 1.4 m under it. Miss the dash and you
+//                                    drop a metre and a half and climb out.                  [checkpoint 0]
+//   B  ONE EACH     z  -70 .. -132   two 11 m gaps with a 12 m pad between them: one dash per landing, and
+//                                    the pad is the landing. Catch floors under both.        [checkpoint 1]
+//   C  THE LONG ONE z -132 .. -172   13 m of open air. Nothing under it.                     [checkpoint 2]
+//   D  THE LAST ONE z -172 .. -206   15 m, 78% of the 19.2 m a dashed sprint jump measures, onto the finish.
+//
+// Rails stop at every lip: a wall-run along the glass would cross these gaps without the dash, and that is
+// the one thing this lesson must not allow.
+
+const ID = 'tut-dash';
+const boxes = [];
+function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
+
+const KILL_Y = -10;
+const W = 5;                       // corridor half width
+const Y0 = 10;                     // the running deck
+function gate(id, name, z, respawn) {
+  return { id, name, min: [-40, KILL_Y - 10, z - 2], max: [40, 60, z + 2], respawn };
+}
+const floor = (id, z0, z1) => add(id, 'floor', [-W, Y0 - 1, z1], [W, Y0, z0]);
+// a catch floor 1.4 m under a gap, reaching 0.5 m under each lip so a short dash still finds it
+const catcher = (id, z0, z1) => add(id, 'floor', [-W, Y0 - 2.4, z1 - 0.5], [W, Y0 - 1.4, z0 + 0.5]);
+// glass rails, only ever beside a floor: over a gap they would be a wall-run across it
+const rails = (id, z0, z1) => {
+  add(id + '-l', 'glass', [-W - 0.3, Y0, z1], [-W, Y0 + 3, z0]);
+  add(id + '-r', 'glass', [W, Y0, z1], [W + 0.3, Y0 + 3, z0]);
+};
+
+// ------------------------------------------------------------------------------- A  THE BURST  (11 m)
+add('pad-start', 'floor', [-W, Y0 - 1, -6], [W, Y0, 6]);
+floor('a-run', -6, -30);
+catcher('a-catch', -30, -41);
+floor('a-land', -41, -70);
+rails('r-a1', 6, -30);
+rails('r-a2', -41, -70);
+
+// ------------------------------------------------------------------------------- B  ONE EACH  (11 + 11)
+catcher('b-catch1', -70, -81);
+floor('b-pad', -81, -93);
+catcher('b-catch2', -93, -104);
+floor('b-land', -104, -132);
+rails('r-b1', -81, -93);
+rails('r-b2', -104, -132);
+
+// ------------------------------------------------------------------------------- C  THE LONG ONE  (13 m)
+floor('c-land', -145, -172);
+rails('r-c', -145, -172);
+
+// ------------------------------------------------------------------------------- D  THE LAST ONE  (15 m)
+floor('d-fin', -187, -206);
+add('d-back', 'wall', [-W, Y0, -207], [W, Y0 + 4, -206]);
+rails('r-d', -187, -206);
+
+// ------------------------------------------------------------------------------- deco
+add('deco-1', 'deco', [-W, -60, -70], [W, Y0 - 2.4, 6]);
+add('deco-2', 'deco', [-W, -60, -132], [W, Y0 - 2.4, -70]);
+add('deco-3', 'deco', [-W, -60, -172], [W, Y0 - 1, -132]);
+add('deco-4', 'deco', [-W, -60, -206], [W, Y0 - 1, -172]);
+add('deco-sky-l1', 'deco', [-32, -60, -80], [-13, 19, -14]);
+add('deco-sky-r1', 'deco', [13, -60, -140], [30, 15, -60]);
+add('deco-sky-l2', 'deco', [-29, -60, -200], [-12, 24, -120]);
+add('deco-sky-r2', 'deco', [14, -60, -215], [33, 27, -160]);
+
+const LEVEL = {
+  name: 'LESSON 7 — DEAD AIR',
+  spawn: { pos: [0, Y0 + 0.01, 0], yaw: 0 },
+  killY: KILL_Y,
+  boxes,
+  movers: [],
+  anchors: [],
+  checkpoints: [
+    gate(ID + '-cp0', 'THE BURST', -52, { pos: [0, Y0 + 0.01, -56], yaw: 0 }),
+    gate(ID + '-cp1', 'ONE EACH', -114, { pos: [0, Y0 + 0.01, -118], yaw: 0 }),
+    gate(ID + '-cp2', 'THE LONG ONE', -156, { pos: [0, Y0 + 0.01, -160], yaw: 0 }),
+  ],
+  finish: { min: [-40, Y0 - 1, -206], max: [40, Y0 + 39, -187] },
+  signs: [
+    { pos: [0, Y0 + 2.6, -5.5], yaw: 0, text: 'LESSON 7 — DEAD AIR\nQ IN THE AIR. ONE CHARGE.' },
+    { pos: [-3.6, Y0 + 1.4, -12], yaw: 0, text: 'Q — AIR DASH\nRIGHT MOUSE DOES IT TOO' },
+    { pos: [3.6, Y0 + 1.4, -18], yaw: 0, text: 'FLAT AND FAST\nIT BUYS DISTANCE, NEVER HEIGHT' },
+    { pos: [-3.6, Y0 + 2.4, -26], yaw: 0, text: '11 M. SPRINT, SPACE, THEN Q' },
+    { pos: [3.6, Y0 + 1.4, -44], yaw: 0, text: 'DROPPED IN?\nTHE FLOOR BELOW IS THERE TO CATCH YOU' },
+    { pos: [-3.6, Y0 + 1.4, -60], yaw: 0, text: 'THE PIP BY THE SPEED READOUT\nIS YOUR CHARGE' },
+    { pos: [3.6, Y0 + 2.4, -66], yaw: 0, text: 'TWO GAPS. ONE DASH EACH.' },
+    { pos: [-3.6, Y0 + 1.4, -86], yaw: 0, text: 'LANDING GIVES IT BACK\nSO DOES A WALL, OR THE ROPE' },
+    { pos: [3.6, Y0 + 1.4, -108], yaw: 0, text: 'NEVER IN MID-AIR ON ITS OWN' },
+    { pos: [-3.6, Y0 + 2.4, -128], yaw: 0, text: 'NO FLOOR FROM HERE ON' },
+    { pos: [3.6, Y0 + 1.4, -136], yaw: 0, text: '13 M OF AIR\nDASH LATE, NOT EARLY' },
+    { pos: [-3.6, Y0 + 2.4, -150], yaw: 0, text: 'THAT IS THE MOVE' },
+    { pos: [3.6, Y0 + 1.4, -168], yaw: 0, text: 'LAST ONE: 15 M\nEVERYTHING YOU HAVE' },
+  ],
+};
+return Object.freeze({ LEVEL });
+})();
+
+// ---- js/levels/tut-climb.js ----
+const __vl$m43_js_levels_tut_climb = (function () {
+
+// TUTORIAL 8 — UP THE FACE.  One skill: the wall-climb.  Walk into a wall too tall to pull yourself up,
+// hold W, and press SPACE: you run 3 m straight up it, and if a lip comes inside reach on the way the
+// ordinary ledge climb finishes the move and puts you on top. No new key — the jump is the climb when you
+// are square to a face and standing still against it.
+// Pure data: no imports, no DOM. Exactly the js/level-data.js LEVEL shape.
+//
+// The whole lesson is a staircase of decks, each one a face taller than the 2.98 m a jump and a ledge catch
+// manage from standing, and all of them inside the 4.6 m a climb and the ledge catch reach together:
+//
+//   A  THE FACE     z    6 ..  -44   a 3.2 m face. Miss it and you are standing where you started. [cp 0]
+//   B  HIGHER       z  -44 ..  -80   4.0 m, 87% of the limit.                                      [cp 1]
+//   C  TWO IN A ROW z  -80 .. -128   3.0 m, then 3.0 m again: the floor between hands the climb back.
+//                                                                                                  [cp 2]
+//   D  ALONG OR UP  z -128 .. -178   a 4.5 m sprint gap under a wall-run wall — run ALONG it and it is a
+//                                    wall-run, stop square to the 3.4 m face at the end and it is a climb.
+//
+// Nothing in A, B or C can kill you: every miss leaves you on the deck you started from. Only D is over air.
+
+const ID = 'tut-climb';
+const boxes = [];
+function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
+
+const KILL_Y = -10;
+const W = 5;                       // corridor half width
+const Y0 = 10;                     // the first deck
+function gate(id, name, z, respawn) {
+  return { id, name, min: [-40, KILL_Y - 10, z - 2], max: [40, 60, z + 2], respawn };
+}
+// A deck: top at `top`, base one metre under the deck behind it, so its front is one solid face.
+const deck = (id, top, base, z0, z1) => add(id, 'floor', [-W, base, z1], [W, top, z0]);
+const rails = (id, top, z0, z1) => {
+  add(id + '-l', 'glass', [-W - 0.3, top, z1], [-W, top + 3, z0]);
+  add(id + '-r', 'glass', [W, top, z1], [W + 0.3, top + 3, z0]);
+};
+
+// ------------------------------------------------------------------------------- A  THE FACE  (3.2 m)
+add('pad-start', 'floor', [-W, Y0 - 1, -6], [W, Y0, 6]);
+deck('a-run', Y0, Y0 - 1, -6, -20);
+deck('a-deck', 13.2, Y0 - 1, -20, -44);
+rails('r-a1', Y0, 6, -20);
+rails('r-a2', 13.2, -20, -44);
+
+// ------------------------------------------------------------------------------- B  HIGHER  (4.0 m)
+deck('b-deck', 17.2, 12.2, -44, -80);
+rails('r-b', 17.2, -44, -80);
+
+// ------------------------------------------------------------------------------- C  TWO IN A ROW  (3.0 + 3.0)
+deck('c-1', 20.2, 16.2, -80, -104);
+deck('c-2', 23.2, 19.2, -104, -128);
+rails('r-c1', 20.2, -80, -104);
+rails('r-c2', 23.2, -104, -128);
+
+// ------------------------------------------------------------------------------- D  ALONG OR UP
+deck('d-run', 23.2, 19.2, -128, -142);
+deck('d-land', 23.2, 19.2, -146.5, -160);
+deck('d-fin', 26.6, 22.2, -160, -178);
+add('d-back', 'wall', [-W, 26.6, -179], [W, 30.6, -178]);
+// the wall-run wall: ten metres of it beside the run-up and the gap, in place of the right-hand rail
+add('d-wall', 'wallrun', [W, 23.2, -160], [W + 0.6, 33.2, -142]);
+add('r-d1-l', 'glass', [-W - 0.3, 23.2, -142], [-W, 26.2, -128]);
+add('r-d1-r', 'glass', [W, 23.2, -142], [W + 0.3, 26.2, -128]);
+add('r-d2-l', 'glass', [-W - 0.3, 23.2, -160], [-W, 26.2, -142]);
+rails('r-d3', 26.6, -160, -178);
+
+// ------------------------------------------------------------------------------- deco
+add('deco-1', 'deco', [-W, -60, -44], [W, Y0 - 1, 6]);
+add('deco-2', 'deco', [-W, -60, -80], [W, 12.2, -44]);
+add('deco-3', 'deco', [-W, -60, -128], [W, 16.2, -80]);
+add('deco-4', 'deco', [-W, -60, -178], [W, 19.2, -128]);
+add('deco-sky-l1', 'deco', [-33, -60, -70], [-14, 22, -10]);
+add('deco-sky-r1', 'deco', [14, -60, -120], [31, 18, -50]);
+add('deco-sky-l2', 'deco', [-30, -60, -180], [-13, 31, -110]);
+add('deco-sky-r2', 'deco', [15, -60, -190], [34, 35, -150]);
+
+const LEVEL = {
+  name: 'LESSON 8 — UP THE FACE',
+  spawn: { pos: [0, Y0 + 0.01, 0], yaw: 0 },
+  killY: KILL_Y,
+  boxes,
+  movers: [],
+  anchors: [],
+  checkpoints: [
+    gate(ID + '-cp0', 'THE FACE', -34, { pos: [0, 13.21, -38], yaw: 0 }),
+    gate(ID + '-cp1', 'HIGHER', -62, { pos: [0, 17.21, -66], yaw: 0 }),
+    gate(ID + '-cp2', 'TWO IN A ROW', -116, { pos: [0, 23.21, -120], yaw: 0 }),
+  ],
+  finish: { min: [-40, 25.6, -178], max: [40, 65.6, -160] },
+  signs: [
+    { pos: [0, Y0 + 2.6, -5.5], yaw: 0, text: 'LESSON 8 — UP THE FACE\nWALK INTO IT, HOLD W, PRESS SPACE' },
+    { pos: [-3.6, Y0 + 1.4, -12], yaw: 0, text: 'NO NEW KEY\nTHE JUMP IS THE CLIMB AT A WALL' },
+    { pos: [3.6, Y0 + 1.4, -17], yaw: 0, text: '3.2 M\nTOO TALL TO PULL YOURSELF UP' },
+    { pos: [-3.6, 13.2 + 2.4, -26], yaw: 0, text: 'THREE METRES OF RUN\nTHEN THE LIP DOES THE REST' },
+    { pos: [3.6, 13.2 + 1.4, -40], yaw: 0, text: 'SQUARE TO THE WALL\nOR IT WILL NOT TAKE' },
+    { pos: [-3.6, 17.2 + 1.4, -50], yaw: 0, text: '4.0 M — NEAR THE LIMIT\n4.6 AND THE LIP IS GONE' },
+    { pos: [3.6, 17.2 + 2.4, -74], yaw: 0, text: 'TWO IN A ROW NEXT' },
+    { pos: [-3.6, 20.2 + 1.4, -86], yaw: 0, text: 'ONE CLIMB PER WALL\nTHE FLOOR HANDS IT BACK' },
+    { pos: [3.6, 23.2 + 1.4, -110], yaw: 0, text: 'AND SO DOES A DIFFERENT WALL' },
+    { pos: [-3.6, 23.2 + 2.4, -124], yaw: 0, text: 'LAST SECTION: MIND THE GAP' },
+    { pos: [3.6, 23.2 + 1.4, -134], yaw: 0, text: 'RUN ALONG THAT WALL\nAND IT IS A WALL-RUN, NOT A CLIMB' },
+    { pos: [-3.6, 23.2 + 1.4, -150], yaw: 0, text: '4.5 M OF AIR\nA SPRINT JUMP IS ENOUGH' },
+    { pos: [3.6, 23.2 + 2.4, -157], yaw: 0, text: 'ONE MORE FACE: 3.4 M' },
+  ],
+};
+return Object.freeze({ LEVEL });
+})();
+
+// ---- js/levels/pack-moves.js ----
+const __vl$m44_js_levels_pack_moves = (function () {
+const { LEVEL: DASH } = __vl$m42_js_levels_tut_dash;
+const { LEVEL: CLIMB } = __vl$m43_js_levels_tut_climb;
+// The MOVES pack: two lessons for the two moves that need teaching, the air dash and the wall-climb.
+// Pure data + imports: no DOM, no side effects. A level-select screen can read this directly —
+// `level` is the LEVEL object itself, in exactly the js/level-data.js shape, ready for `new World(level)`.
+// The shape matches js/levels/catalog.js entry for entry, plus a `category`, so the same row renderer works.
+//
+//   id          the module name under js/levels/ (also the prefix of every box id in that level)
+//   name        the level's own LEVEL.name, as it should appear on the card
+//   blurb       one line: the single skill the lesson teaches
+//   difficulty  1 for both — they carry on from the six TUTORIALS lessons, they are not a ladder
+//   category    'tutorial'
+//   level       the LEVEL data
+//
+// The third new move, the bunny-hop, has no lesson of its own on purpose: it is the jump, landed and
+// pressed again on the beat, so it is taught by every level that already asks you to keep your speed.
+
+
+
+
+const MOVES_PACK = [
+  {
+    id: 'tut-dash',
+    name: DASH.name,
+    blurb: 'Q in the air: one flat, fast charge that buys distance and never height, across gaps no jump reaches.',
+    difficulty: 1,
+    category: 'tutorial',
+    level: DASH,
+  },
+  {
+    id: 'tut-climb',
+    name: CLIMB.name,
+    blurb: 'Square up to a wall too tall to mantle, hold W and jump: you run 3 m up it and the lip does the rest.',
+    difficulty: 1,
+    category: 'tutorial',
+    level: CLIMB,
+  },
+];
+return Object.freeze({ MOVES_PACK });
+})();
+
 // ---- js/levels/skyline.js ----
-const __vl$m42_js_levels_skyline = (function () {
+const __vl$m45_js_levels_skyline = (function () {
 
 // PACK LEVEL 1 — SKYLINE MILE.  A long, flowing rooftop sprint: nothing here is hard on its own, the whole
 // level is about holding 11 m/s for 588 m. Every jump is 3.5 .. 4.5 m against REACH.gapSprint 5.0, the steps
@@ -13335,7 +13928,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/floodway.js ----
-const __vl$m43_js_levels_floodway = (function () {
+const __vl$m46_js_levels_floodway = (function () {
 
 // PACK LEVEL 2 — THE FLOODWAY.  A storm channel run on your back: bays of concrete with a 1.1 m ceiling over
 // them (REACH.slideClearance), spillway holes between the bays, and a roof that stops covering the whole
@@ -13494,7 +14087,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/freight.js ----
-const __vl$m44_js_levels_freight = (function () {
+const __vl$m47_js_levels_freight = (function () {
 
 // PACK LEVEL 3 — FREIGHT YARD.  Almost every metre forward is taken standing on something that is moving:
 // forward ferries, sideways ferries that hand you across to each other, and two gantry lifts that carry you
@@ -13612,7 +14205,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/canyon.js ----
-const __vl$m45_js_levels_canyon = (function () {
+const __vl$m48_js_levels_canyon = (function () {
 
 // PACK LEVEL 4 — HOOK CANYON.  Fifteen ledges cut into the two walls of a canyon, and nothing between them
 // but green anchors and 16 .. 18 m of air — more than twice the 9.5 m a sprint jump carries, so every one of
@@ -13743,7 +14336,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/ascent.js ----
-const __vl$m46_js_levels_ascent = (function () {
+const __vl$m49_js_levels_ascent = (function () {
 
 // PACK LEVEL 5 — THE ASCENT.  A tower under scaffolding, climbed from y 10 to y 76.5 without ever turning
 // back: every unit of this level gains height and gives up as little ground as it can. Four things carry you
@@ -13938,7 +14531,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/crosstown.js ----
-const __vl$m47_js_levels_crosstown = (function () {
+const __vl$m50_js_levels_crosstown = (function () {
 
 // PACK LEVEL 6 — CROSSTOWN.  Every move in the pack, in the order the pack taught them, with the city built
 // so that there is nearly always more than one way through: a duct beside an open stair, an anchor over a
@@ -14148,13 +14741,13 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/pack-levels.js ----
-const __vl$m48_js_levels_pack_levels = (function () {
-const { LEVEL: SKYLINE } = __vl$m42_js_levels_skyline;
-const { LEVEL: FLOODWAY } = __vl$m43_js_levels_floodway;
-const { LEVEL: FREIGHT } = __vl$m44_js_levels_freight;
-const { LEVEL: CANYON } = __vl$m45_js_levels_canyon;
-const { LEVEL: ASCENT } = __vl$m46_js_levels_ascent;
-const { LEVEL: CROSSTOWN } = __vl$m47_js_levels_crosstown;
+const __vl$m51_js_levels_pack_levels = (function () {
+const { LEVEL: SKYLINE } = __vl$m45_js_levels_skyline;
+const { LEVEL: FLOODWAY } = __vl$m46_js_levels_floodway;
+const { LEVEL: FREIGHT } = __vl$m47_js_levels_freight;
+const { LEVEL: CANYON } = __vl$m48_js_levels_canyon;
+const { LEVEL: ASCENT } = __vl$m49_js_levels_ascent;
+const { LEVEL: CROSSTOWN } = __vl$m50_js_levels_crosstown;
 // The six-level pack, in intended play order. Pure data + imports: no DOM, no side effects.
 // Same shape as js/levels/catalog.js, so a level-select screen can read either list:
 //
@@ -14226,7 +14819,7 @@ return Object.freeze({ LEVELS_PACK });
 })();
 
 // ---- js/levels/razor.js ----
-const __vl$m49_js_levels_razor = (function () {
+const __vl$m52_js_levels_razor = (function () {
 
 // EXTREME LEVEL 1 — RAZOR EDGE.  Flat rooftops, nothing to hold on to, and every gap cut to within a few
 // tenths of what the physics can actually do. Pure data: no imports, no DOM.
@@ -14339,7 +14932,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/spine.js ----
-const __vl$m50_js_levels_spine = (function () {
+const __vl$m53_js_levels_spine = (function () {
 
 // EXTREME LEVEL 2 — THE SPINE.  One yellow line down the length of a trench: wall-runs near the longest
 // the physics allows, a wall-jump ladder that climbs while it crosses, and two machines you have to read
@@ -14467,7 +15060,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/lastlight.js ----
-const __vl$m51_js_levels_lastlight = (function () {
+const __vl$m54_js_levels_lastlight = (function () {
 
 // EXTREME LEVEL 3 — LAST LIGHT.  Grapple only, and every anchor is hung at the far end of the hook's
 // useful range: five hops over a canyon with nothing under them. Pure data: no imports, no DOM.
@@ -14569,10 +15162,10 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/pack-extreme.js ----
-const __vl$m52_js_levels_pack_extreme = (function () {
-const { LEVEL: RAZOR } = __vl$m49_js_levels_razor;
-const { LEVEL: SPINE } = __vl$m50_js_levels_spine;
-const { LEVEL: LASTLIGHT } = __vl$m51_js_levels_lastlight;
+const __vl$m55_js_levels_pack_extreme = (function () {
+const { LEVEL: RAZOR } = __vl$m52_js_levels_razor;
+const { LEVEL: SPINE } = __vl$m53_js_levels_spine;
+const { LEVEL: LASTLIGHT } = __vl$m54_js_levels_lastlight;
 // THE EXTREME PACK — three difficulty-5 courses for players who have finished THE GAUNTLET.
 // Pure data + imports: no DOM, no side effects. Same shape as js/levels/catalog.js, so a level-select
 // screen can read this directly: `level` is the LEVEL object itself, ready for `new World(level)`.
@@ -14625,7 +15218,7 @@ return Object.freeze({ EXTREME_PACK });
 })();
 
 // ---- js/levels/hairline.js ----
-const __vl$m53_js_levels_hairline = (function () {
+const __vl$m56_js_levels_hairline = (function () {
 
 // NIGHTMARE LEVEL 1 — HAIRLINE.  Nothing but flat ledges and open air: no walls, no bounce pads, no
 // hook. Every landing is one stride deep, so a gap cannot be re-lined-up on a runway — it is taken with
@@ -14748,7 +15341,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/sheer.js ----
-const __vl$m54_js_levels_sheer = (function () {
+const __vl$m57_js_levels_sheer = (function () {
 
 // NIGHTMARE LEVEL 2 — SHEER.  A trench with a yellow wall down each side and almost no floor: every
 // gap is crossed on the wall, every metre of height is taken by kicking off one. Pure data: no
@@ -14912,7 +15505,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/metronome.js ----
-const __vl$m55_js_levels_metronome = (function () {
+const __vl$m58_js_levels_metronome = (function () {
 
 // NIGHTMARE LEVEL 3 — METRONOME.  Nothing in this level stands still. The floor is wherever the machine
 // happens to be, and it is only there for about a third of a second at a time. Pure data: no imports,
@@ -15054,7 +15647,7 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/piano-wire.js ----
-const __vl$m56_js_levels_piano_wire = (function () {
+const __vl$m59_js_levels_piano_wire = (function () {
 
 // NIGHTMARE LEVEL 4 — PIANO WIRE.  Grapple only, over six hundred metres of nothing, and every deck it
 // strings between is five metres deep. LAST LIGHT's decks were fourteen to eighteen; here the whole
@@ -15164,11 +15757,11 @@ return Object.freeze({ LEVEL });
 })();
 
 // ---- js/levels/pack-nightmare.js ----
-const __vl$m57_js_levels_pack_nightmare = (function () {
-const { LEVEL: HAIRLINE } = __vl$m53_js_levels_hairline;
-const { LEVEL: SHEER } = __vl$m54_js_levels_sheer;
-const { LEVEL: METRONOME } = __vl$m55_js_levels_metronome;
-const { LEVEL: PIANO_WIRE } = __vl$m56_js_levels_piano_wire;
+const __vl$m60_js_levels_pack_nightmare = (function () {
+const { LEVEL: HAIRLINE } = __vl$m56_js_levels_hairline;
+const { LEVEL: SHEER } = __vl$m57_js_levels_sheer;
+const { LEVEL: METRONOME } = __vl$m58_js_levels_metronome;
+const { LEVEL: PIANO_WIRE } = __vl$m59_js_levels_piano_wire;
 // THE NIGHTMARE PACK — four difficulty-5 courses for a player who finished THE EXTREME PACK first try.
 // Pure data + imports: no DOM, no side effects. Same shape as js/levels/catalog.js, so a level-select
 // screen can read this directly: `level` is the LEVEL object itself, ready for `new World(level)`.
@@ -15240,16 +15833,17 @@ return Object.freeze({ NIGHTMARE_PACK });
 })();
 
 // ---- js/levels/catalog.js ----
-const __vl$m58_js_levels_catalog = (function () {
+const __vl$m61_js_levels_catalog = (function () {
 const { LEVEL: TUTORIAL2 } = __vl$m30_js_levels_tutorial2;
 const { LEVEL: WALLRUN } = __vl$m31_js_levels_wallrun;
 const { LEVEL: SLIDE } = __vl$m32_js_levels_slide;
 const { LEVEL: GRAPPLE } = __vl$m33_js_levels_grapple;
 const { LEVEL: GAUNTLET } = __vl$m34_js_levels_gauntlet;
 const { TUTORIALS_PACK } = __vl$m41_js_levels_pack_tutorials;
-const { LEVELS_PACK } = __vl$m48_js_levels_pack_levels;
-const { EXTREME_PACK } = __vl$m52_js_levels_pack_extreme;
-const { NIGHTMARE_PACK } = __vl$m57_js_levels_pack_nightmare;
+const { MOVES_PACK } = __vl$m44_js_levels_pack_moves;
+const { LEVELS_PACK } = __vl$m51_js_levels_pack_levels;
+const { EXTREME_PACK } = __vl$m55_js_levels_pack_extreme;
+const { NIGHTMARE_PACK } = __vl$m60_js_levels_pack_nightmare;
 // Catalogue of the standalone challenge levels, in intended play order (easiest first, the gauntlet last).
 // Pure data + imports: no DOM, no side effects. A level-select screen can read this directly —
 // `level` is the LEVEL object itself, in exactly the js/level-data.js shape, ready for `new World(level)`.
@@ -15263,6 +15857,7 @@ const { NIGHTMARE_PACK } = __vl$m57_js_levels_pack_nightmare;
 //
 // The menu reads `category` to decide which list an entry belongs in — Tutorials or Levels — and
 // `difficulty` to sort within a list and to draw the pips on the card.
+
 
 
 
@@ -15319,16 +15914,16 @@ const CORE_LEVELS = [
   },
 ];
 
-// Everything the menu lists after the campaign: the core five, then the six lessons, the six-level
-// pack, the three difficulty-5 levels and the four nightmare courses. The menu sorts within each
-// list by difficulty.
-const CHALLENGE_LEVELS = [...CORE_LEVELS, ...TUTORIALS_PACK, ...LEVELS_PACK, ...EXTREME_PACK,
-  ...NIGHTMARE_PACK];
+// Everything the menu lists after the campaign: the core five, then the six lessons, the two lessons
+// for the air dash and the wall-climb, the six-level pack, the three difficulty-5 levels and the four
+// nightmare courses. The menu sorts within each list by difficulty.
+const CHALLENGE_LEVELS = [...CORE_LEVELS, ...TUTORIALS_PACK, ...MOVES_PACK, ...LEVELS_PACK,
+  ...EXTREME_PACK, ...NIGHTMARE_PACK];
 return Object.freeze({ CHALLENGE_LEVELS });
 })();
 
 // ---- js/editor/ed-store.js ----
-const __vl$m59_js_editor_ed_store = (function () {
+const __vl$m62_js_editor_ed_store = (function () {
 
 // Named levels in localStorage. Every access is wrapped in try/catch: the editor also runs from file://
 // and inside sandboxed iframes, where storage can be missing, blocked or full.
@@ -15463,7 +16058,7 @@ return Object.freeze({ PREFIX, INDEX_KEY, LAST_KEY, storageAvailable, cleanName,
 })();
 
 // ---- js/editor/ed-doc.js ----
-const __vl$m60_js_editor_ed_doc = (function () {
+const __vl$m63_js_editor_ed_doc = (function () {
 
 // Vaultline level designer — the document model.
 //
@@ -15926,10 +16521,10 @@ return Object.freeze({ GRID, MIN_SIZE, BOX_KINDS, ENTITY_TYPES, KIND_INFO, snap,
 })();
 
 // ---- js/editor/ed-validate.js ----
-const __vl$m61_js_editor_ed_validate = (function () {
+const __vl$m64_js_editor_ed_validate = (function () {
 const { PHYS, REACH, GRAPPLE } = __vl$m0_js_config;
 const { World } = __vl$m10_js_world;
-const { toLevel, entityBounds, moverBoundsAt, entityLabel } = __vl$m60_js_editor_ed_doc;
+const { toLevel, entityBounds, moverBoundsAt, entityLabel } = __vl$m63_js_editor_ed_doc;
 // Level validity, checked against the game's own rules.
 //
 // Everything here is measured with the real World (js/world.js builds the collider list, so 'deco' is
@@ -16268,12 +16863,12 @@ return Object.freeze({ validate });
 })();
 
 // ---- js/level-source.js ----
-const __vl$m62_js_level_source = (function () {
+const __vl$m65_js_level_source = (function () {
 const { levelId, blockCount, decodeLevel, readHashPayload } = __vl$m29_js_level_codec;
-const { CHALLENGE_LEVELS } = __vl$m58_js_levels_catalog;
-const { listLevels, loadLevel } = __vl$m59_js_editor_ed_store;
-const { docFromLevel } = __vl$m60_js_editor_ed_doc;
-const { validate } = __vl$m61_js_editor_ed_validate;
+const { CHALLENGE_LEVELS } = __vl$m61_js_levels_catalog;
+const { listLevels, loadLevel } = __vl$m62_js_editor_ed_store;
+const { docFromLevel } = __vl$m63_js_editor_ed_doc;
+const { validate } = __vl$m64_js_editor_ed_validate;
 // Where a playable level can come from.
 //
 // The campaign in js/level-data.js is still the default and is never touched. On top of it the game can
@@ -16397,7 +16992,7 @@ return Object.freeze({ checkLevel, campaignEntry, challengeEntries, storedEntrie
 })();
 
 // ---- js/ghost.js ----
-const __vl$m63_js_ghost = (function () {
+const __vl$m66_js_ghost = (function () {
 
 // Ghost runs: record the player's motion, replay it, and measure how far ahead or behind you are.
 //
@@ -16775,9 +17370,9 @@ return Object.freeze({ GHOST_VERSION, GHOST_RATE, GHOST_STATES, ANGLE_UNITS, MAX
 })();
 
 // ---- js/ghost-codec.js ----
-const __vl$m64_js_ghost_codec = (function () {
+const __vl$m67_js_ghost_codec = (function () {
 const { encodeBytes, decodeBytes, readHashParam, HASH_PARAM, LINK_WARN_LENGTH } = __vl$m29_js_level_codec;
-const { GHOST_VERSION, GHOST_RATE, GHOST_STATES, ANGLE_UNITS, MAX_GHOST_SECONDS, MIN_GHOST_FRAMES, isGhost } = __vl$m63_js_ghost;
+const { GHOST_VERSION, GHOST_RATE, GHOST_STATES, ANGLE_UNITS, MAX_GHOST_SECONDS, MIN_GHOST_FRAMES, isGhost } = __vl$m66_js_ghost;
 // A ghost run, packed small enough to ride in a URL next to the level it belongs to.
 //
 // The envelope is the level codec's: js/level-codec.js encodeBytes/decodeBytes give the same
@@ -17111,7 +17706,7 @@ return Object.freeze({ GHOST_PARAM, GHOST_MAGIC, GHOST_WARN_LENGTH, LINK_MAX_LEN
 })();
 
 // ---- js/ghost-store.js ----
-const __vl$m65_js_ghost_store = (function () {
+const __vl$m68_js_ghost_store = (function () {
 
 // Where the best ghost of each level is kept: localStorage, bounded, and never able to break a run.
 //
@@ -17287,7 +17882,7 @@ return Object.freeze({ GHOST_PREFIX, GHOST_INDEX_KEY, MAX_TOTAL_BYTES, MAX_ONE_B
 })();
 
 // ---- js/board.js ----
-const __vl$m66_js_board = (function () {
+const __vl$m69_js_board = (function () {
 
 // The public leaderboard: where a posted run lives, and how the game reads it back.
 //
@@ -17511,8 +18106,8 @@ return Object.freeze({ BOARD_ORIGIN, BOARD_PATH, BOARD_URL, BOARD_REPO, ISSUE_TE
 })();
 
 // ---- js/spectate.js ----
-const __vl$m67_js_spectate = (function () {
-const { samplePose, makePose, ghostDuration, frameCount, isGhost, GHOST_RATE } = __vl$m63_js_ghost;
+const __vl$m70_js_spectate = (function () {
+const { samplePose, makePose, ghostDuration, frameCount, isGhost, GHOST_RATE } = __vl$m66_js_ghost;
 // Watching somebody else's run: play a ghost back with a camera that chases it.
 //
 // This is the spectator half of the leaderboard. Nothing here is a run: there is no Player, no input
@@ -17675,8 +18270,8 @@ return Object.freeze({ CHASE_BACK, CHASE_UP, CHASE_LOOK, CHASE_EASE, CHASE_TURN,
 })();
 
 // ---- js/main.js ----
-const __vl$m68_js_main = (function () {
-const { PHYS } = __vl$m0_js_config;
+const __vl$m71_js_main = (function () {
+const { PHYS, DASH } = __vl$m0_js_config;
 const { LEVEL } = __vl$m9_js_level_data;
 const { World } = __vl$m10_js_world;
 const { Player } = __vl$m12_js_player;
@@ -17689,12 +18284,12 @@ const { readPB, writePB, finishData, migratePB, pbKeyFor, bestFor } = __vl$m26_j
 const { migrateRecords } = __vl$m27_js_game_migrate;
 const { GraphicsControl } = __vl$m28_js_game_quality;
 const { levelId, encodeLevel, LINK_WARN_LENGTH } = __vl$m29_js_level_codec;
-const { collectSources, campaignEntry, linkEntry } = __vl$m62_js_level_source;
-const { GhostRecorder, GhostTracker, samplePose, makePose, ghostSplit, isGhost } = __vl$m63_js_ghost;
-const { encodeGhost, decodeGhost, readGhostPayload, raceHashFor, LINK_MAX_LENGTH } = __vl$m64_js_ghost_codec;
-const { loadGhost, saveGhost, removeGhost, ghostTimeFor } = __vl$m65_js_ghost_store;
-const { hasBoard, fetchBoard, fetchGhost, postUrl, OFFLINE_NOTE, EMPTY_NOTE, PASTE_NOTE, POSTED_NOTE } = __vl$m66_js_board;
-const { Spectate, END_HOLD } = __vl$m67_js_spectate;
+const { collectSources, campaignEntry, linkEntry } = __vl$m65_js_level_source;
+const { GhostRecorder, GhostTracker, samplePose, makePose, ghostSplit, isGhost } = __vl$m66_js_ghost;
+const { encodeGhost, decodeGhost, readGhostPayload, raceHashFor, LINK_MAX_LENGTH } = __vl$m67_js_ghost_codec;
+const { loadGhost, saveGhost, removeGhost, ghostTimeFor } = __vl$m68_js_ghost_store;
+const { hasBoard, fetchBoard, fetchGhost, postUrl, OFFLINE_NOTE, EMPTY_NOTE, PASTE_NOTE, POSTED_NOTE } = __vl$m69_js_board;
+const { Spectate, END_HOLD } = __vl$m70_js_spectate;
 // Vaultline boot + game loop: wires Renderer, World, Player, Input, Sfx, Hud.
 // States: 'title' -> 'playing' <-> 'paused' -> 'finished'. Fixed-step physics at PHYS.dt (max 8 steps/frame).
 //
@@ -17836,6 +18431,7 @@ function resetRun() {
   hud.resetRun();
   hud.setRunTime(0);
   hud.setSpeed(0);
+  hud.setDash(DASH.charges, false);
   reelSfx = false;
   sfx.stopLoops();
 }
@@ -17856,7 +18452,7 @@ function setState(name) {
     input.setEnabled(true);
     input.requestLock();
     if (prev === 'title' || prev === 'finished') {
-      hud.setHint('WASD move · SPACE jump · SHIFT sprint · C slide · [E] grapple · [F] reel · [T] respawn', 6);
+      hud.setHint('WASD move · SPACE jump · SHIFT sprint · C slide · [Q] air dash · [E] grapple · [F] reel · [T] respawn', 6);
       if (graphics.pendingHint) setTimeout(() => { if (state === 'playing') graphics.flushHint(); }, 5400);
     } else {
       graphics.flushHint();
@@ -18248,6 +18844,7 @@ function startWatch(g, user) {
   hud.resetRun();
   hud.setRunTime(0);
   hud.setSpeed(0);
+  hud.setDash(DASH.charges, false);
   hud.setGhostRacing(false);
   hud.setGhostDelta(null);
   if (renderer) {
@@ -18695,6 +19292,7 @@ function frame(now) {
     if (steps >= MAX_STEPS) acc = Math.min(acc, PHYS.dt);
     hud.setRunTime(runTime);
     hud.setSpeed(player.speed);
+    hud.setDash(player.dashCharges, player.dashCooldownT > 0);
     sfx.setWind(player.speed);
   } else if (state === 'title') {
     titleTime += dt;

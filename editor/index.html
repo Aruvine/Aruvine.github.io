@@ -552,6 +552,51 @@ const PHYS = {
   bounceVel: 17,          // apex ≈ 5.5 m
 };
 
+// Bunny-hop. No new key: it is the jump, landed and pressed again inside `window`. A clean hop keeps every
+// metre per second the landing carried (no friction, no overspeed bleed that step) and adds `gain` on top,
+// up to sprintSpeed * maxFactor. Miss the window and it is an ordinary jump: the chain is broken and the
+// speed above sprintSpeed bleeds back at `bleed` (the number the controller has always used for excess
+// ground speed), which empties the whole bank in about a second.
+const HOP = {
+  window: 0.12,           // s after touching down in which a jump still counts as a clean hop (= jumpBuffer)
+  gain: 0.55,             // m/s added by each clean hop
+  maxFactor: 1.35,        // ceiling as a multiple of sprintSpeed: 14.85 m/s, reached on the 8th clean hop
+  minSpeed: 6,            // slower than this a hop adds nothing: there is no hopping up from a standstill
+  bleed: 3.5,             // 1/s: ground speed above the input target decays exponentially at this rate
+};
+
+// Air dash. Q (or the right mouse button): one charge, airborne only, a flat burst in the direction held
+// (forward when nothing is). It is distance, never height — the vertical velocity is pinned to zero for the
+// whole burst, so a dash can only ever lower the arc it is fired from. The charge comes back on landing, on
+// catching a wall (wall-run or wall-jump) or on tying the rope on, never in mid-air on its own.
+const DASH = {
+  speed: 24,              // m/s of flat burst (2.2x sprintSpeed)
+  time: 0.16,             // s the burst lasts: 3.84 m of travel, ~2.1 m more than sprinting through it
+  cooldown: 0.35,         // s after a dash before the next one may start, however the charge came back
+  charges: 1,             // charges held at once
+  exitDecay: 14,          // m/s^2: the raised speed cap bleeds back to airMaxSpeed once the burst ends
+  minFall: -30,           // m/s: no dash while falling faster than this (it is a burst, not a parachute)
+};
+
+// Wall-climb. No new key either: face a wall with forward held and jump, and you run straight up it. One
+// climb per wall contact — touching the ground, or catching a different wall, hands it back. A wall-run
+// wins whenever you are actually moving ALONG the wall, so this is the move you get by stopping at a face
+// instead of skimming it. The mantle does the rest: if a lip comes inside PHYS.mantleMaxHeight on the way
+// up, the ordinary ledge climb catches it and puts you on top.
+const CLIMB = {
+  height: 3.0,            // m gained by a full climb
+  time: 0.6,              // s it takes: 5 m/s straight up
+  minFacing: 0.6,         // the view must point into the wall at least this much (cos of the angle)
+  maxFoot: 0.4,           // m the wall's base may sit above the feet: you run up a FACE, never up a soffit
+                          // hanging over your head, so a duct roof is still not a thing you can start on
+  maxAlong: 6,            // m/s along the wall above which the wall-run owns the contact (= wallrunMinSpeed)
+  maxStrafe: 0.5,         // lateral input above this means you are doing something else -- kicking up a
+                          // chimney, leaning into a wall-run -- so the climb stands aside. Square up to it.
+  stick: 1.5,             // m/s pressed into the wall so the contact never flickers
+  exitUp: 2,              // m/s left over at the top, so a lip just out of reach is still mantled
+  cooldown: 0.25,         // s after a climb ends before another may start
+};
+
 // Level-design limits derived from PHYS, with safety margin. Level data must stay inside these.
 const REACH = {
   gapWalk: 3.5,           // horizontal gap (edge to edge) crossable from a walking jump
@@ -587,7 +632,7 @@ const GRAPPLE = {
   jumpKick: 3.2,          // m/s of extra lift when you release by jumping
   keepDecay: 6,           // m/s^2: the raised horizontal speed cap bleeds back to airMaxSpeed after release
 };
-return Object.freeze({ PHYS, REACH, GRAPPLE });
+return Object.freeze({ PHYS, HOP, DASH, CLIMB, REACH, GRAPPLE });
 })();
 
 // ---- js/level/anchors.js ----
@@ -7069,7 +7114,7 @@ return Object.freeze({ EPS, gatherNear, overlapsBox, firstOverlap, sweepAxis, hi
 
 // ---- js/player.js ----
 const __vl$m25_js_player = (function () {
-const { PHYS, GRAPPLE } = __vl$m0_js_config;
+const { PHYS, GRAPPLE, HOP, DASH, CLIMB } = __vl$m0_js_config;
 const { EPS, gatherNear, overlapsBox, firstOverlap, highestOverlap, sweepAxis, faceToward, faceCoord, pushOutCandidates } = __vl$m24_js_player_collide;
 // Player: first-person parkour controller (SPEC "js/player.js").
 // Swept per-axis AABB collision (Y, then X, then Z) against World.colliders with auto step-up.
@@ -7082,7 +7127,7 @@ const FULL = PHYS.height;
 
 // ---- controller feel (level-design limits live in config.js REACH; these only shape feel) ----
 const CRAWL_FACTOR = 0.45;          // crouch-walk speed as a fraction of walkSpeed
-const OVERSPEED_DECAY = 3.5;        // 1/s: ground speed above the input target bleeds off exponentially
+const OVERSPEED_DECAY = HOP.bleed;  // 1/s: ground speed above the input target bleeds off exponentially
 const OVERSPEED_TURN = 5;           // turn rate factor while carrying excess ground speed
 const STOP_DECEL = 5;               // m/s^2 minimum braking without input
 const HARDLAND_KEEP = 0.65;         // horizontal speed kept after a hard landing (crouch on impact to roll instead)
@@ -7150,6 +7195,11 @@ class Player {
     this.onGround = false;
     this.ground = null;             // collider stood on
     this.slideBoosting = false;     // true during an actual slide; state 'slide' without it = crouch-walk
+    this.dashCharges = DASH.charges; // air dashes in hand (read-only for the HUD)
+    this.dashT = 0;                 // s left of the current dash burst, 0 when not dashing
+    this.dashCooldownT = 0;         // s before the next dash may start
+    this.hopChain = 0;              // clean bunny-hops landed back to back (read-only)
+    this.climbT = 0;                // s left of the current wall-climb, 0 when not climbing
     this.grappleAnchor = null;      // surface target the rope is tied to, or null
     this.reeling = false;           // true while F is reeling us in
     this.reelT = 0;                 // s since F was pressed (the reel kick window)
@@ -7172,6 +7222,8 @@ class Player {
     this._dt = PHYS.dt;
     this.wallN = [0, 0];
     this.wallTouch = { c: null, nx: 0, nz: 0 };
+    this.dashDir = [0, 0];
+    this.climbN = [0, 0];
     this.respawn(spawn);
   }
 
@@ -7209,6 +7261,17 @@ class Player {
     this.mantleCooldownT = 0;
     this.stepDist = 0;
 
+    this.hopT = HOP.window + 1;     // s on the ground since landing; over HOP.window = the chain is cold
+    this.hopChain = 0;
+    this.dashT = 0;
+    this.dashDir[0] = 0; this.dashDir[1] = 0;
+    this.dashCharges = DASH.charges;
+    this.dashCooldownT = 0;
+    this.climbT = 0;
+    this.climbCooldownT = 0;
+    this.climbWall = null;          // the collider the last climb used: one climb per wall contact
+    this.climbN[0] = 0; this.climbN[1] = 0;
+
     this.grappleAnchor = null;
     this.aimedAnchor = null;
     this.ropeLen = 0;
@@ -7218,7 +7281,8 @@ class Player {
     this.reeling = false;
     this.reelT = 0;
     this.grappleCooldownT = 0;
-    this._hsCap = PHYS.airMaxSpeed;  // horizontal speed cap; raised while grappling, bleeds back after release
+    this._hsCap = PHYS.airMaxSpeed;  // horizontal speed cap; raised by the rope and the dash, bleeds back after
+    this._capDecay = GRAPPLE.keepDecay;
 
     this._eyeBase = PHYS.eyeHeight;
     this._eyeDip = 0;
@@ -7268,10 +7332,12 @@ class Player {
     k.grapplePressed = !!inp.grapplePressed;
     k.grappleHeld = !!inp.grappleHeld;
     k.reelHeld = !!inp.reelHeld;      // F: reels hard toward the anchor while attached
+    k.dashPressed = !!inp.dashPressed; // Q / right mouse: the air dash
 
     this.grappleCooldownT = Math.max(0, this.grappleCooldownT - dt);
     if (this.grappleAnchor) this._hsCap = Math.max(P.airMaxSpeed, GRAPPLE.maxSpeed);
-    else this._hsCap = Math.max(P.airMaxSpeed, this._hsCap - GRAPPLE.keepDecay * dt);
+    else if (this.dashT > 0) this._hsCap = Math.max(P.airMaxSpeed, DASH.speed);
+    else this._hsCap = Math.max(P.airMaxSpeed, this._hsCap - this._capDecay * dt);
 
     this.jumpBufferT = inp.jumpPressed ? P.jumpBuffer : Math.max(0, this.jumpBufferT - dt);
     this.crouchBufferT = inp.crouchPressed ? P.jumpBuffer : Math.max(0, this.crouchBufferT - dt);
@@ -7280,6 +7346,10 @@ class Player {
     this.wallJumpT = Math.max(0, this.wallJumpT - dt);
     this.mantleCooldownT = Math.max(0, this.mantleCooldownT - dt);
     this.slideCooldownT = Math.max(0, this.slideCooldownT - dt);
+    this.dashCooldownT = Math.max(0, this.dashCooldownT - dt);
+    this.climbCooldownT = Math.max(0, this.climbCooldownT - dt);
+    // the bunny-hop window: time spent standing since the landing that opened it
+    if (this.onGround) this.hopT += dt;
     const cds = this._cooldowns;
     for (let i = cds.length - 1; i >= 0; i--) {
       cds[i].t -= dt;
@@ -7320,8 +7390,9 @@ class Player {
     // 2b. grapple: release checks before any pull this step
     if (this.grappleAnchor) this._grappleTick(dt, ev, k);
 
-    // 3. gravity and speed limits
-    v[1] -= (this.state === 'wallrun' ? P.wallrunGravity : P.gravity) * dt;
+    // 3. gravity and speed limits. A dash burst and a wall-climb are scripted in the vertical: they own
+    // v[1] outright, which is exactly why a dash can never become a second jump.
+    if (this.dashT <= 0 && this.climbT <= 0) v[1] -= (this.state === 'wallrun' ? P.wallrunGravity : P.gravity) * dt;
     if (v[1] < -P.maxFallSpeed) v[1] = -P.maxFallSpeed;
     if (this.grappleAnchor) this._grappleVel(dt);
     const cap = this._hsCap;
@@ -7343,6 +7414,10 @@ class Player {
     if (hm.hx) v[0] = 0;
     if (hm.hz) v[2] = 0;
     if (hm.stepGround) { groundHit = hm.stepGround; if (v[1] < 0) v[1] = 0; }
+    // a dash into something solid is spent there rather than hovering against it
+    if (this.dashT > 0 && ((hm.hx && Math.abs(this.dashDir[0]) > 0.3) || (hm.hz && Math.abs(this.dashDir[1]) > 0.3))) {
+      this.dashT = 0;
+    }
 
     // 5. ground bookkeeping
     if (groundHit) {
@@ -7378,7 +7453,7 @@ class Player {
 
     // 7. wall-run
     if (this.state === 'wallrun') this._wallrunPost(ev, hm);
-    else if (this.state === 'air' && !this.grappleAnchor) this._tryWallrun(ev, k, preVx, preVz, preHs);
+    else if (this.state === 'air' && !this.grappleAnchor && this.climbT <= 0) this._tryWallrun(ev, k, preVx, preVz, preHs);
 
     if (this.onGround) this.airTime = 0;
     else this.airTime += dt;
@@ -7388,7 +7463,11 @@ class Player {
 
   _groundLogic(dt, ev, k) {
     const P = PHYS;
-    if (this.jumpBufferT > 0 && this._jump(ev)) return;
+    if (this.hopT > HOP.window) this.hopChain = 0;      // stood around: the chain is broken, the bank bleeds
+    if (this.jumpBufferT > 0) {
+      if (this._tryWallClimb(ev, k)) return;
+      if (this._jump(ev)) return;
+    }
 
     if (this.state === 'ground') {
       if (this.crouchBufferT > 0) {
@@ -7425,6 +7504,10 @@ class Player {
       this._airMove(dt, k);
       return;
     }
+    // Scripted bursts own the body while they last. Both are still plain 'air' to everything outside this
+    // file, so the ghost, the renderer and the referee see a jump like any other.
+    if (this.climbT > 0) { this._climbTick(dt, ev, k); return; }
+    if (this.dashT > 0) { this._dashTick(dt); return; }
     const touch = this._findWall(PHYS.wallProbe, 0, 0, 'touch');
     if (touch) {
       const wt = this.wallTouch;
@@ -7432,6 +7515,9 @@ class Player {
       this.wallCoyoteT = P.coyoteTime;
     }
     if (this.jumpBufferT > 0) {
+      // A face straight ahead with W held is a climb, not a kick: the kick is what you get off a wall you
+      // are travelling along, and that case is refused by _tryWallClimb.
+      if (this._tryWallClimb(ev, k)) return;
       let jumped = this.coyoteT > 0 && this._jump(ev);
       const wt = this.wallTouch;
       if (!jumped && this.wallCoyoteT > 0 && wt.c && !(wt.c === this.lastWallJump && this.wallJumpT > 0)) {
@@ -7439,6 +7525,8 @@ class Player {
         jumped = true;
       }
     }
+    if (k.dashPressed) this._tryDash(ev, k);
+    if (this.dashT > 0) { this._dashTick(dt); return; }
     if (this.height < FULL - 1e-6 && !k.crouchHeld && this._canStand()) this.height = FULL;
     this._airMove(dt, k);
   }
@@ -7476,13 +7564,18 @@ class Player {
   _groundMove(dt, k, target) {
     const P = PHYS, v = this.vel;
     const hs = Math.hypot(v[0], v[2]);
+    // The bunny-hop window. For HOP.window after touching down, a runner still holding a direction keeps
+    // every metre per second the landing had: the overspeed bleed (this controller's ground friction for
+    // anyone moving faster than they are asking to) is switched off, so a jump pressed on the beat leaves
+    // with all of it. Let go of the stick and ordinary friction still stops you dead.
+    const fresh = this.hopT <= HOP.window && k.wmag > 1e-3;
     if (k.wmag > 1e-3) {
       const want = target * k.wmag;
       const dx = k.wx / k.wmag, dz = k.wz / k.wmag;
       const acc = P.groundAccel * dt;
       if (hs > want + 1e-6 && v[0] * dx + v[2] * dz > 0.5 * hs) {
         // faster than the input asks but heading roughly that way: steer, and let the excess bleed off gently
-        const ns = want + (hs - want) * Math.exp(-OVERSPEED_DECAY * dt);
+        const ns = fresh ? hs : want + (hs - want) * Math.exp(-OVERSPEED_DECAY * dt);
         const blend = Math.min(1, OVERSPEED_TURN * dt);
         let ux = v[0] / hs + (dx - v[0] / hs) * blend;
         let uz = v[2] / hs + (dz - v[2] / hs) * blend;
@@ -7546,8 +7639,10 @@ class Player {
       this.height = FULL;
     }
     if (this.slideBoosting) this._endSlide(ev);
+    const clean = this.onGround && this.hopT <= HOP.window;
     const platformVy = this.onGround ? this._inheritPlatform(this.ground) : 0;
     v[1] = P.jumpVel + Math.max(0, platformVy);
+    if (clean) this._hop(ev);
     this.state = 'air';
     this.onGround = false;
     this.ground = null;
@@ -7608,6 +7703,11 @@ class Player {
     this.wallTouch.c = null;
     this.blockedPlane = null;
     this.state = 'ground';
+    this.hopT = 0;                            // the bunny-hop window opens here
+    this.dashT = 0;
+    this.dashCharges = DASH.charges;          // the floor hands the dash back
+    this.climbWall = null;                    // and so does it hand back the climb
+    this.climbT = 0;
     if (c.kind === 'bounce') return;          // _bounce runs right after
 
     const impact = Math.max(0, -preVy);
@@ -7641,6 +7741,131 @@ class Player {
     this.airTime = 0;
     if (this.height < FULL - 1e-6 && this._canStand()) this.height = FULL;
     ev.push('bounce');
+  }
+
+  // ================================================================== bunny-hop / air dash / wall-climb
+
+  // A jump pressed inside HOP.window of touching down. The window itself is what keeps the speed (see
+  // _groundMove); this only adds the bonus on top and counts the chain. Below HOP.minSpeed it adds
+  // nothing, so there is no hopping up from a standstill — and a hop pressed late never gets here at all,
+  // which is what makes a mistimed hop an ordinary jump.
+  _hop(ev) {
+    const P = PHYS, v = this.vel;
+    const hs = Math.hypot(v[0], v[2]);
+    if (hs < HOP.minSpeed) return;
+    this.hopChain++;
+    const cap = P.sprintSpeed * HOP.maxFactor;
+    const ns = Math.min(cap, hs + HOP.gain);
+    if (ns > hs) { v[0] *= ns / hs; v[2] *= ns / hs; }
+    ev.push('hop');
+  }
+
+  // Q / right mouse. One charge, airborne only, never on the rope: a flat burst in the direction held
+  // (forward when nothing is). v[1] is pinned to 0 for the whole burst and gravity is skipped, so the
+  // dash buys distance and can only ever lower the arc it was fired from.
+  _tryDash(ev, k) {
+    const v = this.vel;
+    if (this.onGround || this.grappleAnchor || this.state === 'mantle' || this.state === 'wallrun') return false;
+    if (this.dashT > 0 || this.dashCooldownT > 0 || this.dashCharges <= 0) return false;
+    if (v[1] < DASH.minFall) return false;
+    let dx, dz;
+    if (k.wmag > 1e-3) { dx = k.wx / k.wmag; dz = k.wz / k.wmag; } else { dx = k.fx; dz = k.fz; }
+    if (this.height < FULL - 1e-6 && this._canStand()) this.height = FULL;
+    this.dashDir[0] = dx; this.dashDir[1] = dz;
+    this.dashT = DASH.time;
+    this.dashCharges--;
+    this.dashCooldownT = DASH.time + DASH.cooldown;
+    this._capDecay = DASH.exitDecay;          // the raised cap bleeds back faster than the rope's does
+    v[0] = dx * DASH.speed;
+    v[2] = dz * DASH.speed;
+    v[1] = 0;
+    this.coyoteT = 0;
+    this.jumpBufferT = 0;
+    ev.push('dash');
+    return true;
+  }
+
+  // The burst itself: the direction is locked in, so air control cannot steer a dash into a second jump.
+  _dashTick(dt) {
+    const v = this.vel;
+    this.dashT -= dt;
+    v[0] = this.dashDir[0] * DASH.speed;
+    v[2] = this.dashDir[1] * DASH.speed;
+    v[1] = 0;
+    if (this.dashT <= 0) this.dashT = 0;
+  }
+
+  // Facing a wall with W held and pressing jump. Refused when a wall-run owns the contact (you are moving
+  // along the face), when the top is already inside mantle reach (that is the ledge climb's job, unchanged)
+  // and when this is the same wall the last climb used — one climb per wall contact, handed back by the
+  // ground or by catching a different wall.
+  _tryWallClimb(ev, k) {
+    const P = PHYS, v = this.vel;
+    if (!k.forward || this.grappleAnchor || this.climbT > 0 || this.climbCooldownT > 0) return false;
+    if (this.state === 'mantle' || this.state === 'wallrun') return false;
+    if (Math.abs(k.moveX) > CLIMB.maxStrafe) return false;    // strafing: that press belongs to another move
+    const w = this._findWall(P.wallProbe, k.fx, k.fz, 'climb');
+    if (!w || w.c === this.climbWall) return false;
+    if (-(k.fx * w.nx + k.fz * w.nz) < CLIMB.minFacing) return false;
+    if (w.c.min[1] > this.pos[1] + CLIMB.maxFoot) return false;
+    if (w.c.max[1] <= this.pos[1] + P.mantleMaxHeight + 1e-6) return false;
+    if (Math.abs(v[0] * -w.nz + v[2] * w.nx) >= CLIMB.maxAlong) return false;
+    if (this.height < FULL - 1e-6) {
+      if (!this._canStand()) return false;
+      this.height = FULL;
+    }
+    if (this.slideBoosting) this._endSlide(ev);
+    this.climbT = CLIMB.time;
+    this.climbN[0] = w.nx; this.climbN[1] = w.nz;
+    this.climbWall = w.c;
+    this.dashT = 0;
+    this.state = 'air';
+    this.onGround = false;
+    this.ground = null;
+    this.jumpBufferT = 0;
+    this.coyoteT = 0;
+    this.wallCoyoteT = 0;
+    this.airTime = 0;
+    v[1] = CLIMB.height / CLIMB.time;
+    v[0] = -w.nx * CLIMB.stick;
+    v[2] = -w.nz * CLIMB.stick;
+    ev.push('wallclimb');
+    return true;
+  }
+
+  // Running up the face. The mantle in _stepPhysics is what finishes the move when a lip comes inside
+  // PHYS.mantleMaxHeight; without one the climb simply runs out of its CLIMB.height and you drop off.
+  _climbTick(dt, ev, k) {
+    const P = PHYS, v = this.vel;
+    const nx = this.climbN[0], nz = this.climbN[1];
+    if (this.jumpBufferT > 0 && this.climbWall) {   // a second press kicks off the face instead
+      const c = this.climbWall;
+      this._stopClimb();
+      this._wallJump(c, nx, nz, ev);
+      return;
+    }
+    const w = this._findWall(P.wallProbe, -nx, -nz, 'climb');
+    if (!k.forward || !w || w.nx !== nx || w.nz !== nz) {
+      this._stopClimb();
+      this._airMove(dt, k);
+      return;
+    }
+    this.climbWall = w.c;                           // hand-over between boxes on the same face
+    this.climbT -= dt;
+    v[1] = CLIMB.height / CLIMB.time;
+    v[0] = -nx * CLIMB.stick;
+    v[2] = -nz * CLIMB.stick;
+    if (this.climbT <= 0) {
+      this._stopClimb();
+      v[1] = CLIMB.exitUp;                          // a lip just out of reach is still mantled
+    }
+  }
+
+  _stopClimb() {
+    if (this.climbT <= 0) return;
+    this.climbT = 0;
+    this.climbCooldownT = CLIMB.cooldown;
+    this.state = 'air';
   }
 
   // ================================================================== wall-run / wall-jump
@@ -7735,6 +7960,8 @@ class Player {
         this.blockedPlane = null;
       }
       const speed = Math.max(Math.abs(along), Math.min(preHs, P.wallrunSpeed));
+      this.dashT = 0;
+      this.dashCharges = DASH.charges;        // catching a wall hands the dash back
       this.state = 'wallrun';
       this.wall = w.c;
       this.wallN[0] = w.nx;
@@ -7807,6 +8034,8 @@ class Player {
     this.onGround = false;
     this.ground = null;
     this._setCooldown(c, P.wallrunCooldown);
+    this.dashT = 0;
+    this.dashCharges = DASH.charges;          // so does kicking off one
     this.lastWallJump = c;
     this.wallJumpT = WALLJUMP_REPEAT;
     this.wallTouch.c = null;
@@ -7855,6 +8084,8 @@ class Player {
 
       if (this.state === 'wallrun') this._endWallrun(ev, 0, false);
       if (this.slideBoosting) this._endSlide(ev);
+      this._stopClimb();                       // the lip is the top of the climb
+      this.dashT = 0;
       this.mantle = {
         sx: p[0], sy: p[1], sz: p[2],
         ex: axis === 0 ? target : p[0], ey: top, ez: axis === 2 ? target : p[2],
@@ -7915,6 +8146,9 @@ class Player {
       this.onGround = true;
       this.ground = hit;
       this.stepDist = 0;
+      this.hopT = 0;
+      this.dashCharges = DASH.charges;
+      this.climbWall = null;
     } else {
       p[1] = y0;
       this.onGround = false;
@@ -7988,6 +8222,9 @@ class Player {
     if (this.state === 'wallrun') this._endWallrun(ev, 0, false);
     if (this.slideBoosting) this._endSlide(ev);
     if (this.height < FULL - 1e-6 && this._canStand()) this.height = FULL;
+    this._stopClimb();
+    this.dashT = 0;
+    this.dashCharges = DASH.charges;          // and so does tying the rope on
     this.grappleAnchor = a;
     this.aimedAnchor = a;
     this.ropeLen = Math.max(G.minRopeLen, d);
@@ -8020,6 +8257,7 @@ class Player {
     this.grappleAirT = 0;
     this._gBlockT = 0;
     this.grappleCooldownT = GRAPPLE.cooldown;
+    this._capDecay = GRAPPLE.keepDecay;
     this._hsCap = Math.max(this._hsCap, Math.min(GRAPPLE.maxSpeed, Math.hypot(v[0], v[2])));
     if (jumped) v[1] += GRAPPLE.jumpKick;
     ev.push('grappleRelease');
@@ -8255,8 +8493,9 @@ const __vl$m26_js_input = (function () {
 // without allow-pointer-lock, API missing, permission denied, no answer) the class switches to `fallbackDrag`:
 // holding the primary button on the canvas and dragging looks around.
 //
-// Keyboard is tracked by physical key (KeyboardEvent.code). Edge-triggered actions (jump, crouch) are latched on
-// keydown and consumed by sample(), so a tap shorter than one fixed physics step is never lost.
+// Keyboard is tracked by physical key (KeyboardEvent.code). Edge-triggered actions (jump, crouch, grapple, reel,
+// dash) are latched on keydown and consumed by sample(), so a tap shorter than one fixed physics step is never
+// lost. The air dash also answers the right mouse button, and the context menu is suppressed on the canvas.
 
 const SENS_KEY = 'vaultline.sens';
 const DEFAULT_SENS = 0.0022;
@@ -8277,9 +8516,10 @@ const LEFT = ['KeyA', 'ArrowLeft'];
 const RIGHT = ['KeyD', 'ArrowRight'];
 const JUMP = ['Space'];
 const SPRINT = ['ShiftLeft', 'ShiftRight'];
-const CROUCH = ['KeyC', 'ControlLeft', 'ControlRight', 'KeyQ'];
+const CROUCH = ['KeyC', 'ControlLeft', 'ControlRight'];
 const GRAPPLE = ['KeyE'];
 const REEL = ['KeyF'];
+const DASH = ['KeyQ'];             // Q is the air dash now; the right mouse button fires it too
 
 const PAUSE_CODES = new Set(['Escape', 'KeyP']);
 const RESTART_CODES = new Set(['KeyR']);
@@ -8288,10 +8528,12 @@ const JUMP_CODES = new Set(JUMP);
 const CROUCH_CODES = new Set(CROUCH);
 const GRAPPLE_CODES = new Set(GRAPPLE);
 const REEL_CODES = new Set(REEL);
+const DASH_CODES = new Set(DASH);
+const DASH_BUTTON = 2;             // right mouse button
 
 // Keys whose browser default (scrolling, focus moves, quick-find, menu bar, back navigation) must not fire mid-run.
 const PREVENT_CODES = new Set([
-  ...FORWARD, ...BACK, ...LEFT, ...RIGHT, ...JUMP, ...SPRINT, ...CROUCH, ...GRAPPLE, ...REEL,
+  ...FORWARD, ...BACK, ...LEFT, ...RIGHT, ...JUMP, ...SPRINT, ...CROUCH, ...GRAPPLE, ...REEL, ...DASH,
   'KeyP', 'KeyR', 'KeyT', 'Backspace', 'Tab', 'AltLeft', 'AltRight', 'Slash', 'Quote',
   'PageUp', 'PageDown', 'Home', 'End',
 ]);
@@ -8376,6 +8618,7 @@ class Input {
     this._crouchLatch = false;
     this._grappleLatch = false;
     this._reelLatch = false;
+    this._dashLatch = false;
     this._lockedEmitted = false;
     this._baseCursor = canvas && canvas.style ? canvas.style.cursor : '';
     this._listeners = [];
@@ -8432,6 +8675,7 @@ class Input {
       grappleHeld: on && this._any(GRAPPLE),
       reelPressed: on && this._reelLatch,
       reelHeld: on && this._any(REEL),
+      dashPressed: on && this._dashLatch,
       yaw: this.yaw,
       pitch: this.pitch,
     };
@@ -8439,6 +8683,7 @@ class Input {
     this._crouchLatch = false;
     this._grappleLatch = false;
     this._reelLatch = false;
+    this._dashLatch = false;
     return out;
   }
 
@@ -8666,6 +8911,12 @@ class Input {
   }
 
   _onPointerDown(e) {
+    // The right button is the dash wherever the mouse is: under pointer lock the canvas is still the
+    // event target, and in the drag-look fallback it is the button that is not the look drag.
+    if (e.button === DASH_BUTTON && e.pointerType !== 'touch') {
+      if (this._enabled && this.locked) this._dashLatch = true;
+      return;
+    }
     if (!this._dragActive() || this._drag) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     if (e.isPrimary === false) return;
@@ -8713,8 +8964,10 @@ class Input {
     this._updateCursor();
   }
 
+  // Never on the canvas: the right button is a game key there, and a menu over the viewport eats the
+  // pointer lock with it.
   _onContextMenu(e) {
-    if (this._enabled && this.locked) e.preventDefault();
+    e.preventDefault();
   }
 
   _updateCursor() {
@@ -8737,6 +8990,7 @@ class Input {
     this._crouchLatch = false;
     this._grappleLatch = false;
     this._reelLatch = false;
+    this._dashLatch = false;
   }
 
   _onKeyDown(e) {
@@ -8767,6 +9021,7 @@ class Input {
     if (CROUCH_CODES.has(code)) this._crouchLatch = true;
     if (GRAPPLE_CODES.has(code)) this._grappleLatch = true;
     if (REEL_CODES.has(code)) this._reelLatch = true;
+    if (DASH_CODES.has(code)) this._dashLatch = true;
   }
 
   _onKeyUp(e) {
