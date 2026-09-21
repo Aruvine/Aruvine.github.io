@@ -565,10 +565,12 @@ const REACH = {
 };
 
 // Grappling hook. E = rope only (pure constraint, you swing on gravity), F = reel (shoots you in).
-// Tuned in the physics job; renderer/HUD read range + coneDeg for aim feedback.
+// The rope ties to ANY solid surface: the aim is a raycast from the eye, and the exact point it hits is
+// the tie point. Renderer/HUD read range + assistDeg for aim feedback.
 const GRAPPLE = {
-  range: 28,              // m: max attach distance (eye -> anchor)
-  coneDeg: 14,            // half-angle of the aim cone
+  range: 28,              // m: max attach distance (eye -> the point hit)
+  assistDeg: 5,           // half-angle of the aim-assist cone used only when the centre ray hits nothing
+  minRange: 1.2,          // m: a surface closer than this is not a target (you are already on it)
   pullAccel: 0,           // m/s^2 toward the anchor from E alone — zero: E never pulls, it only ropes
   maxSpeed: 34,           // m/s: speed cap (3D) while attached
   minRopeLen: 2.5,        // m: never reel closer than this
@@ -764,13 +766,6 @@ function solid(id, kind, min, max) {
 
 const HALF_PI = Math.PI / 2;
 
-// ---- grapple anchors (kind 'grapple': rendered emerald, NEVER collidable; merged by js/level-data.js).
-// A 0.7 m cube whose centre is the anchor point; `approach` is the spot the anchor was designed to be
-// fired from (feet position on the natural running line) — tests aim from eye height there.
-const AH = 0.35;
-function anchor(id, x, y, z, approach) {
-  return { id, kind: 'grapple', min: [x - AH, y - AH, z - AH], max: [x + AH, y + AH, z + AH], approach };
-}
 
 const S2 = {
   id: 's2',
@@ -795,15 +790,9 @@ const S2 = {
     // ---- deco (no collision)
     solid('s2-B-antenna', 'deco', [-6.6, 3.5, -126], [-6.3, 9, -125.7]),
   ],
-  // Every anchor hangs ~5.5 m over the void of one sprint gap, on the sight line of the runner arriving at
-  // it: fire from the runway, or grab it on the way down. All four are optional (see requiredMoves).
-  grapples: [
-    anchor('s2-g1', 0, 8.6, -138.2, [0, 3.5, -131]),   // over the B -> C gap (4.5 m)
-    anchor('s2-g2', 8.5, 8.6, -148, [3, 3, -148]),     // over the dogleg gap C -> D (5.0 m, +X), deadly drop
-    anchor('s2-g3', 6.5, 8.6, -172, [12, 3.5, -172]),  // over the E -> F gap (5.0 m, -X), deadly drop
-    anchor('s2-g4', 0, 14, -183, [0, 3, -177]),        // rescue over the last gap, F -> PADS[2]; p2's checkpoint
-    // volume is 30 m tall (js/level-data.js), so even the fastest F-reel arc off this anchor still trips cp 1
-  ],
+  // The rope hooks any solid surface now, so this section carries no hook entities of its own:
+  // the parapets, walls and towers already here are what you shoot.
+  grapples: [],
   movers: [],
   signs: [
     { pos: [0, 7.0, -107], yaw: 0, text: 'SPRINT GAPS' },            // high over the first gap, seen from p1
@@ -911,23 +900,14 @@ add('deco-bldg-1', [-W, -30, -225], [W, Y - 1, -195], 'deco');
 add('deco-bldg-2', [-W, -30, -243], [W, LOW - 1, -225], 'deco');
 add('deco-bldg-3', [-W, -30, -255], [W, Y - 1, -247], 'deco');
 
-// ---- grapple anchors (kind 'grapple': rendered emerald, NEVER collidable; merged by js/level-data.js).
-// A 0.7 m cube whose centre is the anchor point; `approach` is the spot the anchor was designed to be
-// fired from (feet position on the natural running line) — tests aim from eye height there.
-const AH = 0.35;
-function anchor(id, x, y, z, approach) {
-  return { id, kind: 'grapple', min: [x - AH, y - AH, z - AH], max: [x + AH, y + AH, z + AH], approach };
-}
 
 const S3 = {
   id: 's3',
   name: 'SLIDE DUCT',
   boxes,
-  // One rescue anchor over the 4 m death gap after duct 2. Duct 2's ceiling block hides it from the
-  // runway before the duct (no LOS), so it cannot be used to skip the slide.
-  grapples: [
-    anchor('s3-g1', 0, 13, -244, [0, LOW, -241]),   // p3's checkpoint volume is 30 m tall: no arc clears it
-  ],
+  // The rope hooks any solid surface now, so this section carries no hook entities of its own:
+  // the parapets, walls and towers already here are what you shoot.
+  grapples: [],
   movers: [],
   signs: [
     { pos: [0, Y + 2.8, -202.9], yaw: 0, text: 'C — SLIDE UNDER' },
@@ -1056,28 +1036,17 @@ add('block-4', 'deco', [-W, -12, ZE], [W, Y - 1, G3[1]]);
 
 const LINE = W - 0.35;                     // body center when touching a right wall
 
-// ---- grapple anchors (kind 'grapple': rendered emerald, NEVER collidable; merged by js/level-data.js).
-// A 0.7 m cube whose centre is the anchor point; `approach` is the spot the anchor was designed to be
-// fired from (feet position on the natural running line) — tests aim from eye height there.
-const AH = 0.35;
-function anchor(id, x, y, z, approach) {
-  return { id, kind: 'grapple', min: [x - AH, y - AH, z - AH], max: [x + AH, y + AH, z + AH], approach };
-}
 
 const S4 = {
   id: 's4',
   name: 'WALLRUN ALLEY',
   boxes,
-  // Recovery line: three anchors strung down the middle of the alley ABOVE the walls (wall tops y 11,
-  // glass panes y 11), one over each gap. Miss a wall-run and you can still catch the alley.
-  grapples: [
-    anchor('s4-g1', 0, 14, -278, [1.5, Y, -268]),     // over gap 1 (safe pit)
-    anchor('s4-g2', 0, 14, -301, [0, UP, -284]),      // over gap 2 (11 m void)
-    anchor('s4-g3', 0, 14, -322, [0, UP, -313]),      // over the 15 m slalom void
-  ],
+  // The rope hooks any solid surface now, so this section carries no hook entities of its own:
+  // the parapets, walls and towers already here are what you shoot.
+  grapples: [],
   movers: [],
   signs: [
-    { pos: [0, Y + 2.4, Z0 - 0.5], yaw: 0, text: 'RUN ALONG YELLOW WALLS' },
+    { pos: [0, Y + 2.4, Z0 - 0.5], yaw: 0, text: 'RUN ALONG THE WALL' },
     { pos: [-0.8, UP + 3, G3[0] - 0.5], yaw: 0, text: 'W — HOLD FROM WALL TO WALL' },
   ],
   requiredMoves: [
@@ -1089,9 +1058,12 @@ const S4 = {
     },
     {
       id: 's4-wallrun-full', type: 'wallrun', from: [LINE, UP, G1[1] - 2], yaw: 0,
-      input: { moveZ: 1, sprint: true, jumpAt: G2[0] + 0.5 },
+      input: { moveZ: 1, sprint: true },
       expectLandOn: 's4-ledge-2',
-      note: 'along the right side: drop to runway 2, jump beside the wall 0.5 m before the edge, wall-run 11 m over the void onto the +1.5 m ledge',
+      // No jump any more: every solid face is wall-runnable, so the grey filler at the end of ledge 1
+      // catches the drop off it and the run is already going by the time the void arrives. Pressing jump
+      // on the way is a wall-jump OFF the right wall, which throws you left across the lane and down.
+      note: 'along the right side: run off ledge 1 hugging the wall and the wall catches you - 11 m over the void onto the +1.5 m ledge, with no jump at all',
     },
     {
       id: 's4-slalom', type: 'wallrun', from: [LINE, UP, G2[1] - 1], yaw: 0,
@@ -1329,28 +1301,15 @@ const requiredMoves = [
     expectLandOn: 'p6', note: 'ride s6-m5 to pad p6 and hop the 1.5 m dock gap' },
 ];
 
-// ---- grapple anchors (kind 'grapple': rendered emerald, NEVER collidable; merged by js/level-data.js).
-// A 0.7 m cube whose centre is the anchor point; `approach` is the spot the anchor was designed to be
-// fired from (feet position on the natural running line) — tests aim from eye height there.
-const AH = 0.35;
-function anchor(id, x, y, z, approach) {
-  return { id, kind: 'grapple', min: [x - AH, y - AH, z - AH], max: [x + AH, y + AH, z + AH], approach };
-}
 
 const S6 = {
   id: 's6',
   name: 'MOVING FREIGHT',
   killY: KILL_Y,
   boxes,
-  // Four anchors, one over each ferry lane, 3.5 m above the deck: a way across when you mistime a ferry
-  // (or do not want to wait). Everything below this section is a fall to KILL_Y. PADS[5] / PADS[6] carry
-  // 30 m tall checkpoint volumes (js/level-data.js), so no swing or F-reel arc crosses them untriggered.
-  grapples: [
-    anchor('s6-g1', 0, 14.5, -397, [0, Y, -388]),         // over the s6-m1 forward-ferry lane
-    anchor('s6-g2', -3, 14.5, -414, [-6, Y, -406]),       // over the s6-m2 sideways band
-    anchor('s6-g3', 0, 14.5, -439, [6, Y, -425]),         // over the swap band (s6-m3 / s6-m4)
-    anchor('s6-g4', -6, 24, -463, [-9, Y, -455]),     // over the s6-m5 diagonal lane
-  ],
+  // The rope hooks any solid surface now, so this section carries no hook entities of its own:
+  // the parapets, walls and towers already here are what you shoot.
+  grapples: [],
   movers: [M1, M2, M3, M4, M5],
   signs,
   requiredMoves,
@@ -1432,32 +1391,20 @@ add('deco-tower-foot', [-14, -1, CROWN_FACE], [WALL_X, Y1 - 1, L3_FRONT], 'deco'
 add('deco-crown-foot', [-5, -1, ZE], [5, Y3 - 3, CROWN_FACE], 'deco');
 add('deco-spire', [-11, 32, -527], [-6, 42, -518], 'deco');
 
-// ---- grapple anchors (kind 'grapple': rendered emerald, NEVER collidable; merged by js/level-data.js).
-// A 0.7 m cube whose centre is the anchor point; `approach` is the spot the anchor was designed to be
-// fired from (feet position on the natural running line) — tests aim from eye height there.
-const AH = 0.35;
-function anchor(id, x, y, z, approach) {
-  return { id, kind: 'grapple', min: [x - AH, y - AH, z - AH], max: [x + AH, y + AH, z + AH], approach };
-}
 
 const S7 = {
   id: 's7',
   name: 'FINAL TOWER',
   boxes,
-  // Optional fast line up the tower: one anchor per storey, each clearing the ledge in front of it so it
-  // is visible from the storey below. Using them skips the bounce pads / the wall-run, never PADS[7].
-  grapples: [
-    anchor('s7-g1', 0, 19.5, -493, [0, Y0, -482]),      // from the plaza, over ledge 1
-    anchor('s7-g2', 0, 22, -506, [0, Y1, -495]),      // from ledge 1, over the B2 island gap
-    anchor('s7-g3', 1, 28, -517, [0, Y2, -509]),        // from ledge 2, over ledge 3
-    anchor('s7-g4', 0, 26, -529, [0, Y3, -519]),        // from ledge 3, over the 9 m void to the crown
-  ],
+  // The rope hooks any solid surface now, so this section carries no hook entities of its own:
+  // the parapets, walls and towers already here are what you shoot.
+  grapples: [],
   movers: [],
   signs: [
     { pos: [0, Y0 + 2.6, L1_FACE + 0.05], yaw: 0, text: 'TEAL PADS LAUNCH YOU' },
     { pos: [0, Y1 + 2.6, L2_FACE + 0.05], yaw: 0, text: 'JUMP TO THE PAD' },
     { pos: [EAST_X + 0.05, Y2 + 2.3, (B3_Z0 + B3_Z1) / 2], yaw: HALF_PI, text: 'LAUNCH ONTO THE TOWER' },
-    { pos: [1, YT - 1.3, CROWN_FACE + 0.05], yaw: 0, text: 'RUN THE YELLOW WALL' },
+    { pos: [1, YT - 1.3, CROWN_FACE + 0.05], yaw: 0, text: 'RUN THE WALL' },
   ],
   requiredMoves: [
     { id: 's7-m1', type: 'bounce', from: [0, Y0, Z0 + 3], yaw: 0, input: { moveZ: 1, sprint: false },
@@ -1677,7 +1624,7 @@ const __vl$m10_js_editor_ed_doc = (function () {
 
 const GRID = 0.5;                       // metres: the snapping grid
 const MIN_SIZE = 0.5;                   // metres: thinnest box the editor will make
-const BOX_KINDS = ['floor', 'wall', 'wallrun', 'glass', 'bounce', 'deco', 'grapple'];
+const BOX_KINDS = ['floor', 'wall', 'wallrun', 'glass', 'bounce', 'deco'];
 const ENTITY_TYPES = ['box', 'mover', 'checkpoint', 'sign', 'spawn', 'finish'];
 
 // Palette copy: label + the one-line hint shown in the properties panel.
@@ -1688,10 +1635,8 @@ const KIND_INFO = {
   glass:   { label: 'Glass',    hint: 'Solid but see-through.' },
   bounce:  { label: 'Bounce',   hint: 'Teal pad: launches up at PHYS.bounceVel.' },
   deco:    { label: 'Deco',     hint: 'Scenery only — never collides.' },
-  grapple: { label: 'Anchor',   hint: 'Emerald grapple anchor. Never collides.' },
 };
 
-const ANCHOR_HALF = 0.35;                      // the campaign's grapple cubes are 0.7 m
 const DEFAULT_KILL_Y = -12;
 
 // ---------------------------------------------------------------------------------------- numbers
@@ -1954,7 +1899,7 @@ function addEntity(doc, type, raw) {
 }
 
 function defaultIdStem(ent) {
-  if (ent.type === 'box') return ent.kind === 'grapple' ? 'anchor' : ent.kind;
+  if (ent.type === 'box') return ent.kind;
   if (ent.type === 'mover') return 'mover';
   if (ent.type === 'checkpoint') return 'cp';
   return 'item';
@@ -2056,10 +2001,9 @@ function toLevel(doc) {
     if (b.approach) out.approach = b.approach.slice();
     return out;
   });
-  const anchors = boxes.filter((b) => b.kind === 'grapple').map((b) => ({
-    id: b.id,
-    point: [0, 1, 2].map((k) => tidy((b.min[k] + b.max[k]) / 2)),
-  }));
+  // Vestigial: the rope hooks any surface now, so there are never anchors. The key stays so a level
+  // saved before the change and re-exported keeps the same shape (and the same id).
+  const anchors = [];
   return {
     name: doc.name,
     spawn: { pos: doc.spawn.pos.slice(), yaw: doc.spawn.yaw },
@@ -2091,13 +2035,6 @@ function docFromJSON(obj, name) {
 // Defaults used by the palette when a kind is placed with a single click.
 function defaultBoxFor(kind, point) {
   const p = vec3(point, [0, 0, 0]);
-  if (kind === 'grapple') {
-    return {
-      kind: 'grapple',
-      min: [p[0] - ANCHOR_HALF, p[1] - ANCHOR_HALF, p[2] - ANCHOR_HALF],
-      max: [p[0] + ANCHOR_HALF, p[1] + ANCHOR_HALF, p[2] + ANCHOR_HALF],
-    };
-  }
   if (kind === 'bounce') {
     return { kind, min: [p[0] - 1.5, p[1], p[2] - 1.5], max: [p[0] + 1.5, p[1] + 0.5, p[2] + 1.5] };
   }
@@ -2216,21 +2153,42 @@ return Object.freeze({ History });
 // ---- js/world.js ----
 const __vl$m12_js_world = (function () {
 
-// World: static + moving axis-aligned colliders and trigger queries.
+// World: static + moving axis-aligned colliders, grapple raycasts and trigger queries.
 // Pure module: no imports, no DOM. Runs headless under node.
 //
 // Collider shape: { id, min:[x,y,z], max:[x,y,z], kind, dx, dy, dz }
-//   kind : 'floor' | 'wall' | 'wallrun' | 'bounce' | 'glass' | 'mover'   (boxes with kind 'grapple' become World.anchors, never colliders)
+//   kind : 'floor' | 'wall' | 'wallrun' | 'bounce' | 'glass' | 'mover'
 //   d*   : displacement applied during the most recent step() (always 0 for static colliders)
 // Movers additionally carry { size, a, b, period, phase, center } (read-only for consumers).
 //
 // Mover path: box CENTER ping-pongs a -> b -> a with a cosine ease.
 //   s(t) = 0.5 - 0.5 * cos(2π (t / period + phase)),  center = a + (b - a) * s
 //   `phase` is a fraction of the period (0 starts at a, 0.5 starts at b). period <= 0 keeps the mover parked at a.
+//
+// The grapple hooks ANY collider: `pickSurface` raycasts the aim (with a small assist cone) and hands back
+// the exact point it hit. There are no anchor entities any more — boxes of the retired kind 'grapple' are
+// ignored completely, so an old custom level loses its floating hooks instead of gaining solid blocks.
+//
+// `deco` boxes are still NOT colliders. Seven levels build their routes THROUGH deco masses (tutorial2's
+// opening run sits inside `deco-a1`, ascent's shafts inside their own roof slabs), so making deco solid
+// would break them — and the near skyline slabs sit inside GRAPPLE.range of several courses, which would
+// hand the hardest levels free hooks. Deco is made UNREACHABLE instead:
+//   * every deco volume that is clear of play space is LETHAL on contact, so a building is never passed
+//     through — you splat on its face (`decos`, `_markLethal`),
+//   * a fall out of the course ends the run at once: outside the course footprint (`bounds`) or below the
+//     course's own lowest standing surface by FALL_GRACE (`fallY`), whichever comes first.
 
 const SOLID_KINDS = { floor: 1, wall: 1, wallrun: 1, bounce: 1, glass: 1 };
 const MAX_CONTINUOUS_GAP = 0.25; // s; larger jumps in t (restart, first call, time going backwards) do not carry riders
-const LOS_SLACK = 0.45;          // m of a grapple line ignored at each end (flush-mounted anchors stay shootable)
+const LOS_SLACK = 0.45;          // m of a grapple line ignored at each end (a body pressed into geometry can still fire)
+const OOB_MARGIN = 12;           // m outside the solid geometry's x/z footprint before the run is called off
+const DECO_SKIN = 0.2;           // m the lethal deco volume is inset, so brushing a corner is not a death
+const PLAY_PAD = 0.5;            // m of slack around a standing volume when deciding a deco is out of play
+const PLAY_HEAD = 2.1;           // m of headroom counted as play space above a solid surface
+const PLAY_SIDE = 0.9;           // m out from a surface's footprint counted as play space
+const FALL_GRACE = 5;            // m below the lowest standing surface before a fall is called off
+const RING = 8;                  // assist rays per cone ring
+const RINGS = [0.55, 1];         // ring radii as a fraction of the assist half-angle
 
 function num(v, fallback) {
   return typeof v === 'number' && Number.isFinite(v) ? v : fallback;
@@ -2247,6 +2205,12 @@ function touches(amin, amax, bmin, bmax) {
          amin[2] <= bmax[2] && amax[2] >= bmin[2];
 }
 
+function sortMinMax(min, max) {
+  for (let k = 0; k < 3; k++) {
+    if (min[k] > max[k]) { const t = min[k]; min[k] = max[k]; max[k] = t; }
+  }
+}
+
 class World {
   constructor(level) {
     const lv = level || {};
@@ -2256,28 +2220,30 @@ class World {
     this.finish = lv.finish || null;
     this.colliders = [];
     this.movers = [];
-    this.anchors = [];   // grapple anchors: { id, point:[x,y,z], min, max } — never collidable
+    this.decos = [];     // lethal volumes (kind 'deco'), already inset by DECO_SKIN
     this.time = 0;
     this._lastT = null;
+    this._hit = { t: 0, point: [0, 0, 0], normal: [0, 0, 0], collider: null };
+    this._ray = [0, 0, 0];
+    this._u = [0, 0, 0];
+    this._v = [0, 0, 0];
 
     const boxes = Array.isArray(lv.boxes) ? lv.boxes : [];
     for (let i = 0; i < boxes.length; i++) {
       const b = boxes[i];
-      if (!b || b.kind === 'deco') continue;
+      if (!b || b.kind === 'grapple') continue;       // the retired anchor kind: not geometry, not a target
       const min = vec3(b.min, [0, 0, 0]);
       const max = vec3(b.max, [0, 0, 0]);
-      for (let k = 0; k < 3; k++) {
-        if (min[k] > max[k]) { const t = min[k]; min[k] = max[k]; max[k] = t; }
-      }
+      sortMinMax(min, max);
       // a zero-thickness box cannot block anything reliably; skip it
       if (max[0] - min[0] <= 0 || max[1] - min[1] <= 0 || max[2] - min[2] <= 0) continue;
-      if (b.kind === 'grapple') {
-        this.anchors.push({
-          id: b.id != null ? b.id : 'anchor' + i,
-          point: [(min[0] + max[0]) * 0.5, (min[1] + max[1]) * 0.5, (min[2] + max[2]) * 0.5],
-          min, max,
-        });
-        continue;                                   // anchors are targets, not geometry
+      if (b.kind === 'deco') {
+        const dmin = [min[0] + DECO_SKIN, min[1] + DECO_SKIN, min[2] + DECO_SKIN];
+        const dmax = [max[0] - DECO_SKIN, max[1] - DECO_SKIN, max[2] - DECO_SKIN];
+        if (dmax[0] > dmin[0] && dmax[1] > dmin[1] && dmax[2] > dmin[2]) {
+          this.decos.push({ id: b.id != null ? b.id : 'deco' + i, min: dmin, max: dmax });
+        }
+        continue;
       }
       const kind = SOLID_KINDS[b.kind] ? b.kind : 'wall';
       this.colliders.push({ id: b.id != null ? b.id : 'box' + i, min, max, kind, dx: 0, dy: 0, dz: 0 });
@@ -2307,6 +2273,92 @@ class World {
       this.colliders.push(c);
       this.movers.push(c);
     }
+
+    this.bounds = this._buildBounds(lv);
+    this.fallY = this._buildFallY();
+    this._markLethal(lv);
+  }
+
+  // A deco volume is lethal unless a body could legitimately be inside it: the standing volume over any
+  // solid surface (movers at both ends of their path), the spawn, or a respawn point. Levels that model a
+  // walkway as a slot cut through a building keep their scenery harmless; everything else - the skyline,
+  // the masses beside and below the course - is something you hit rather than something you sink through.
+  _markLethal(lv) {
+    const vols = [];
+    const box = (min, max) => vols.push({ min, max });
+    for (const c of this.colliders) {
+      if (c.kind === 'mover') {
+        for (const p of [c.a, c.b]) {
+          const h = [c.size[0] / 2, c.size[1] / 2, c.size[2] / 2];
+          box([p[0] - h[0] - PLAY_SIDE, p[1] - h[1], p[2] - h[2] - PLAY_SIDE],
+              [p[0] + h[0] + PLAY_SIDE, p[1] + h[1] + PLAY_HEAD, p[2] + h[2] + PLAY_SIDE]);
+        }
+      } else {
+        box([c.min[0] - PLAY_SIDE, c.min[1], c.min[2] - PLAY_SIDE],
+            [c.max[0] + PLAY_SIDE, c.max[1] + PLAY_HEAD, c.max[2] + PLAY_SIDE]);
+      }
+    }
+    const spots = [];
+    if (lv.spawn && Array.isArray(lv.spawn.pos)) spots.push(lv.spawn.pos);
+    for (const cp of this.checkpoints) if (cp && cp.respawn && Array.isArray(cp.respawn.pos)) spots.push(cp.respawn.pos);
+    for (const p of spots) {
+      box([p[0] - PLAY_SIDE - 0.5, p[1] - 1, p[2] - PLAY_SIDE - 0.5],
+          [p[0] + PLAY_SIDE + 0.5, p[1] + PLAY_HEAD, p[2] + PLAY_SIDE + 0.5]);
+    }
+    const lethal = [];
+    for (const d of this.decos) {
+      const min = [d.min[0] - PLAY_PAD, d.min[1] - PLAY_PAD, d.min[2] - PLAY_PAD];
+      const max = [d.max[0] + PLAY_PAD, d.max[1] + PLAY_PAD, d.max[2] + PLAY_PAD];
+      let clear = true;
+      for (let i = 0; i < vols.length; i++) {
+        const v = vols[i];
+        if (touches(min, max, v.min, v.max)) { clear = false; break; }
+      }
+      d.lethal = clear;
+      if (clear) lethal.push(d);
+    }
+    this.decos = lethal;
+  }
+
+  // The plane a fall is called off at: the lowest surface the course actually stands on, FALL_GRACE below.
+  // Never above any standing surface, so no route is affected; well above a level's own killY, so leaving
+  // the course is a death in a fraction of a second instead of a long drift.
+  _buildFallY() {
+    let low = Infinity;
+    for (const c of this.colliders) {
+      const top = c.kind === 'mover' ? Math.min(c.a[1], c.b[1]) + c.size[1] / 2 : c.max[1];
+      if (top < low) low = top;
+    }
+    if (!Number.isFinite(low)) return this.killY;
+    return Math.max(this.killY, low - FALL_GRACE);
+  }
+
+  // x/z footprint the run has to stay inside: every solid box, both ends of every mover, the checkpoint
+  // and finish volumes and the spawn, widened by OOB_MARGIN. Deco is deliberately left out — the skyline
+  // is scenery beyond the course, not part of it.
+  _buildBounds(lv) {
+    const lo = [Infinity, Infinity], hi = [-Infinity, -Infinity];
+    const eat = (min, max) => {
+      for (let k = 0; k < 2; k++) {
+        const a = k === 0 ? 0 : 2;
+        if (min[a] < lo[k]) lo[k] = min[a];
+        if (max[a] > hi[k]) hi[k] = max[a];
+      }
+    };
+    for (const c of this.colliders) {
+      if (c.kind === 'mover') {
+        for (const p of [c.a, c.b]) {
+          eat([p[0] - c.size[0] / 2, 0, p[2] - c.size[2] / 2], [p[0] + c.size[0] / 2, 0, p[2] + c.size[2] / 2]);
+        }
+      } else eat(c.min, c.max);
+    }
+    for (const cp of this.checkpoints) if (cp && Array.isArray(cp.min) && Array.isArray(cp.max)) eat(cp.min, cp.max);
+    const f = this.finish;
+    if (f && Array.isArray(f.min) && Array.isArray(f.max)) eat(f.min, f.max);
+    const sp = lv.spawn && Array.isArray(lv.spawn.pos) ? lv.spawn.pos : null;
+    if (sp) eat(sp, sp);
+    if (!Number.isFinite(lo[0]) || !Number.isFinite(lo[1])) return null;
+    return { minX: lo[0] - OOB_MARGIN, maxX: hi[0] + OOB_MARGIN, minZ: lo[1] - OOB_MARGIN, maxZ: hi[1] + OOB_MARGIN };
   }
 
   // Path parameter in [0,1] of mover `c` at time t.
@@ -2361,8 +2413,8 @@ class World {
   }
 
   // True when the straight segment from -> to is clear of every collider.
-  // Hits within `slack` m of either end are ignored: an anchor mounted flush against a wall stays
-  // shootable, and a body pressed into geometry can still fire.
+  // Hits within `slack` m of either end are ignored: the surface the rope is tied to does not cut its own
+  // line, and a body pressed into geometry can still fire.
   rayClear(from, to, slack) {
     const s = num(slack, LOS_SLACK);
     const dx = to[0] - from[0], dy = to[1] - from[1], dz = to[2] - from[2];
@@ -2394,35 +2446,133 @@ class World {
     return true;
   }
 
-  // Best grapple anchor inside the aim cone with a clear line of sight, or null.
-  // `dir` need not be normalised; `coneDeg` is the half-angle.
-  pickAnchor(origin, dir, range, coneDeg) {
-    const as = this.anchors;
-    if (!as.length || !origin || !dir) return null;
+  // ------------------------------------------------------------------------------------ grapple
+  // First collider along the ray, or null. `dir` must be unit length. Fills and returns `out`
+  // ({ t, point, normal, collider }). Colliders that already contain the origin are ignored, so a body
+  // clipped into geometry still shoots out of it.
+  raycast(origin, dir, range, out) {
+    const res = out || { t: 0, point: [0, 0, 0], normal: [0, 0, 0], collider: null };
+    const r = num(range, 0);
+    if (!(r > 0)) return null;
+    const cs = this.colliders;
+    let bestT = Infinity, bestC = null, bestAxis = -1, bestSign = 0;
+    for (let i = 0; i < cs.length; i++) {
+      const c = cs[i];
+      let lo = 0, hi = r, axis = -1, sign = 0, miss = false;
+      for (let k = 0; k < 3; k++) {
+        const d = dir[k];
+        if (Math.abs(d) < 1e-9) {
+          if (origin[k] < c.min[k] || origin[k] > c.max[k]) { miss = true; break; }
+          continue;
+        }
+        const inv = 1 / d;
+        let a = (c.min[k] - origin[k]) * inv;
+        let b = (c.max[k] - origin[k]) * inv;
+        let s = -1;
+        if (a > b) { const t = a; a = b; b = t; s = 1; }
+        if (a > lo) { lo = a; axis = k; sign = s; }
+        if (b < hi) hi = b;
+        if (lo > hi) { miss = true; break; }
+      }
+      if (miss || axis < 0) continue;       // missed, or the origin is inside this box
+      if (lo >= bestT) continue;
+      bestT = lo; bestC = c; bestAxis = axis; bestSign = sign;
+    }
+    if (!bestC) return null;
+    res.t = bestT;
+    res.collider = bestC;
+    for (let k = 0; k < 3; k++) {
+      res.point[k] = origin[k] + dir[k] * bestT;
+      res.normal[k] = k === bestAxis ? bestSign : 0;
+    }
+    // the hit point is on the face: nudge each axis back inside the box so rounding cannot put it outside
+    for (let k = 0; k < 3; k++) {
+      if (res.point[k] < bestC.min[k]) res.point[k] = bestC.min[k];
+      else if (res.point[k] > bestC.max[k]) res.point[k] = bestC.max[k];
+    }
+    return res;
+  }
+
+  // A grapple target: the exact point on the first surface the aim hits, or null.
+  // The centre ray is tried first; only if it hits nothing does a small assist cone of half-angle
+  // `coneDeg` fan out around it, nearest ring first. `dir` need not be normalised.
+  // Fills and returns `out` = { id, point, normal, collider, local }.
+  pickSurface(origin, dir, range, coneDeg, out) {
+    if (!origin || !dir) return null;
     const r = num(range, 0);
     if (!(r > 0)) return null;
     const dl = Math.hypot(dir[0], dir[1], dir[2]);
     if (!(dl > 1e-9)) return null;
-    const ux = dir[0] / dl, uy = dir[1] / dl, uz = dir[2] / dl;
-    const minCos = Math.cos(Math.max(0, num(coneDeg, 0)) * Math.PI / 180);
-    let best = null, bestScore = -Infinity;
-    for (let i = 0; i < as.length; i++) {
-      const a = as[i];
-      const rx = a.point[0] - origin[0], ry = a.point[1] - origin[1], rz = a.point[2] - origin[2];
-      const d = Math.hypot(rx, ry, rz);
-      if (d > r) continue;
-      const cos = d > 1e-4 ? (rx * ux + ry * uy + rz * uz) / d : 1;
-      if (cos < minCos) continue;
-      const score = cos - 0.02 * (d / r);      // aim first, nearer wins ties
-      if (score <= bestScore) continue;
-      if (!this.rayClear(origin, a.point)) continue;
-      best = a; bestScore = score;
+    const u = this._ray;
+    u[0] = dir[0] / dl; u[1] = dir[1] / dl; u[2] = dir[2] / dl;
+    let hit = this.raycast(origin, u, r, this._hit);
+    if (!hit) hit = this._assist(origin, u, r, num(coneDeg, 0));
+    if (!hit) return null;
+    return this.makeTarget(hit.collider, hit.point, hit.normal, out);
+  }
+
+  _assist(origin, u, range, coneDeg) {
+    if (!(coneDeg > 0)) return null;
+    // an orthonormal pair across the aim
+    const a = this._u, b = this._v;
+    const ax = Math.abs(u[0]), ay = Math.abs(u[1]), az = Math.abs(u[2]);
+    let hx = 0, hy = 0, hz = 0;
+    if (ax <= ay && ax <= az) hx = 1; else if (ay <= az) hy = 1; else hz = 1;
+    a[0] = u[1] * hz - u[2] * hy; a[1] = u[2] * hx - u[0] * hz; a[2] = u[0] * hy - u[1] * hx;
+    const al = Math.hypot(a[0], a[1], a[2]) || 1;
+    a[0] /= al; a[1] /= al; a[2] /= al;
+    b[0] = u[1] * a[2] - u[2] * a[1]; b[1] = u[2] * a[0] - u[0] * a[2]; b[2] = u[0] * a[1] - u[1] * a[0];
+    const probe = [0, 0, 0];
+    const scratch = { t: 0, point: [0, 0, 0], normal: [0, 0, 0], collider: null };
+    for (let ring = 0; ring < RINGS.length; ring++) {
+      const ang = coneDeg * RINGS[ring] * Math.PI / 180;
+      const cs = Math.cos(ang), sn = Math.sin(ang);
+      let best = null, bestT = Infinity;
+      for (let i = 0; i < RING; i++) {
+        const th = (i / RING) * Math.PI * 2;
+        const ca = Math.cos(th) * sn, sa = Math.sin(th) * sn;
+        for (let k = 0; k < 3; k++) probe[k] = u[k] * cs + a[k] * ca + b[k] * sa;
+        const h = this.raycast(origin, probe, range, scratch);
+        if (h && h.t < bestT) {
+          bestT = h.t;
+          best = this._hit;
+          best.t = h.t; best.collider = h.collider;
+          for (let k = 0; k < 3; k++) { best.point[k] = h.point[k]; best.normal[k] = h.normal[k]; }
+        }
+      }
+      if (best) return best;
     }
-    return best;
+    return null;
+  }
+
+  // Wrap a surface point as a rope target. `local` is the offset from the collider's own min, so a rope
+  // tied to a mover rides along with it (see refreshTarget).
+  makeTarget(collider, point, normal, out) {
+    const t = out || { id: '', point: [0, 0, 0], normal: [0, 0, 0], collider: null, local: [0, 0, 0] };
+    t.collider = collider || null;
+    for (let k = 0; k < 3; k++) {
+      t.point[k] = point[k];
+      t.normal[k] = normal ? normal[k] : 0;
+      t.local[k] = collider ? point[k] - collider.min[k] : 0;
+    }
+    t.id = (collider ? collider.id : 'air') + '@' +
+      Math.round(t.local[0] * 20) + ',' + Math.round(t.local[1] * 20) + ',' + Math.round(t.local[2] * 20);
+    return t;
+  }
+
+  // Re-seat a target on its collider. Static geometry does not move, movers do; the rope follows.
+  refreshTarget(t) {
+    if (!t || !t.collider) return t;
+    const c = t.collider;
+    if (c.kind !== 'mover') return t;
+    for (let k = 0; k < 3; k++) t.point[k] = c.min[k] + t.local[k];
+    return t;
   }
 
   // -> { checkpoint: index|-1, finish: bool, kill: bool }
-  // checkpoint is the highest-index checkpoint volume touched; kill when the query box is entirely below killY.
+  // checkpoint is the highest-index checkpoint volume touched. A kill is: entirely below the fall plane
+  // (`fallY`, itself never above the level's killY), outside the course footprint, or inside a lethal
+  // scenery volume - nothing that looks solid is ever passed through.
   queryTriggers(min, max) {
     let checkpoint = -1;
     for (let i = 0; i < this.checkpoints.length; i++) {
@@ -2431,8 +2581,29 @@ class World {
     }
     const f = this.finish;
     const finish = !!(f && Array.isArray(f.min) && Array.isArray(f.max) && touches(min, max, f.min, f.max));
-    const kill = max[1] < this.killY;
+    let kill = max[1] < this.fallY;
+    if (!kill) kill = this.outOfBounds(min, max);
+    if (!kill) kill = this.inDeco(min, max);
     return { checkpoint, finish, kill };
+  }
+
+  // The body has left the course footprint sideways.
+  outOfBounds(min, max) {
+    const b = this.bounds;
+    if (!b) return false;
+    return max[0] < b.minX || min[0] > b.maxX || max[2] < b.minZ || min[2] > b.maxZ;
+  }
+
+  // The body is inside a scenery volume it should never have been able to enter (lethal decos only).
+  inDeco(min, max) {
+    const ds = this.decos;
+    for (let i = 0; i < ds.length; i++) {
+      const d = ds[i];
+      if (min[0] < d.max[0] && max[0] > d.min[0] &&
+          min[1] < d.max[1] && max[1] > d.min[1] &&
+          min[2] < d.max[2] && max[2] > d.min[2]) return true;
+    }
+    return false;
   }
 }
 return Object.freeze({ World });
@@ -2445,15 +2616,15 @@ const { World } = __vl$m12_js_world;
 const { toLevel, entityBounds, moverBoundsAt, entityLabel } = __vl$m10_js_editor_ed_doc;
 // Level validity, checked against the game's own rules.
 //
-// Everything here is measured with the real World (js/world.js builds the collider list, so 'deco' and
-// 'grapple' are excluded exactly as they are in play) and the real limits in js/config.js. Nothing is
+// Everything here is measured with the real World (js/world.js builds the collider list, so 'deco' is
+// excluded exactly as it is in play) and the real limits in js/config.js. Nothing is
 // re-derived: if PHYS or REACH changes, this panel changes with it.
 //
 // Two severities:
 //   error  the level is broken — the game would misbehave (degenerate box, duplicate id, checkpoints in
 //          the wrong order, a spawn buried in geometry or with nothing under it)
-//   warn   the level loads but a move looks impossible — a gap or a rise beyond REACH with no wall-run
-//          wall, bounce pad, mover or grapple anchor to make it
+//   warn   the level loads but a move looks impossible — a gap or a rise beyond REACH with no wall,
+//          bounce pad, mover or grappleable surface to make it
 //
 // Pure module: no DOM, no three.
 
@@ -2528,9 +2699,30 @@ function nearKind(list, kind, x, z, y, radius) {
   return false;
 }
 
-function anchorNear(world, x, y, z) {
-  for (const a of world.anchors) {
-    if (Math.hypot(a.point[0] - x, a.point[1] - y, a.point[2] - z) <= GRAPPLE.range) return true;
+// Any solid face that rises past the route is a wall-run wall now, so "is there a yellow wall?" is
+// "is there a wall?". Bounce pads are excluded: their sides are too low to run.
+function nearWall(list, x, z, y, radius) {
+  for (const s of list) {
+    if (s.kind === 'bounce') continue;
+    if (s.max[1] - s.min[1] < 1.2) continue;          // too short to carry a run
+    const dx = Math.max(s.min[0] - x, 0, x - s.max[0]);
+    const dz = Math.max(s.min[2] - z, 0, z - s.max[2]);
+    if (Math.hypot(dx, dz) > radius) continue;
+    if (y != null && (s.max[1] < y - 12 || s.min[1] > y + 12)) continue;
+    return true;
+  }
+  return false;
+}
+
+// Anything solid inside GRAPPLE.range is something the rope can bite, so "is there a hook here?" is
+// now "is there a surface here?". Distance is measured to the box, not to its centre.
+function hookNear(world, x, y, z) {
+  const r = GRAPPLE.range;
+  for (const c of world.colliders) {
+    const dx = Math.max(c.min[0] - x, 0, x - c.max[0]);
+    const dy = Math.max(c.min[1] - y, 0, y - c.max[1]);
+    const dz = Math.max(c.min[2] - z, 0, z - c.max[2]);
+    if (Math.hypot(dx, dy, dz) <= r) return true;
   }
   return false;
 }
@@ -2574,8 +2766,8 @@ function checkLeg(world, list, from, to, out) {
     gapStart = null;
     if (gapLen <= REACH.gapSprint) return;
     const mx = gapAt[0], mz = gapAt[1];
-    if (anchorNear(world, mx, y, mz)) return;                                   // grapple across it
-    const wall = nearKind(list, 'wallrun', mx, mz, y, NEAR_WALLRUN);
+    if (hookNear(world, mx, y, mz)) return;                                     // grapple across it
+    const wall = nearWall(list, mx, mz, y, NEAR_WALLRUN);
     const limit = wall ? REACH.wallrunGap : REACH.gapSprint;
     if (gapLen <= limit) return;
     out.push(issue('warn',
@@ -2598,9 +2790,9 @@ function checkLeg(world, list, from, to, out) {
       const rise = sup.top - lastTop;
       if (rise > REACH.mantleFromJump) {
         const bounce = nearKind(list, 'bounce', x, z, lastTop, NEAR_BOUNCE);
-        const wall = nearKind(list, 'wallrun', x, z, lastTop, NEAR_WALLRUN);
+        const wall = nearWall(list, x, z, lastTop, NEAR_WALLRUN);
         const limit = bounce ? REACH.bounceApex : REACH.mantleFromJump;
-        if (!wall && !anchorNear(world, x, sup.top, z) && rise > limit) {
+        if (!wall && !hookNear(world, x, sup.top, z) && rise > limit) {
           out.push(issue('warn',
             'Step up of ' + rise.toFixed(1) + ' m onto "' + sup.id + '" at (' + fmt([x, sup.top, z]) +
             ') is past REACH.' + (bounce ? 'bounceApex ' + REACH.bounceApex : 'mantleFromJump ' + REACH.mantleFromJump) + ' m.',
@@ -3659,10 +3851,7 @@ function createSurfaceMaterials(THREE, shared) {
     'GRID', shared, { a: C(PALETTE.gridLine), b: C(PALETTE.gridEdge), c: C(PALETTE.concrete) }
   );
 
-  const wallrun = applyPatch(
-    new THREE.MeshStandardMaterial({ color: C(PALETTE.wallrun), roughness: 0.62, metalness: 0 }),
-    'CHEVRON', shared, { a: C(PALETTE.chevron), b: C(PALETTE.chevron), c: C(PALETTE.wallrun) }
-  );
+  // (no wallrun material: kind 'wallrun' draws as concrete now - every face is wall-runnable)
 
   const bounce = applyPatch(
     new THREE.MeshStandardMaterial({ color: C(PALETTE.bounce), roughness: 0.5, metalness: 0 }),
@@ -3691,7 +3880,7 @@ function createSurfaceMaterials(THREE, shared) {
     'DECO', shared, { a: C(PALETTE.decoLine), b: C(PALETTE.decoLine), c: C(PALETTE.decoDark) }
   );
 
-  return { concrete, wallrun, bounce, mover, glass, deco };
+  return { concrete, bounce, mover, glass, deco };
 }
 
 // Unlit material (signs, banners, pylon strips) that still honours the void fog.
@@ -4095,7 +4284,7 @@ function buildBoxGeometry(THREE, entries) {
 
 // Static level boxes merged into one mesh per visual kind.
 function buildStaticMeshes(THREE, level, materials, path) {
-  const groups = { concrete: [], wallrun: [], bounce: [], glass: [], deco: [] };
+  const groups = { concrete: [], bounce: [], glass: [], deco: [] };
   const decoDark = new THREE.Color(PALETTE.decoDark);
   const decoLight = new THREE.Color(PALETTE.decoLight);
   const tmp = new THREE.Color();
@@ -4105,22 +4294,8 @@ function buildStaticMeshes(THREE, level, materials, path) {
     const h = hashString(b.id !== undefined ? b.id : b.min.join(',') + b.max.join(','));
     const jitter = ((h % 1000) / 1000 - 0.5) * 0.05;
     switch (b.kind) {
-      case 'wallrun': {
-        const dx = b.max[0] - b.min[0];
-        const dy = b.max[1] - b.min[1];
-        const dz = b.max[2] - b.min[2];
-        const axis = dx >= dz ? [1, 0] : [0, 1];
-        const cx = (b.min[0] + b.max[0]) / 2;
-        const cz = (b.min[2] + b.max[2]) / 2;
-        const dir = courseDirectionAt(path, cx, cz);
-        const dot = axis[0] * dir[0] + axis[1] * dir[1];
-        let sign = dot >= 0 ? 1 : -1;
-        if (Math.abs(dot) < 0.05) sign = axis[1] === 1 ? -1 : 1;
-        // Tall, short walls (chimneys) are climbed by wall-jumping: their chevrons point up.
-        const climb = dy >= 5 && dy >= 1.6 * Math.max(dx, dz) ? 1 : 0;
-        groups.wallrun.push({ min: b.min, max: b.max, extra: [axis[0] * sign, axis[1] * sign, climb] });
-        break;
-      }
+      // 'wallrun' is a dead letter: every solid face is wall-runnable, so the yellow paint and its
+      // chevrons would be a lie. The kind stays in the data; it draws as plain concrete.
       case 'bounce':
         groups.bounce.push({
           min: b.min, max: b.max,
@@ -4131,13 +4306,14 @@ function buildStaticMeshes(THREE, level, materials, path) {
         groups.glass.push({ min: b.min, max: b.max });
         break;
       case 'grapple':
-        break;     // drawn by render-grapple.js (billboard marker), never as a concrete block
+        break;     // retired anchor kind: not geometry, not a target, not drawn
 
       case 'deco':
         tmp.lerpColors(decoDark, decoLight, (h % 997) / 997);
         groups.deco.push({ min: b.min, max: b.max, color: [tmp.r, tmp.g, tmp.b] });
         break;
-      case 'wall': {
+      case 'wall':
+      case 'wallrun': {
         const f = 0.985 + jitter;
         groups.concrete.push({ min: b.min, max: b.max, color: [f, f, f] });
         break;
@@ -4153,7 +4329,7 @@ function buildStaticMeshes(THREE, level, materials, path) {
   group.name = 'static-level';
   const meshes = {};
   const shadowSettings = {
-    concrete: [true, true], wallrun: [true, true], bounce: [true, true], glass: [false, true], deco: [true, true],
+    concrete: [true, true], bounce: [true, true], glass: [false, true], deco: [true, true],
   };
   for (const key of Object.keys(groups)) {
     if (groups[key].length === 0) continue;
@@ -4346,53 +4522,23 @@ function buildCheckpointBeacon(THREE, cp, shared, level) {
     },
   };
 }
-
-// ---------------------------------------------------------------------------
-// Grapple anchors: [{ id, point:[x,y,z], half }] for render-grapple.js.
-// Preferred source is level.anchors (what World exposes); otherwise the level's kind:'grapple' boxes
-// (~0.7 m cubes, not collidable) are used directly, so the renderer works before/after that wiring.
-// ---------------------------------------------------------------------------
-function collectGrappleAnchors(level) {
-  const out = [];
-  const seen = new Set();
-  const add = (id, point, half) => {
-    const key = id !== undefined && id !== null ? String(id) : 'a' + out.length;
-    if (seen.has(key)) return;
-    if (!Array.isArray(point) || point.length < 3) return;
-    if (!point.every((v) => typeof v === 'number' && Number.isFinite(v))) return;
-    seen.add(key);
-    out.push({ id: id !== undefined && id !== null ? id : key, point: [point[0], point[1], point[2]], half });
-  };
-  if (Array.isArray(level && level.anchors)) {
-    for (const a of level.anchors) if (a) add(a.id, a.point, typeof a.half === 'number' ? a.half : 0.35);
-  }
-  for (const b of (level && level.boxes) || []) {
-    if (!b || b.kind !== 'grapple' || !isValidBox(b.min, b.max)) continue;
-    add(b.id, [(b.min[0] + b.max[0]) / 2, (b.min[1] + b.max[1]) / 2, (b.min[2] + b.max[2]) / 2],
-      Math.max(0.12, Math.min(b.max[0] - b.min[0], b.max[1] - b.min[1], b.max[2] - b.min[2]) / 2));
-  }
-  return out;
-}
-return Object.freeze({ levelBounds, supportTopAt, buildCoursePath, courseDirectionAt, buildBoxGeometry, buildStaticMeshes, buildMoverMeshes, buildSkyline, buildCheckpointBeacon, collectGrappleAnchors });
+return Object.freeze({ levelBounds, supportTopAt, buildCoursePath, courseDirectionAt, buildBoxGeometry, buildStaticMeshes, buildMoverMeshes, buildSkyline, buildCheckpointBeacon });
 })();
 
 // ---- js/render-grapple.js ----
 const __vl$m19_js_render_grapple = (function () {
 
-// Vaultline grapple visuals: emerald anchor markers + the rope drawn while attached.
+// Vaultline grapple visuals: the aim marker + the rope drawn while attached.
 // Does not import three: render.js passes the THREE namespace in (SPEC: only render.js imports three).
 //
-// Two draw calls for every anchor in the level:
-//   1. `core`  - merged octahedra, one per anchor, opaque, lit by a cheap normal ramp (a solid object).
-//   2. `glow`  - merged view-space billboards: soft halo + ring + dark rim, alpha blended, no depth write.
-// The billboard keeps a minimum SCREEN size (uMinAng), so a 0.7 m anchor is still an obvious emerald
-// target at 28 m in both presets. The aimed anchor is picked out by uAimed (an index, -1 for none).
+// The rope hooks any surface, so there is nothing in the level to light up - only the exact point the
+// shot would bite. `createAimMarker` draws that: a small emerald reticle laid on the surface and turned
+// to face out of it, held at a constant size on screen (three small unlit meshes, one draw call each).
 // The rope is one camera-facing ribbon with a parabolic sag and a taper, rebuilt on the CPU each frame
 // (26 segments on PC, 9 on laptop -> 144..624 floats; the GPU cost is one thin transparent strip).
 
-// Emerald set. `base` is the SPEC green (#3DDC84, the HUD "ahead" colour); `deep` is the shaded side of
-// the gem, `hot` the aimed highlight, `rim` the dark outline that keeps the marker readable against the
-// pale concrete.
+// Emerald set. `base` is the SPEC green (#3DDC84, the HUD "ahead" colour); `deep` is the shaded side,
+// `hot` the centre pip, `rim` the dark outline that keeps the marker readable against pale concrete.
 const EMERALD = {
   base: '#3DDC84',
   deep: '#159B55',
@@ -4402,264 +4548,86 @@ const EMERALD = {
   ropeEdge: '#1E8F55',
 };
 
-const ANCHOR_MIN_PX = 26;     // halo diameter never shrinks below this many pixels
-const ANCHOR_FADE_NEAR = 55;  // halo starts fading past this distance (m)
-const ANCHOR_FADE_FAR = 95;   // ...and is gone here (keeps far anchors from speckling the skyline)
 const ROPE_MIN_PX = 2.6;      // rope never thinner than this on screen
 
 // ---------------------------------------------------------------------------
-// Anchors
+// Aim marker: where the rope would bite
 // ---------------------------------------------------------------------------
+// There are no anchors any more - the rope ties to whatever surface the crosshair is on - so the only
+// thing to draw is a small emerald reticle sitting ON that surface, turned to face out of it. Two thin
+// rings and a centre pip, unlit, depth-tested against the world so it reads as paint on the wall; the
+// caller keeps it a constant size on screen by feeding setScale() a world radius derived from depth.
 
-const ANCHOR_VERT_PARS = /* glsl */ `
-attribute float aId;
-uniform float uTime;
-uniform float uAimed;
-uniform float uAimT;
-varying float vlAim;
-varying float vlPulse;
-`;
+const MARKER_PX = 15;         // on-screen radius (CSS px) the reticle is held at
+const MARKER_MIN = 0.06;      // m: never smaller than this in world units
+const MARKER_MAX = 0.9;       // m: never larger
+const MARKER_LIFT = 0.03;     // m off the surface, so it never z-fights the face it is painted on
 
-// 0.5..1 soft pulse, desynchronised per anchor so a cluster never blinks in unison.
-const ANCHOR_PULSE = /* glsl */ `
-vlAim = 1.0 - step( 0.5, abs( aId - uAimed ) );
-vlPulse = 0.5 + 0.5 * sin( uTime * 2.1 + aId * 1.7 );
-`;
-
-const CORE_VERT = ANCHOR_VERT_PARS + `
-varying vec3 vlN;
-`;
-
-const CORE_FRAG = /* glsl */ `
-uniform vec3 uBase;
-uniform vec3 uDeep;
-uniform vec3 uHot;
-uniform float uAimT;
-varying float vlAim;
-varying float vlPulse;
-varying vec3 vlN;
-`;
-
-const GLOW_VERT = ANCHOR_VERT_PARS + /* glsl */ `
-attribute vec3 aCenter;
-attribute vec2 aCorner;
-attribute float aHalf;
-uniform float uMinAng;
-uniform float uGlow;
-varying vec2 vlUv;
-varying float vlFade;
-`;
-
-const GLOW_FRAG = /* glsl */ `
-uniform vec3 uBase;
-uniform vec3 uHot;
-uniform vec3 uRim;
-uniform float uGlow;
-uniform float uAimT;
-varying vec2 vlUv;
-varying float vlFade;
-varying float vlAim;
-varying float vlPulse;
-`;
-
-function anchorTemplate(THREE, radius) {
-  const geo = new THREE.OctahedronGeometry(radius, 0);
-  const pos = geo.getAttribute('position').array;
-  const nor = geo.getAttribute('normal').array;
-  geo.dispose();
-  return { pos, nor, count: pos.length / 3 };
-}
-
-// anchors: [{ id, point:[x,y,z], half }] -> { group, setAimed(id), setAimT(t), setScreen(minAng), setGlow(k), dispose() }
-function buildGrappleAnchors(THREE, anchors, shared, glowStrength) {
-  const list = anchors || [];
+function createAimMarker(THREE) {
   const group = new THREE.Group();
-  group.name = 'grapple-anchors';
-  const index = new Map();
-  const uAimed = { value: -1 };
-  const uAimT = { value: 0 };
-  const uMinAng = { value: 0.02 };
-  const uGlow = { value: typeof glowStrength === 'number' ? glowStrength : 1 };
-  const C = (hex) => new THREE.Color(hex);
-  const uBase = { value: C(EMERALD.base) };
-  const uDeep = { value: C(EMERALD.deep) };
-  const uHot = { value: C(EMERALD.hot) };
-  const uRim = { value: C(EMERALD.rim) };
-  const common = (shader) => {
-    shader.uniforms.uTime = shared.uTime;
-    shader.uniforms.uAimed = uAimed;
-    shader.uniforms.uAimT = uAimT;
-    shader.uniforms.uBase = uBase;
-    shader.uniforms.uDeep = uDeep;
-    shader.uniforms.uHot = uHot;
-    shader.uniforms.uRim = uRim;
-    shader.uniforms.uGlow = uGlow;
-    shader.uniforms.uMinAng = uMinAng;
+  group.name = 'grapple-aim';
+  group.visible = false;
+  group.matrixAutoUpdate = true;
+
+  const mk = (geo, color, opacity) => {
+    const mat = new THREE.MeshBasicMaterial({
+      color: new THREE.Color(color), transparent: true, opacity,
+      depthWrite: false, side: THREE.DoubleSide, toneMapped: false,
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.frustumCulled = false;
+    group.add(mesh);
+    return { mesh, mat, base: opacity };
   };
 
-  const api = {
+  const parts = [
+    mk(new THREE.RingGeometry(0.86, 1, 28), EMERALD.rim, 0.55),
+    mk(new THREE.RingGeometry(0.62, 0.84, 28), EMERALD.base, 0.95),
+    mk(new THREE.CircleGeometry(0.2, 16), EMERALD.hot, 0.95),
+  ];
+
+  const up = new THREE.Vector3(0, 0, 1);
+  const n = new THREE.Vector3();
+  let strength = 1;
+  let radius = 0.25;
+
+  return {
     group,
-    count: list.length,
-    setAimed(id) {
-      const i = id === null || id === undefined ? -1 : index.has(id) ? index.get(id) : -1;
-      if (i === uAimed.value) return false;
-      uAimed.value = i;
-      return true;
+
+    // point: [x,y,z] on the surface. normal: [x,y,z] out of it (may be all zeros).
+    setPoint(point, normal) {
+      if (!point) { group.visible = false; return; }
+      n.set(normal ? normal[0] : 0, normal ? normal[1] : 0, normal ? normal[2] : 0);
+      if (n.lengthSq() < 1e-6) n.set(0, 1, 0);
+      else n.normalize();
+      group.position.set(point[0] + n.x * MARKER_LIFT, point[1] + n.y * MARKER_LIFT, point[2] + n.z * MARKER_LIFT);
+      group.quaternion.setFromUnitVectors(up, n);
+      group.visible = strength > 0.01;
     },
-    aimedIndex: () => uAimed.value,
-    setAimT(t) { uAimT.value = t < 0 ? 0 : t > 1 ? 1 : t; },
-    // tan(vfov/2)/heightPx: world units per pixel per metre of depth.
-    setScreen(perPixelPerMetre) { uMinAng.value = ANCHOR_MIN_PX * 0.5 * perPixelPerMetre; },
-    setGlow(k) { uGlow.value = k; },
-    dispose() {},
+
+    hide() { group.visible = false; },
+
+    // World radius the reticle is drawn at. Callers derive it from depth so it holds a screen size.
+    setScale(r) {
+      radius = Math.min(MARKER_MAX, Math.max(MARKER_MIN, r));
+      group.scale.setScalar(radius);
+    },
+
+    // 0..1 fade, also used by the quality preset to quiet the marker down.
+    setStrength(k) {
+      strength = Math.max(0, Math.min(1, typeof k === 'number' && Number.isFinite(k) ? k : 1));
+      for (const p of parts) p.mat.opacity = p.base * strength;
+      if (strength <= 0.01) group.visible = false;
+    },
+
+    // Screen-locked sizing helper: perPixel = world units per CSS pixel per metre of depth.
+    sizeFor(perPixel, depth) { return perPixel * MARKER_PX * Math.max(0.5, depth); },
+
+    dispose() {
+      for (const p of parts) { p.mesh.geometry.dispose(); p.mat.dispose(); }
+      group.clear();
+    },
   };
-  if (list.length === 0) return api;
-
-  // --- solid cores -----------------------------------------------------------
-  const tpl = anchorTemplate(THREE, 1);
-  const n = list.length;
-  const cPos = new Float32Array(n * tpl.count * 3);
-  const cNor = new Float32Array(n * tpl.count * 3);
-  const cId = new Float32Array(n * tpl.count);
-  // --- billboards (4 verts, 2 tris each) -------------------------------------
-  const bPos = new Float32Array(n * 4 * 3);
-  const bCen = new Float32Array(n * 4 * 3);
-  const bCor = new Float32Array(n * 4 * 2);
-  const bHalf = new Float32Array(n * 4);
-  const bId = new Float32Array(n * 4);
-  const bIdx = new Uint16Array(n * 6);
-  const CORNERS = [-1, -1, 1, -1, 1, 1, -1, 1];
-
-  for (let a = 0; a < n; a++) {
-    const it = list[a];
-    index.set(it.id, a);
-    const p = it.point || [0, 0, 0];
-    const half = typeof it.half === 'number' && it.half > 0.05 ? it.half : 0.35;
-    for (let v = 0; v < tpl.count; v++) {
-      const o = (a * tpl.count + v) * 3;
-      cPos[o] = p[0] + tpl.pos[v * 3] * half * 1.35;
-      cPos[o + 1] = p[1] + tpl.pos[v * 3 + 1] * half * 1.35;
-      cPos[o + 2] = p[2] + tpl.pos[v * 3 + 2] * half * 1.35;
-      cNor[o] = tpl.nor[v * 3];
-      cNor[o + 1] = tpl.nor[v * 3 + 1];
-      cNor[o + 2] = tpl.nor[v * 3 + 2];
-      cId[a * tpl.count + v] = a;
-    }
-    for (let v = 0; v < 4; v++) {
-      const o = (a * 4 + v) * 3;
-      bPos[o] = p[0]; bPos[o + 1] = p[1]; bPos[o + 2] = p[2];
-      bCen[o] = p[0]; bCen[o + 1] = p[1]; bCen[o + 2] = p[2];
-      bCor[(a * 4 + v) * 2] = CORNERS[v * 2];
-      bCor[(a * 4 + v) * 2 + 1] = CORNERS[v * 2 + 1];
-      bHalf[a * 4 + v] = half * 3.1;
-      bId[a * 4 + v] = a;
-    }
-    const b = a * 4;
-    bIdx.set([b, b + 1, b + 2, b, b + 2, b + 3], a * 6);
-  }
-
-  const coreGeo = new THREE.BufferGeometry();
-  coreGeo.setAttribute('position', new THREE.BufferAttribute(cPos, 3));
-  coreGeo.setAttribute('normal', new THREE.BufferAttribute(cNor, 3));
-  coreGeo.setAttribute('aId', new THREE.BufferAttribute(cId, 1));
-    // toneMapped:false keeps the marker at exactly #3DDC84 on screen: ACES would pull an unlit
-  // albedo-valued emerald well below the tone-mapped brightness of the sunlit concrete around it.
-  const coreMat = new THREE.MeshBasicMaterial({ color: 0xffffff, toneMapped: false });
-  coreMat.onBeforeCompile = (shader) => {
-    common(shader);
-    shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\n' + CORE_VERT)
-      .replace('#include <begin_vertex>', '#include <begin_vertex>\n' + ANCHOR_PULSE + 'vlN = normalize( mat3( modelMatrix ) * normal );\n');
-    shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', '#include <common>\n' + CORE_FRAG)
-      .replace('#include <color_fragment>', /* glsl */ `
-        vec3 col = mix( uDeep, uBase, 0.45 + 0.55 * ( 0.5 * vlN.y + 0.5 ) );
-        col *= 0.94 + 0.13 * vlPulse;
-        // Aimed = brighter emerald, not paler. Washing the core toward uHot used to drop it to a
-        // near-white that LOST contrast against the pale concrete and the bright sky, so the
-        // highlight made the target harder to see. Keep the hue, raise the value.
-        float aim = vlAim * uAimT;
-        col = mix( col, uHot, aim * ( 0.14 + 0.08 * vlPulse ) );
-        col *= 1.0 + aim * ( 0.50 + 0.16 * vlPulse );
-        diffuseColor.rgb = col;
-      `);
-  };
-  coreMat.customProgramCacheKey = () => 'vaultline-anchor-core';
-  const core = new THREE.Mesh(coreGeo, coreMat);
-  core.name = 'grapple-anchor-cores';
-  core.matrixAutoUpdate = false;
-  core.updateMatrix();
-  core.renderOrder = 18;
-  group.add(core);
-
-  const glowGeo = new THREE.BufferGeometry();
-  glowGeo.setAttribute('position', new THREE.BufferAttribute(bPos, 3));
-  glowGeo.setAttribute('aCenter', new THREE.BufferAttribute(bCen, 3));
-  glowGeo.setAttribute('aCorner', new THREE.BufferAttribute(bCor, 2));
-  glowGeo.setAttribute('aHalf', new THREE.BufferAttribute(bHalf, 1));
-  glowGeo.setAttribute('aId', new THREE.BufferAttribute(bId, 1));
-  glowGeo.setIndex(new THREE.BufferAttribute(bIdx, 1));
-  const glowMat = new THREE.MeshBasicMaterial({
-    color: 0xffffff,
-    transparent: true,
-    depthWrite: false,
-    fog: false,
-    toneMapped: false,
-    side: THREE.DoubleSide,
-  });
-  glowMat.onBeforeCompile = (shader) => {
-    common(shader);
-    shader.vertexShader = shader.vertexShader
-      .replace('#include <common>', '#include <common>\n' + GLOW_VERT)
-      .replace('#include <project_vertex>', /* glsl */ `
-        ${ANCHOR_PULSE}
-        vec4 mvPosition = modelViewMatrix * vec4( aCenter, 1.0 );
-        float dist = max( -mvPosition.z, 0.05 );
-        float halfSize = max( aHalf * mix( 1.0, 0.72, 1.0 - uGlow ), dist * uMinAng );
-        halfSize *= 1.0 + 0.06 * vlPulse + 0.3 * vlAim * uAimT;
-        mvPosition.xy += aCorner * halfSize;
-        gl_Position = projectionMatrix * mvPosition;
-        vlUv = aCorner;
-        vlFade = 1.0 - smoothstep( ${ANCHOR_FADE_NEAR.toFixed(1)}, ${ANCHOR_FADE_FAR.toFixed(1)}, dist );
-      `);
-    shader.fragmentShader = shader.fragmentShader
-      .replace('#include <common>', '#include <common>\n' + GLOW_FRAG)
-      .replace('#include <color_fragment>', /* glsl */ `
-        float r = length( vlUv );
-        if ( r > 1.0 || vlFade <= 0.001 ) discard;
-        float ring = smoothstep( 0.60, 0.50, r ) * smoothstep( 0.30, 0.40, r );
-        float rim  = smoothstep( 0.78, 0.66, r ) * smoothstep( 0.60, 0.66, r );
-        float halo = pow( max( 0.0, 1.0 - r ), 2.2 );
-        float pulse = 0.72 + 0.28 * vlPulse;
-        float aim = vlAim * uAimT;
-        // locked-on inner ring: a second emerald hairline that only the aimed anchor draws
-        float lock = aim * smoothstep( 0.30, 0.22, r ) * smoothstep( 0.12, 0.20, r );
-        vec3 col = mix( uBase, uHot, 0.18 * vlPulse + 0.20 * aim );
-        col = mix( col, uRim, rim * ( 0.90 - 0.22 * aim ) );
-        float alpha = ring * ( 0.85 * pulse + 0.15 ) * ( 1.0 + 1.30 * aim )
-                    + halo * ( 0.30 + 0.38 * aim ) * uGlow
-                    + rim * ( 0.55 + 0.40 * aim )
-                    + lock * 0.85;
-        diffuseColor.rgb = col;
-        diffuseColor.a = clamp( alpha, 0.0, 1.0 ) * vlFade;
-      `);
-  };
-  glowMat.customProgramCacheKey = () => 'vaultline-anchor-glow';
-  const glow = new THREE.Mesh(glowGeo, glowMat);
-  glow.name = 'grapple-anchor-glow';
-  glow.frustumCulled = false;      // billboards grow in view space; the bounding sphere would clip them
-  glow.matrixAutoUpdate = false;
-  glow.updateMatrix();
-  glow.renderOrder = 22;
-  group.add(glow);
-
-  api.dispose = () => {
-    coreGeo.dispose();
-    glowGeo.dispose();
-    coreMat.dispose();
-    glowMat.dispose();
-  };
-  return api;
 }
 
 // ---------------------------------------------------------------------------
@@ -4780,7 +4748,7 @@ function createGrappleRope(THREE, maxSegments) {
     dispose() { geo.dispose(); mat.dispose(); },
   };
 }
-return Object.freeze({ EMERALD, buildGrappleAnchors, createGrappleRope });
+return Object.freeze({ EMERALD, createAimMarker, createGrappleRope });
 })();
 
 // ---- js/render-text.js ----
@@ -5116,8 +5084,8 @@ return Object.freeze({ whenFontsReady, createSign, createFinishGate });
 const __vl$m21_js_editor_ed_render = (function () {
 const { PHYS } = __vl$m0_js_config;
 const { PALETTE, createSharedUniforms, createSurfaceMaterials, createSkyMaterial } = __vl$m17_js_render_materials;
-const { levelBounds, buildCoursePath, courseDirectionAt, supportTopAt, buildStaticMeshes, buildMoverMeshes, buildCheckpointBeacon, collectGrappleAnchors } = __vl$m18_js_render_build;
-const { buildGrappleAnchors, createGrappleRope } = __vl$m19_js_render_grapple;
+const { levelBounds, buildCoursePath, courseDirectionAt, supportTopAt, buildStaticMeshes, buildMoverMeshes, buildCheckpointBeacon } = __vl$m18_js_render_build;
+const { createAimMarker, createGrappleRope } = __vl$m19_js_render_grapple;
 const { createSign, createFinishGate, whenFontsReady } = __vl$m20_js_render_text;
 const { toLevel, entityBounds, moverBoundsAt, sortedBounds } = __vl$m10_js_editor_ed_doc;
 // The level designer's viewport.
@@ -5126,7 +5094,7 @@ const { toLevel, entityBounds, moverBoundsAt, sortedBounds } = __vl$m10_js_edito
 // helper that needs three takes the namespace as a parameter, exactly as js/render-*.js do.
 //
 // The level itself is drawn by the GAME's builders — buildStaticMeshes, buildMoverMeshes,
-// buildCheckpointBeacon, buildGrappleAnchors, createSign, createFinishGate with the game's own surface
+// buildCheckpointBeacon, createAimMarker, createSign, createFinishGate with the game's own surface
 // materials — so what a designer sees while building is what the runner sees at speed. On top of that sit
 // the editor-only overlays (construction grid, selection outlines, face handles, drag preview, spawn and
 // mover gizmos), which live in their own group and are never part of the level.
@@ -5261,9 +5229,11 @@ class EdRender {
     this._built = null;
     this._statics = null;
     this._movers = null;
-    this._anchors = null;
+    this._aim = createAimMarker(THREE);
+    this._aimPoint = null;
+    this._aimNormal = [0, 1, 0];
+    this.levelGroup.add(this._aim.group);
     this._beaconCache = new Map();
-    this._anchorCache = new Map();
     this._signCache = new Map();
     this._finishCache = new Map();
     this._sharedMaterials = new Set(Object.keys(this.materials).map((k) => this.materials[k]));
@@ -5449,19 +5419,6 @@ class EdRender {
     }
     this._sweep(this._beaconCache, (b) => this._killMeshGroup(b.group, true));
 
-    const anchorList = collectGrappleAnchors(lvl);
-    const anchors = this._cached(this._anchorCache, JSON.stringify(anchorList), () => {
-      const a = buildGrappleAnchors(THREE, anchorList, this.shared, 1);
-      this.levelGroup.add(a.group);
-      return a;
-    });
-    anchors.setScreen(this._perPixel);
-    this._sweep(this._anchorCache, (a) => {
-      this.levelGroup.remove(a.group);
-      if (typeof a.dispose === 'function') a.dispose();
-    });
-    this._anchors = anchors;
-
     for (const s of lvl.signs || []) {
       const sign = this._cached(this._signCache, JSON.stringify(s), () => {
         const built = createSign(THREE, s, this.shared, this._anisotropy);
@@ -5517,18 +5474,14 @@ class EdRender {
     this._statics = null;
     this._movers = null;
     this._moverMeshes = new Map();
-    for (const store of [this._beaconCache, this._anchorCache, this._signCache, this._finishCache]) {
+    for (const store of [this._beaconCache, this._signCache, this._finishCache]) {
       for (const entry of store.values()) entry.used = false;
     }
     this._sweep(this._beaconCache, (b) => this._killMeshGroup(b.group, true));
-    this._sweep(this._anchorCache, (a) => {
-      this.levelGroup.remove(a.group);
-      if (typeof a.dispose === 'function') a.dispose();
-    });
     this._sweep(this._signCache, (s) => this._disposeBuilt(s));
     this._sweep(this._finishCache, (g) => this._disposeBuilt(g));
     this._built = null;
-    this._anchors = null;
+    this._aim.hide();
   }
 
   // Editor-only gizmos that depend on the document: spawn marker, mover ghosts, trigger volumes.
@@ -5652,8 +5605,17 @@ class EdRender {
     this._gridGroup.visible = !!on;
   }
 
-  setAimedAnchor(id) {
-    if (this._anchors) this._anchors.setAimed(id == null ? null : id);
+  // The exact surface point the rope would bite, or null. Sized against its depth from the camera.
+  setAimPoint(point, normal) {
+    const ok = Array.isArray(point) && point.length >= 3 && point.every((v) => Number.isFinite(v));
+    this._aimPoint = ok ? point : null;
+    if (ok && Array.isArray(normal) && normal.length >= 3) this._aimNormal = normal;
+    if (!ok) { this._aim.hide(); return; }
+    const c = this.camera.position;
+    const depth = Math.hypot(point[0] - c.x, point[1] - c.y, point[2] - c.z);
+    this._aim.setStrength(1);
+    this._aim.setScale(this._aim.sizeFor(this._perPixel, depth));
+    this._aim.setPoint(point, this._aimNormal);
   }
 
   setRope(from, to) {
@@ -5697,7 +5659,6 @@ class EdRender {
   _updatePerPixel() {
     const h = Math.max(1, this._size.h);
     this._perPixel = (2 * Math.tan(THREE.MathUtils.degToRad(this.camera.fov) / 2)) / h;
-    if (this._anchors) this._anchors.setScreen(this._perPixel);
   }
 
   // World-space ray through a point in CSS pixels, relative to the canvas.
@@ -5785,7 +5746,7 @@ const { rayBox, rayPlaneY, rayLineParam, rightFrom, forwardFrom } = __vl$m16_js_
 
 
 
-const PLACE_TOOLS = ['floor', 'wall', 'wallrun', 'glass', 'bounce', 'deco', 'grapple', 'mover', 'checkpoint', 'sign', 'spawn', 'finish'];
+const PLACE_TOOLS = ['floor', 'wall', 'wallrun', 'glass', 'bounce', 'deco', 'mover', 'checkpoint', 'sign', 'spawn', 'finish'];
 const DRAG_KINDS = { floor: 1, wall: 1, wallrun: 1, glass: 1, bounce: 1, deco: 1, mover: 1, finish: 1 };
 const DEFAULT_HEIGHT = { floor: 0.5, wall: 3, wallrun: 4, glass: 3, bounce: 0.5, deco: 6, mover: 0.5, finish: 4 };
 const CLICK_SLOP = 4;          // px: a pointer that moved less than this is a click, not a drag
@@ -6119,12 +6080,6 @@ class Tools {
       this.ctx.onCommit('place checkpoint');
       return;
     }
-    if (this.tool === 'grapple') {
-      const ent = addEntity(doc, 'box', defaultBoxFor('grapple', p));
-      this.ctx.onSelect([ent.uid]);
-      this.ctx.onCommit('place anchor');
-      return;
-    }
     if (this.tool === 'mover') {
       const ent = addEntity(doc, 'mover', defaultMoverAt(p));
       this.ctx.onSelect([ent.uid]);
@@ -6388,7 +6343,7 @@ const { BOX_KINDS, KIND_INFO, entityLabel, findEntity } = __vl$m10_js_editor_ed_
 
 
 const TOOL_KEYS = {
-  select: '1', floor: '2', wall: '3', wallrun: '4', glass: '5', bounce: '6', deco: '7', grapple: '8',
+  select: '1', floor: '2', wall: '3', wallrun: '4', glass: '5', bounce: '6', deco: '7',
   mover: '9', checkpoint: 'C', sign: 'G', spawn: 'N', finish: 'X',
 };
 
@@ -6400,7 +6355,6 @@ const SWATCH = {
   glass: '#9FD8E8',
   bounce: '#2FB3A7',
   deco: '#7C8994',
-  grapple: '#3DDC84',
   mover: '#4F6D8A',
   checkpoint: '#7FE3FF',
   sign: '#E8EDF1',
@@ -6602,9 +6556,8 @@ class EdUI {
 
   setCounts(doc) {
     const n = doc.boxes.length;
-    const grapples = doc.boxes.filter((b) => b.kind === 'grapple').length;
     this.dom.stCounts.textContent =
-      n + ' boxes · ' + grapples + ' anchors · ' + doc.movers.length + ' movers · ' +
+      n + ' boxes · ' + doc.movers.length + ' movers · ' +
       doc.checkpoints.length + ' checkpoints · ' + doc.signs.length + ' signs';
   }
 
@@ -7150,6 +7103,7 @@ const WALLRUN_TIMEOUT_PUSH = 2;     // m/s away from the wall when the run times
 const WALLRUN_DROP_PUSH = 0.5;      // m/s away from the wall when the player lets go
 const WALLRUN_ROLL = 0.14;          // rad camera roll toward the wall
 const WALLJUMP_REPEAT = 0.3;        // s before the same wall can be kicked off again
+const TOUCH_MIN_APPROACH = 0.5;     // m/s into a face before it beats a merely nearer one for a wall-jump
 
 const MANTLE_PROBE = 0.3;           // m ahead searched when the body is blocked
 const MANTLE_NEAR = 0.12;           // m ahead searched when merely close (falling past a ledge)
@@ -7167,7 +7121,7 @@ const FOV_WALLRUN_KICK = 2;
 
 // ---- grapple (tuning lives in config.js GRAPPLE) ----
 const ROPE_CORRECT = 26;            // m/s: how fast a stretched rope drags the body back onto its sphere
-const GRAPPLE_LOST_RANGE = 1.6;     // x GRAPPLE.range: rope snaps if the anchor ends up this far away
+const GRAPPLE_LOST_RANGE = 1.6;     // x GRAPPLE.range: rope snaps if the tie point ends up this far away
 const ROPE_LOS_SLACK = 0.8;         // m of the rope ignored at each end when testing for blocking geometry
 
 const NO_INPUT = {};
@@ -7196,20 +7150,21 @@ class Player {
     this.onGround = false;
     this.ground = null;             // collider stood on
     this.slideBoosting = false;     // true during an actual slide; state 'slide' without it = crouch-walk
-    this.grappleAnchor = null;      // anchor we are attached to, or null
+    this.grappleAnchor = null;      // surface target the rope is tied to, or null
     this.reeling = false;           // true while F is reeling us in
     this.reelT = 0;                 // s since F was pressed (the reel kick window)
     this.ropeLen = 0;               // m: current rope constraint length while attached
-    this.aimedAnchor = null;        // anchor under the crosshair this step (HUD / renderer highlight)
+    this.aimedAnchor = null;        // surface point under the crosshair this step (HUD / renderer marker)
 
     this._gEye = [0, 0, 0];
     this._gDir = [0, 0, 0];
+    this._aimTarget = { id: '', point: [0, 0, 0], normal: [0, 0, 0], collider: null, local: [0, 0, 0] };
     this._near = [];
     this._bmin = [0, 0, 0];
     this._bmax = [0, 0, 0];
     this._res = { move: 0, hit: null };
     this._face = { nx: 0, nz: 0, gap: 0 };
-    this._wallHit = { c: null, nx: 0, nz: 0, gap: 0 };
+    this._wallHit = { c: null, nx: 0, nz: 0, gap: 0, into: 0 };
     this._hm = { hx: null, hz: null, stepGround: null, blocked: false };
     this._cand = [];
     this._k = {};
@@ -7702,7 +7657,9 @@ class Player {
     return false;
   }
 
-  // Nearest 'wallrun' face within `dist` of the body (vertical band), or null.
+  // Nearest solid vertical face within `dist` of the body (vertical band), or null.
+  // ANY collider counts - concrete, glass, the side of a floor slab, a mover - as long as its face covers
+  // the body's mid band. The kind 'wallrun' no longer means anything to the controller.
   // dirX/dirZ != 0 restricts the search to that horizontal direction (the wall must lie that way).
   // mode 'attach' skips cooled-down / timed-out walls, 'touch' skips the wall just kicked off,
   // 'follow' only accepts faces with the current wall normal.
@@ -7721,10 +7678,11 @@ class Player {
     const best = this._wallHit;
     best.c = null;
     best.gap = Infinity;
+    best.into = -Infinity;
     const list = this._near;
     for (let i = 0; i < list.length; i++) {
       const c = list[i];
-      if (c.kind !== 'wallrun' || !overlapsBox(c, x0, y0, z0, x1, y1, z1)) continue;
+      if (!overlapsBox(c, x0, y0, z0, x1, y1, z1)) continue;
       faceToward(c, bx0, bz0, bx1, bz1, face);
       if (face.gap < -EPS || face.gap > dist + EPS) continue;
       if (directed && -(face.nx * dirX + face.nz * dirZ) < 0.3) continue;
@@ -7738,8 +7696,22 @@ class Player {
       } else if (mode === 'follow') {
         if (face.nx !== this.wallN[0] || face.nz !== this.wallN[1]) continue;
       }
+      if (mode === 'touch') {
+        // Now that every face counts, "nearest" is the wrong pick: in a shaft the back wall can be a
+        // centimetre closer than the side wall you are actually flying into, and you kick backwards out
+        // of the climb. Prefer the face you are moving into; fall back to nearest when nothing is.
+        const into = -(this.vel[0] * face.nx + this.vel[2] * face.nz);
+        if (into > TOUCH_MIN_APPROACH) {
+          if (best.into <= TOUCH_MIN_APPROACH || into > best.into) {
+            best.c = c; best.nx = face.nx; best.nz = face.nz; best.gap = face.gap; best.into = into;
+          }
+          continue;
+        }
+        if (best.into > TOUCH_MIN_APPROACH) continue;
+      }
       if (face.gap < best.gap) {
         best.c = c; best.nx = face.nx; best.nz = face.nz; best.gap = face.gap;
+        best.into = mode === 'touch' ? -(this.vel[0] * face.nx + this.vel[2] * face.nz) : 0;
       }
     }
     return best.c ? best : null;
@@ -7981,7 +7953,11 @@ class Player {
 
   // Aim feedback every step, plus the shot itself. Either key fires: E ropes you on to swing,
   // and F fires too when you have no rope out — that shot reels immediately, so a bare F press
-  // shoots you at the anchor you are looking at without roping up with E first.
+  // shoots you at the surface you are looking at without roping up with E first.
+  //
+  // The aim is a raycast along the view from the eye: the rope ties to the exact point of the FIRST
+  // collider it meets, so line of sight is the raycast itself and anything solid is a valid target.
+  // A miss (open sky, or nothing inside GRAPPLE.range) falls back to a small assist cone.
   _grappleAim(ev, k) {
     const G = GRAPPLE, w = this.world;
     const reelEdge = !!k.reelHeld && !this._reelPrev;
@@ -7991,15 +7967,23 @@ class Player {
       return;
     }
     const eye = this.ropeOrigin(this._gEye);
-    this.aimedAnchor = w && w.pickAnchor ? w.pickAnchor(eye, this._aimDir(this._gDir), G.range, G.coneDeg) : null;
+    let t = w && w.pickSurface
+      ? w.pickSurface(eye, this._aimDir(this._gDir), G.range, num(G.assistDeg, 0), this._aimTarget)
+      : null;
+    // a surface you are all but touching is not something to swing from
+    if (t && this._toPoint(t.point, this._gDir) < num(G.minRange, 0)) t = null;
+    this.aimedAnchor = t;
     if ((!k.grapplePressed && !reelEdge) || this.state === 'mantle' || this.grappleCooldownT > 0) return;
     ev.push('grappleFire');
     if (this.aimedAnchor) this._grappleAttach(this.aimedAnchor, ev);
     else { ev.push('grappleMiss'); this.grappleCooldownT = G.cooldown; }
   }
 
-  _grappleAttach(a, ev) {
+  _grappleAttach(target, ev) {
     const G = GRAPPLE;
+    // the aim buffer is reused every step, so the rope keeps a copy of its own
+    const a = { id: target.id, point: target.point.slice(), normal: target.normal.slice(),
+                collider: target.collider, local: target.local.slice() };
     const d = this._toPoint(a.point, this._gDir);
     if (this.state === 'wallrun') this._endWallrun(ev, 0, false);
     if (this.slideBoosting) this._endSlide(ev);
@@ -8046,6 +8030,8 @@ class Player {
   // for longer than blockedGrace (a single frame of clipping must not drop the rope mid-swing).
   _grappleTick(dt, ev, k) {
     const G = GRAPPLE, a = this.grappleAnchor;
+    // a rope tied to a mover travels with it
+    if (this.world && this.world.refreshTarget) this.world.refreshTarget(a);
     this.grappleT += dt;
     if (!this.onGround) this.grappleAirT += dt;
     // Either key keeps the rope: E for a plain swing, F for a shot fired with F alone.
@@ -9265,7 +9251,7 @@ const { encodeLevel, hashFor, LINK_WARN_LENGTH } = __vl$m28_js_level_codec;
 
 const TOOL_BY_CODE = {
   Digit1: 'select', Digit2: 'floor', Digit3: 'wall', Digit4: 'wallrun', Digit5: 'glass',
-  Digit6: 'bounce', Digit7: 'deco', Digit8: 'grapple', Digit9: 'mover',
+  Digit6: 'bounce', Digit7: 'deco', Digit8: 'mover',
   KeyC: 'checkpoint', KeyG: 'sign', KeyN: 'spawn', KeyX: 'finish', KeyV: 'select',
 };
 
@@ -9384,7 +9370,6 @@ function setTool(name) {
 
 function hintFor(tool) {
   if (tool === 'select') return 'Click to select. Drag the body to move it, the yellow face handles to resize. Shift while dragging moves it vertically. Del deletes, Ctrl+D duplicates.';
-  if (tool === 'grapple') return 'Click to drop a grapple anchor. Anchors never collide — they are targets for E.';
   if (tool === 'spawn') return 'Click to put the spawn point there. Set its yaw in the properties panel.';
   if (tool === 'checkpoint') return 'Click to drop a checkpoint: a tall trigger volume plus a respawn point. Order along -Z is the split order.';
   if (tool === 'sign') return 'Click to place a sign, then type its text in the properties panel.';
@@ -9600,7 +9585,7 @@ function stopPlaytest() {
   render.setGridVisible(showGrid);
   render.setSelection(doc, selection);
   render.setRope(null, null);
-  render.setAimedAnchor(null);
+  render.setAimPoint(null);
   render.setMoverTime(0);
   refreshHandles();
   canvas.focus();
@@ -9716,8 +9701,8 @@ function frame(now) {
     if (p) {
       render.applyPlayerCamera(p);
       render.setMoverTime(playtest.time);
-      const anchor = p.grappleAnchor || p.aimedAnchor;
-      render.setAimedAnchor(anchor ? anchor.id : null);
+      const target = p.grappleAnchor || p.aimedAnchor;
+      render.setAimPoint(target ? target.point : null, target ? target.normal : null);
       if (p.grappleAnchor) {
         const from = [0, 0, 0];
         if (typeof p.ropeOrigin === 'function') p.ropeOrigin(from);
@@ -9797,7 +9782,6 @@ window.__vaultlineEditor = {
     movers: doc.movers.length,
     checkpoints: doc.checkpoints.length,
     signs: doc.signs.length,
-    grapples: doc.boxes.filter((b) => b.kind === 'grapple').length,
   }),
 };
 return Object.freeze({  });

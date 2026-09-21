@@ -71,10 +71,12 @@ const REACH = {
 };
 
 // Grappling hook. E = rope only (pure constraint, you swing on gravity), F = reel (shoots you in).
-// Tuned in the physics job; renderer/HUD read range + coneDeg for aim feedback.
+// The rope ties to ANY solid surface: the aim is a raycast from the eye, and the exact point it hits is
+// the tie point. Renderer/HUD read range + assistDeg for aim feedback.
 const GRAPPLE = {
-  range: 28,              // m: max attach distance (eye -> anchor)
-  coneDeg: 14,            // half-angle of the aim cone
+  range: 28,              // m: max attach distance (eye -> the point hit)
+  assistDeg: 5,           // half-angle of the aim-assist cone used only when the centre ray hits nothing
+  minRange: 1.2,          // m: a surface closer than this is not a target (you are already on it)
   pullAccel: 0,           // m/s^2 toward the anchor from E alone — zero: E never pulls, it only ropes
   maxSpeed: 34,           // m/s: speed cap (3D) while attached
   minRopeLen: 2.5,        // m: never reel closer than this
@@ -270,13 +272,6 @@ function solid(id, kind, min, max) {
 
 const HALF_PI = Math.PI / 2;
 
-// ---- grapple anchors (kind 'grapple': rendered emerald, NEVER collidable; merged by js/level-data.js).
-// A 0.7 m cube whose centre is the anchor point; `approach` is the spot the anchor was designed to be
-// fired from (feet position on the natural running line) — tests aim from eye height there.
-const AH = 0.35;
-function anchor(id, x, y, z, approach) {
-  return { id, kind: 'grapple', min: [x - AH, y - AH, z - AH], max: [x + AH, y + AH, z + AH], approach };
-}
 
 const S2 = {
   id: 's2',
@@ -301,15 +296,9 @@ const S2 = {
     // ---- deco (no collision)
     solid('s2-B-antenna', 'deco', [-6.6, 3.5, -126], [-6.3, 9, -125.7]),
   ],
-  // Every anchor hangs ~5.5 m over the void of one sprint gap, on the sight line of the runner arriving at
-  // it: fire from the runway, or grab it on the way down. All four are optional (see requiredMoves).
-  grapples: [
-    anchor('s2-g1', 0, 8.6, -138.2, [0, 3.5, -131]),   // over the B -> C gap (4.5 m)
-    anchor('s2-g2', 8.5, 8.6, -148, [3, 3, -148]),     // over the dogleg gap C -> D (5.0 m, +X), deadly drop
-    anchor('s2-g3', 6.5, 8.6, -172, [12, 3.5, -172]),  // over the E -> F gap (5.0 m, -X), deadly drop
-    anchor('s2-g4', 0, 14, -183, [0, 3, -177]),        // rescue over the last gap, F -> PADS[2]; p2's checkpoint
-    // volume is 30 m tall (js/level-data.js), so even the fastest F-reel arc off this anchor still trips cp 1
-  ],
+  // The rope hooks any solid surface now, so this section carries no hook entities of its own:
+  // the parapets, walls and towers already here are what you shoot.
+  grapples: [],
   movers: [],
   signs: [
     { pos: [0, 7.0, -107], yaw: 0, text: 'SPRINT GAPS' },            // high over the first gap, seen from p1
@@ -417,23 +406,14 @@ add('deco-bldg-1', [-W, -30, -225], [W, Y - 1, -195], 'deco');
 add('deco-bldg-2', [-W, -30, -243], [W, LOW - 1, -225], 'deco');
 add('deco-bldg-3', [-W, -30, -255], [W, Y - 1, -247], 'deco');
 
-// ---- grapple anchors (kind 'grapple': rendered emerald, NEVER collidable; merged by js/level-data.js).
-// A 0.7 m cube whose centre is the anchor point; `approach` is the spot the anchor was designed to be
-// fired from (feet position on the natural running line) — tests aim from eye height there.
-const AH = 0.35;
-function anchor(id, x, y, z, approach) {
-  return { id, kind: 'grapple', min: [x - AH, y - AH, z - AH], max: [x + AH, y + AH, z + AH], approach };
-}
 
 const S3 = {
   id: 's3',
   name: 'SLIDE DUCT',
   boxes,
-  // One rescue anchor over the 4 m death gap after duct 2. Duct 2's ceiling block hides it from the
-  // runway before the duct (no LOS), so it cannot be used to skip the slide.
-  grapples: [
-    anchor('s3-g1', 0, 13, -244, [0, LOW, -241]),   // p3's checkpoint volume is 30 m tall: no arc clears it
-  ],
+  // The rope hooks any solid surface now, so this section carries no hook entities of its own:
+  // the parapets, walls and towers already here are what you shoot.
+  grapples: [],
   movers: [],
   signs: [
     { pos: [0, Y + 2.8, -202.9], yaw: 0, text: 'C — SLIDE UNDER' },
@@ -562,28 +542,17 @@ add('block-4', 'deco', [-W, -12, ZE], [W, Y - 1, G3[1]]);
 
 const LINE = W - 0.35;                     // body center when touching a right wall
 
-// ---- grapple anchors (kind 'grapple': rendered emerald, NEVER collidable; merged by js/level-data.js).
-// A 0.7 m cube whose centre is the anchor point; `approach` is the spot the anchor was designed to be
-// fired from (feet position on the natural running line) — tests aim from eye height there.
-const AH = 0.35;
-function anchor(id, x, y, z, approach) {
-  return { id, kind: 'grapple', min: [x - AH, y - AH, z - AH], max: [x + AH, y + AH, z + AH], approach };
-}
 
 const S4 = {
   id: 's4',
   name: 'WALLRUN ALLEY',
   boxes,
-  // Recovery line: three anchors strung down the middle of the alley ABOVE the walls (wall tops y 11,
-  // glass panes y 11), one over each gap. Miss a wall-run and you can still catch the alley.
-  grapples: [
-    anchor('s4-g1', 0, 14, -278, [1.5, Y, -268]),     // over gap 1 (safe pit)
-    anchor('s4-g2', 0, 14, -301, [0, UP, -284]),      // over gap 2 (11 m void)
-    anchor('s4-g3', 0, 14, -322, [0, UP, -313]),      // over the 15 m slalom void
-  ],
+  // The rope hooks any solid surface now, so this section carries no hook entities of its own:
+  // the parapets, walls and towers already here are what you shoot.
+  grapples: [],
   movers: [],
   signs: [
-    { pos: [0, Y + 2.4, Z0 - 0.5], yaw: 0, text: 'RUN ALONG YELLOW WALLS' },
+    { pos: [0, Y + 2.4, Z0 - 0.5], yaw: 0, text: 'RUN ALONG THE WALL' },
     { pos: [-0.8, UP + 3, G3[0] - 0.5], yaw: 0, text: 'W — HOLD FROM WALL TO WALL' },
   ],
   requiredMoves: [
@@ -595,9 +564,12 @@ const S4 = {
     },
     {
       id: 's4-wallrun-full', type: 'wallrun', from: [LINE, UP, G1[1] - 2], yaw: 0,
-      input: { moveZ: 1, sprint: true, jumpAt: G2[0] + 0.5 },
+      input: { moveZ: 1, sprint: true },
       expectLandOn: 's4-ledge-2',
-      note: 'along the right side: drop to runway 2, jump beside the wall 0.5 m before the edge, wall-run 11 m over the void onto the +1.5 m ledge',
+      // No jump any more: every solid face is wall-runnable, so the grey filler at the end of ledge 1
+      // catches the drop off it and the run is already going by the time the void arrives. Pressing jump
+      // on the way is a wall-jump OFF the right wall, which throws you left across the lane and down.
+      note: 'along the right side: run off ledge 1 hugging the wall and the wall catches you - 11 m over the void onto the +1.5 m ledge, with no jump at all',
     },
     {
       id: 's4-slalom', type: 'wallrun', from: [LINE, UP, G2[1] - 1], yaw: 0,
@@ -835,28 +807,15 @@ const requiredMoves = [
     expectLandOn: 'p6', note: 'ride s6-m5 to pad p6 and hop the 1.5 m dock gap' },
 ];
 
-// ---- grapple anchors (kind 'grapple': rendered emerald, NEVER collidable; merged by js/level-data.js).
-// A 0.7 m cube whose centre is the anchor point; `approach` is the spot the anchor was designed to be
-// fired from (feet position on the natural running line) — tests aim from eye height there.
-const AH = 0.35;
-function anchor(id, x, y, z, approach) {
-  return { id, kind: 'grapple', min: [x - AH, y - AH, z - AH], max: [x + AH, y + AH, z + AH], approach };
-}
 
 const S6 = {
   id: 's6',
   name: 'MOVING FREIGHT',
   killY: KILL_Y,
   boxes,
-  // Four anchors, one over each ferry lane, 3.5 m above the deck: a way across when you mistime a ferry
-  // (or do not want to wait). Everything below this section is a fall to KILL_Y. PADS[5] / PADS[6] carry
-  // 30 m tall checkpoint volumes (js/level-data.js), so no swing or F-reel arc crosses them untriggered.
-  grapples: [
-    anchor('s6-g1', 0, 14.5, -397, [0, Y, -388]),         // over the s6-m1 forward-ferry lane
-    anchor('s6-g2', -3, 14.5, -414, [-6, Y, -406]),       // over the s6-m2 sideways band
-    anchor('s6-g3', 0, 14.5, -439, [6, Y, -425]),         // over the swap band (s6-m3 / s6-m4)
-    anchor('s6-g4', -6, 24, -463, [-9, Y, -455]),     // over the s6-m5 diagonal lane
-  ],
+  // The rope hooks any solid surface now, so this section carries no hook entities of its own:
+  // the parapets, walls and towers already here are what you shoot.
+  grapples: [],
   movers: [M1, M2, M3, M4, M5],
   signs,
   requiredMoves,
@@ -938,32 +897,20 @@ add('deco-tower-foot', [-14, -1, CROWN_FACE], [WALL_X, Y1 - 1, L3_FRONT], 'deco'
 add('deco-crown-foot', [-5, -1, ZE], [5, Y3 - 3, CROWN_FACE], 'deco');
 add('deco-spire', [-11, 32, -527], [-6, 42, -518], 'deco');
 
-// ---- grapple anchors (kind 'grapple': rendered emerald, NEVER collidable; merged by js/level-data.js).
-// A 0.7 m cube whose centre is the anchor point; `approach` is the spot the anchor was designed to be
-// fired from (feet position on the natural running line) — tests aim from eye height there.
-const AH = 0.35;
-function anchor(id, x, y, z, approach) {
-  return { id, kind: 'grapple', min: [x - AH, y - AH, z - AH], max: [x + AH, y + AH, z + AH], approach };
-}
 
 const S7 = {
   id: 's7',
   name: 'FINAL TOWER',
   boxes,
-  // Optional fast line up the tower: one anchor per storey, each clearing the ledge in front of it so it
-  // is visible from the storey below. Using them skips the bounce pads / the wall-run, never PADS[7].
-  grapples: [
-    anchor('s7-g1', 0, 19.5, -493, [0, Y0, -482]),      // from the plaza, over ledge 1
-    anchor('s7-g2', 0, 22, -506, [0, Y1, -495]),      // from ledge 1, over the B2 island gap
-    anchor('s7-g3', 1, 28, -517, [0, Y2, -509]),        // from ledge 2, over ledge 3
-    anchor('s7-g4', 0, 26, -529, [0, Y3, -519]),        // from ledge 3, over the 9 m void to the crown
-  ],
+  // The rope hooks any solid surface now, so this section carries no hook entities of its own:
+  // the parapets, walls and towers already here are what you shoot.
+  grapples: [],
   movers: [],
   signs: [
     { pos: [0, Y0 + 2.6, L1_FACE + 0.05], yaw: 0, text: 'TEAL PADS LAUNCH YOU' },
     { pos: [0, Y1 + 2.6, L2_FACE + 0.05], yaw: 0, text: 'JUMP TO THE PAD' },
     { pos: [EAST_X + 0.05, Y2 + 2.3, (B3_Z0 + B3_Z1) / 2], yaw: HALF_PI, text: 'LAUNCH ONTO THE TOWER' },
-    { pos: [1, YT - 1.3, CROWN_FACE + 0.05], yaw: 0, text: 'RUN THE YELLOW WALL' },
+    { pos: [1, YT - 1.3, CROWN_FACE + 0.05], yaw: 0, text: 'RUN THE WALL' },
   ],
   requiredMoves: [
     { id: 's7-m1', type: 'bounce', from: [0, Y0, Z0 + 3], yaw: 0, input: { moveZ: 1, sprint: false },
@@ -1200,10 +1147,14 @@ const boxes = [];
 function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
 
 const KILL_Y = -20;
-const AH = 0.35;                                  // anchors are 0.7 m cubes
-function anchor(id, x, y, z, approach) {
-  add(id, 'grapple', [x - AH, y - AH, z - AH], [x + AH, y + AH, z + AH]);
-  boxes[boxes.length - 1].approach = approach;    // the spot the anchor was designed to be fired from
+// A service catwalk carried across the gap between the towers on either side. `y` is its SOFFIT - the
+// underside the rope bites - and the walkway and its handrails all sit ON TOP of it, so no part of the
+// structure ever reaches down into the swing below it.
+const SPAN_T = 1.0;
+function span(id, x, y, z, halfW = 20, halfD = 0.9) {
+  add(id, 'floor', [x - halfW, y, z - halfD], [x + halfW, y + SPAN_T, z + halfD]);
+  add(id + '-rail-a', 'wall', [x - halfW, y + SPAN_T, z - halfD], [x + halfW, y + SPAN_T + 0.8, z - halfD + 0.18]);
+  add(id + '-rail-b', 'wall', [x - halfW, y + SPAN_T, z + halfD - 0.18], [x + halfW, y + SPAN_T + 0.8, z + halfD]);
 }
 function gate(id, name, z, respawn) {
   return { id, name, min: [-40, KILL_Y - 10, z - 2], max: [40, 60, z + 2], respawn };
@@ -1270,9 +1221,9 @@ add('d-land1', 'floor', [-7, YD1 - 1, -328], [7, YD1, -314]);     // 14 m deep: 
 add('d-land2', 'floor', [-7, YD2 - 1, -360], [7, YD2, -346]);     // 4 m higher: the rope has to gain height
 add('d-tower', 'floor', [-7, YF - 8, -392], [7, YF, -376]);       // finish platform
 add('d-tower-back', 'wall', [-7, YF, -392], [7, YF + 4, -391]);   // backstop: nothing overshoots the finish
-anchor('g1', 0, YD + 9.5, -305, [0, YD, -293]);                   // E swing across the 18 m gap
-anchor('g2', 0, 20, -337, [0, YD1, -325]);                        // E swing up onto the higher landing
-anchor('g3', 0, 28, -370, [0, YD2, -357]);                        // F shot up onto the tower
+span('span-1', 0, YD + 9.5, -305);                   // E swing across the 18 m gap
+span('span-2', 0, 20, -337);                        // E swing up onto the higher landing
+span('span-3', 0, 28, -370);                        // F shot up onto the tower
 
 // ---------------------------------------------------------------------------------- deco
 add('deco-a1', 'deco', [-6, -60, -58], [6, YA2 - 1, -5]);
@@ -1299,8 +1250,7 @@ const LEVEL = {
   killY: KILL_Y,
   boxes,
   movers: [],
-  anchors: boxes.filter((b) => b.kind === 'grapple')
-    .map((b) => ({ id: b.id, point: [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2) })),
+  anchors: [],
   checkpoints: [
     gate(ID + '-cp0', 'MANTLE', -100, { pos: [0, YA5 + 0.01, -104], yaw: 0 }),
     gate(ID + '-cp1', 'SLIDE CHAIN', -194, { pos: [0, YB + 0.01, -199], yaw: 0 }),
@@ -1315,7 +1265,7 @@ const LEVEL = {
     { pos: [0, YB + 2.6, -115.5], yaw: 0, text: 'C — SLIDE' },
     { pos: [3.6, YB + 1.6, -122], yaw: 0, text: 'SPACE ON THE LIP' },
     { pos: [-3.6, YB + 1.8, -148], yaw: 0, text: 'KEEP C HELD\nCHAIN THE SLIDES' },
-    { pos: [-1.4, YC + 2.6, -204.5], yaw: 0, text: 'RUN ALONG YELLOW' },
+    { pos: [-1.4, YC + 2.6, -204.5], yaw: 0, text: 'RUN ALONG THE WALL' },
     { pos: [-1.4, YC1 + 2.6, -229.5], yaw: 0, text: 'WALL-RUN THEN SPACE\nKICK OFF THE WALL' },
     { pos: [-4.5, YC2 + 2.4, -254], yaw: 0, text: 'ONE LONG RUN\nSTAY ON THE RIGHT' },
     { pos: [0, YD + 2.8, -288.5], yaw: 0, text: 'E — ROPE\nSWING ACROSS' },
@@ -1613,23 +1563,29 @@ return Object.freeze({ LEVEL });
 // ---- js/levels/grapple.js ----
 const __vl$m13_js_levels_grapple = (function () {
 
-// CHALLENGE LEVEL 3 — SKYHOOK.  GRAPPLE ONLY: a line of small decks strung over an open void, with nothing
-// between them but green anchors. Every gap is 18 .. 20 m — two and a half times a sprint jump — so the only
-// way forward is E (rope, swing) and F (reel, shoot). Pure data: no imports, no DOM.
+// CHALLENGE LEVEL 3 — SKYHOOK.  GRAPPLE ONLY: a line of small decks strung over an open void, crossed on
+// the underside of the sky-bridges that span it. Every gap is 18 .. 20 m — two and a half times a sprint
+// jump — so the only way forward is E (rope, swing) and F (reel, shoot). Pure data: no imports, no DOM.
 //
-// Real numbers this is built against: GRAPPLE.range 28 m (every anchor sits ~15 m from the deck it is fired
+// REDESIGNED for any-surface grappling: there are no anchors any more. Each gap is spanned by a real
+// SPAN — a service bridge 1.2 m thick carried between the towers on both sides, 9 .. 11 m above the deck
+// you fire from. You hook its underside. Each span's soffit sits at exactly the height the old anchor did,
+// so the swings are the same swings; what changed is that the thing you hook is a piece of the city.
+//
+// Real numbers this is built against: GRAPPLE.range 28 m (every soffit is ~15 m from the deck it is fired
 // from, comfortably inside it), GRAPPLE.maxSpeed 34 m/s on the F reel, and the rope is a pure constraint —
-// E never pulls, so a swing that has to GAIN height needs a tap of F.
+// E never pulls, so a swing that has to GAIN height needs a tap of F. Reeling all the way in no longer
+// shoots you past anything: you come to rest GRAPPLE.minRopeLen under the span and swing from there.
 //
-//   hop 1  E swing, flat            deck 25 -> 23     the gentle one, with the anchor dead ahead
+//   hop 1  E swing, flat            deck 25 -> 23     the gentle one, with the span dead ahead
 //   hop 2  E + a tap of F, +4 m     deck 23 -> 27     climbing needs the reel
 //   hop 3  E swing, -2 m            deck 27 -> 25     long swing, release late            [checkpoint 0]
-//   hop 4  E swing out to the side  deck 25 -> 23     the line turns: the anchor is off to the right
-//   hop 5  F shot, +11 m            deck 23 -> 34     straight up the side of the stack    [checkpoint 1]
+//   hop 4  E swing out to the side  deck 25 -> 23     the line turns: the span crosses to the right
+//   hop 5  F reel, +11 m            deck 23 -> 34     up under the high span of the stack  [checkpoint 1]
 //   hop 6  E swing back to centre   deck 34 -> 32
 //   hop 7  E swing, -2 m            deck 32 -> 30                                        [checkpoint 2]
 //   hop 8  E swing out to the left  deck 30 -> 34
-//   hop 9  F shot onto the finish   deck 34 -> 45
+//   hop 9  F reel onto the finish   deck 34 -> 45
 //
 // Falls are always into open air below killY. Every deck is at least 14 m deep and 10 m wide: after a 20 m
 // flight you want a landing you cannot miss.
@@ -1639,10 +1595,15 @@ const boxes = [];
 function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
 
 const KILL_Y = -5;
-const AH = 0.35;
-function anchor(id, x, y, z, approach) {
-  add(id, 'grapple', [x - AH, y - AH, z - AH], [x + AH, y + AH, z + AH]);
-  boxes[boxes.length - 1].approach = approach;
+// A sky-bridge across the void. `y` is its SOFFIT — the underside you hook — and the deck sits on top of
+// it, so nothing of the structure ever reaches down into the swing. It runs the full width of the gorge
+// between the towers on both sides, which is why it needs no legs of its own.
+const SPAN_T = 1.2;                            // deck thickness
+function span(id, x, y, z, halfW = 22, halfD = 1.0) {
+  add(id, 'floor', [x - halfW, y, z - halfD], [x + halfW, y + SPAN_T, z + halfD]);
+  // a waist-high rail on each edge, on TOP: silhouette only, never in the way of the rope
+  add(id + '-rail-a', 'wall', [x - halfW, y + SPAN_T, z - halfD], [x + halfW, y + SPAN_T + 0.9, z - halfD + 0.2]);
+  add(id + '-rail-b', 'wall', [x - halfW, y + SPAN_T, z + halfD - 0.2], [x + halfW, y + SPAN_T + 0.9, z + halfD]);
 }
 // A checkpoint gate spans the whole corridor and rises to y 150: an F reel can throw a body 20 m over a deck,
 // and a checkpoint you sail over is a checkpoint skipped.
@@ -1653,23 +1614,23 @@ function gate(id, name, z, respawn) {
 function deck(id, top, x0, x1, z0, z1) { add(id, 'floor', [x0, top - 1, z1], [x1, top, z0]); }
 
 deck('deck-0', 25, -5, 5, 6, -6);
-anchor('g1', 0, 34.5, -15, [0, 25, -3]);
+span('span-1', 0, 34.5, -15);
 deck('deck-1', 23, -5, 5, -24, -38);
-anchor('g2', 0, 36, -47, [0, 23, -35]);
+span('span-2', 0, 36, -47);
 deck('deck-2', 27, -5, 5, -56, -70);
-anchor('g3', 0, 36.5, -79, [0, 27, -67]);
+span('span-3', 0, 36.5, -79);
 deck('deck-3', 25, -6, 6, -88, -104);            // checkpoint 0 deck, a little longer: the line turns here
-anchor('g4', 8, 34.5, -113, [2, 25, -101]);
+span('span-4', 8, 34.5, -113, 20);
 deck('deck-4', 23, 2, 22, -122, -136);
-anchor('g5', 11, 40, -146, [11, 23, -133]);
+span('span-5', 11, 40, -146, 20);
 deck('deck-5', 34, 4, 18, -152, -168);           // checkpoint 1 deck
-anchor('g6', 5, 43.5, -177, [8, 34, -165]);
+span('span-6', 5, 43.5, -177, 21);
 deck('deck-6', 32, -6, 8, -186, -200);
-anchor('g7', 0, 41.5, -209, [0, 32, -197]);
+span('span-7', 0, 41.5, -209);
 deck('deck-7', 30, -8, 6, -218, -232);           // checkpoint 2 deck
-anchor('g8', -4, 41, -241, [-2, 30, -229]);
+span('span-8', -4, 41, -241, 21);
 deck('deck-8', 34, -16, -2, -250, -264);         // the line turns left
-anchor('g9', -9, 48, -274, [-9, 34, -261]);
+span('span-9', -9, 48, -274, 20);
 deck('deck-fin', 45, -16, -2, -280, -296);
 add('deck-fin-back', 'wall', [-16, 45, -296], [-2, 49, -295]);   // backstop behind the finish
 
@@ -1698,8 +1659,7 @@ const LEVEL = {
   killY: KILL_Y,
   boxes,
   movers: [],
-  anchors: boxes.filter((b) => b.kind === 'grapple')
-    .map((b) => ({ id: b.id, point: [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2) })),
+  anchors: [],
   checkpoints: [
     gate(ID + '-cp0', 'THREE SWINGS', -94, { pos: [0, 25.01, -98], yaw: 0 }),
     gate(ID + '-cp1', 'THE STACK', -158, { pos: [11, 34.01, -162], yaw: 0 }),
@@ -1708,11 +1668,11 @@ const LEVEL = {
   finish: { min: [-60, 44, -296], max: [60, 144, -280] },
   signs: [
     { pos: [0, 27.6, -5.5], yaw: 0, text: 'SKYHOOK\nE ROPES, F REELS' },
-    { pos: [-3.4, 25.4, -4], yaw: 0, text: 'AIM GREEN\nHOLD E, LET GO LATE' },
+    { pos: [-3.4, 25.4, -4], yaw: 0, text: 'AIM THE SPAN\nHOLD E, LET GO LATE' },
     { pos: [-3.4, 25.4, -37], yaw: 0, text: 'THIS ONE CLIMBS\nTAP F ON THE WAY' },
     { pos: [-3.4, 29.4, -69], yaw: 0, text: 'LONG ONE' },
     { pos: [-4.4, 27.4, -103], yaw: 0, text: 'THE LINE TURNS RIGHT' },
-    { pos: [6.0, 25.4, -135], yaw: 0, text: 'HOLD F ALL THE WAY UP' },
+    { pos: [6.0, 25.4, -135], yaw: 0, text: 'HOLD F UP UNDER IT' },
     { pos: [6.0, 36.4, -167], yaw: 0, text: 'BACK TO THE MIDDLE' },
     { pos: [-3.4, 34.4, -199], yaw: 0, text: 'THREE TO GO' },
     { pos: [-5.4, 32.4, -231], yaw: 0, text: 'LEFT NOW' },
@@ -1747,10 +1707,14 @@ const KILL_Y = -10;
 const LX = 2.2, WT = 0.5;                     // wall-run lane half width, wall thickness
 const WB = -12, WTP = 44;                     // yellow walls hang below the run and tower over it
 const CLEAR = 1.1;                            // REACH.slideClearance
-const AH = 0.35;
-function anchor(id, x, y, z, approach) {
-  add(id, 'grapple', [x - AH, y - AH, z - AH], [x + AH, y + AH, z + AH]);
-  boxes[boxes.length - 1].approach = approach;
+// A service catwalk carried across the gap between the towers on either side. `y` is its SOFFIT - the
+// underside the rope bites - and the walkway and its handrails all sit ON TOP of it, so no part of the
+// structure ever reaches down into the swing below it.
+const SPAN_T = 1.0;
+function span(id, x, y, z, halfW = 20, halfD = 0.9) {
+  add(id, 'floor', [x - halfW, y, z - halfD], [x + halfW, y + SPAN_T, z + halfD]);
+  add(id + '-rail-a', 'wall', [x - halfW, y + SPAN_T, z - halfD], [x + halfW, y + SPAN_T + 0.8, z - halfD + 0.18]);
+  add(id + '-rail-b', 'wall', [x - halfW, y + SPAN_T, z + halfD - 0.18], [x + halfW, y + SPAN_T + 0.8, z + halfD]);
 }
 function gate(id, name, z, respawn) {
   return { id, name, min: [-40, KILL_Y - 10, z - 2], max: [40, 110, z + 2], respawn };
@@ -1800,9 +1764,9 @@ add('c-ledge2', 'floor', [-7, 23.4, -169], [1, 24.4, -147]);   // wide landing; 
 rail('c-rail', -1, 24.4, -147, -169, 7);
 
 // ------------------------------------------------------------------------------- D  GRAPPLE
-anchor('g1', -3, 34, -178, [-3, 24.4, -166]);
+span('span-1', -3, 34, -178);
 add('d-land', 'floor', [-7, 21.4, -201], [7, 22.4, -187]);     // 18 m of open air
-anchor('g2', 0, 39, -211, [0, 22.4, -198]);
+span('span-2', 0, 39, -211);
 add('d-tower', 'floor', [-5, 25.4, -241], [5, 33.4, -217]);    // 11 m up: the F reel is the only way.
 // 24 m deep on purpose: the reel drops you about 8 m in, and the duct needs a run-up after that
 
@@ -1842,8 +1806,7 @@ const LEVEL = {
   killY: KILL_Y,
   boxes,
   movers: [],
-  anchors: boxes.filter((b) => b.kind === 'grapple')
-    .map((b) => ({ id: b.id, point: [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2) })),
+  anchors: [],
   checkpoints: [
     gate(ID + '-cp0', 'SLIDE AND RUN', -58, { pos: [0, 15.51, -61], yaw: 0 }),
     gate(ID + '-cp1', 'BOUNCE AND CLIMB', -100, { pos: [0, 22.41, -102.5], yaw: 0 }),
@@ -2197,8 +2160,8 @@ const LEVEL = {
   ],
   finish: { min: [-40, Y0 + 5, -152], max: [40, Y0 + 45, -135] },
   signs: [
-    { pos: [-1.4, Y0 + 2.6, -4.5], yaw: 0, text: 'LESSON 3 — OFF THE WALL\nYELLOW MEANS RUNNABLE' },
-    { pos: [-1.4, Y0 + 1.6, -12], yaw: 0, text: 'SPRINT AT THE YELLOW,\nJUMP INTO IT, HOLD W' },
+    { pos: [-1.4, Y0 + 2.6, -4.5], yaw: 0, text: 'LESSON 3 — OFF THE WALL\nEVERY WALL IS RUNNABLE' },
+    { pos: [-1.4, Y0 + 1.6, -12], yaw: 0, text: 'SPRINT AT THE WALL,\nJUMP INTO IT, HOLD W' },
     { pos: [-1.4, Y0 + 1.6, -22], yaw: 0, text: 'DROP OFF, RUN IT AGAIN.\nTHERE IS NOTHING TO FALL INTO' },
     { pos: [-1.4, Y0 + 2.4, -36], yaw: 0, text: 'NOW A REAL GAP' },
     { pos: [-1.4, Y0 + 1.6, -44], yaw: 0, text: 'JUMP AT THE EDGE\nAND KEEP HOLDING W' },
@@ -2216,20 +2179,24 @@ return Object.freeze({ LEVEL });
 // ---- js/levels/tut-swing.js ----
 const __vl$m18_js_levels_tut_swing = (function () {
 
-// TUTORIAL 4 — ON THE ROPE.  One skill: E.  E throws a rope at a green anchor and the rope HOLDS for as long
-// as E is held — look away, spin around, it stays. It never pulls: it is a pure constraint, so you fall
-// around the anchor and keep every metre per second you arrived with. Let go at the bottom and you go down;
-// let go near the top of the swing and you are thrown forward onto the next deck.
+// TUTORIAL 4 — ON THE ROPE.  One skill: E.  E throws a rope at whatever the crosshair is on and the rope
+// HOLDS for as long as E is held — look away, spin around, it stays. It never pulls: it is a pure
+// constraint, so you fall around the tie point and keep every metre per second you arrived with. Let go at
+// the bottom and you go down; let go near the top of the swing and you are thrown forward onto the next deck.
+//
+// REDESIGNED for any-surface grappling: the lesson is taught on real architecture. Each swing hangs off the
+// SOFFIT of a service catwalk carried across the gap between the towers on either side — the underside of a
+// bridge, aimed at and hooked exactly where the old anchor used to float.
 // Pure data: no imports, no DOM. Exactly the js/level-data.js LEVEL shape.
 //
-//   A  THE FEEL   z    6 ..  -26   y 25         one anchor over a 32 m deck. Rope it standing still, swing,
+//   A  THE FEEL   z    6 ..  -26   y 25         one catwalk over a 32 m deck. Rope it standing still, swing,
 //                                               let go, land on the same deck. Nothing to fall into. [cp 0]
-//   B  FIRST GAP  z  -26 ..  -62   y 25 -> 23   18 m of open air with the anchor 9 m up and 9 m out — the
+//   B  FIRST GAP  z  -26 ..  -62   y 25 -> 23   18 m of open air with the catwalk 9 m up and 9 m out — the
 //                                               same shape the campaign uses, onto an 18 m deck.     [cp 1]
 //   C  THE LONG   z  -62 .. -102   y 23 -> 21   20 m. Same move, held a beat longer.                 [cp 2]
 //   D  TWO IN A ROW z -102 .. -178 y 21 -> 17   land off one swing and rope the next straight away.  [cp 3]
 //
-// Every anchor hangs 9.5 m above the deck it is thrown from and 10 m out over the gap, well inside
+// Every soffit hangs 9.5 m above the deck it is thrown from and 10 m out over the gap, well inside
 // GRAPPLE.range (28 m), and every deck is 12 m wide and 16 m deep or more: after a 20 m flight you want a
 // landing you cannot miss. Every swing loses 2 m of height, because a rope alone never buys any.
 
@@ -2238,10 +2205,13 @@ const boxes = [];
 function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
 
 const KILL_Y = -5;
-const AH = 0.35;                                  // anchors are 0.7 m cubes
-function anchor(id, x, y, z, approach) {
-  add(id, 'grapple', [x - AH, y - AH, z - AH], [x + AH, y + AH, z + AH]);
-  boxes[boxes.length - 1].approach = approach;    // the spot the anchor was designed to be thrown from
+// A catwalk across the gap. `y` is its SOFFIT — the underside you hook — and the walkway and its handrails
+// all sit ON TOP of it, so no part of the structure ever reaches down into the swing.
+const SPAN_T = 1.0;
+function span(id, x, y, z, halfW = 20, halfD = 0.9) {
+  add(id, 'floor', [x - halfW, y, z - halfD], [x + halfW, y + SPAN_T, z + halfD]);
+  add(id + '-rail-a', 'wall', [x - halfW, y + SPAN_T, z - halfD], [x + halfW, y + SPAN_T + 0.8, z - halfD + 0.18]);
+  add(id + '-rail-b', 'wall', [x - halfW, y + SPAN_T, z + halfD - 0.18], [x + halfW, y + SPAN_T + 0.8, z + halfD]);
 }
 // A gate spans the whole corridor and rises to y 150: a swing can throw a body high over a deck, and a
 // checkpoint you sail over is a checkpoint skipped.
@@ -2252,20 +2222,20 @@ const deck = (id, top, z0, z1, half = 6) => add(id, 'floor', [-half, top - 1, z1
 
 // ------------------------------------------------------------------------------- A  THE FEEL
 deck('deck-a', 25, 6, -26);
-anchor('g1', 0, 34, -14, [0, 25, -6]);
+span('span-1', 0, 34, -14);
 
 // ------------------------------------------------------------------------------- B  FIRST GAP  (18 m)
-anchor('g2', 0, 34.5, -35, [0, 25, -23]);
+span('span-2', 0, 34.5, -35);
 deck('deck-b', 23, -44, -62);
 
 // ------------------------------------------------------------------------------- C  THE LONG  (20 m)
-anchor('g3', 0, 32.5, -72, [0, 23, -59]);
+span('span-3', 0, 32.5, -72);
 deck('deck-c', 21, -82, -102);
 
 // ------------------------------------------------------------------------------- D  TWO IN A ROW
-anchor('g4', 0, 30.5, -112, [0, 21, -99]);
+span('span-4', 0, 30.5, -112);
 deck('deck-d', 19, -122, -138);
-anchor('g5', 0, 28.5, -148, [0, 19, -135]);
+span('span-5', 0, 28.5, -148);
 deck('deck-fin', 17, -156, -178);
 add('deck-fin-back', 'wall', [-6, 17, -179], [6, 21, -178]);
 
@@ -2286,8 +2256,7 @@ const LEVEL = {
   killY: KILL_Y,
   boxes,
   movers: [],
-  anchors: boxes.filter((b) => b.kind === 'grapple')
-    .map((b) => ({ id: b.id, point: [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2) })),
+  anchors: [],
   checkpoints: [
     gate(ID + '-cp0', 'THE FEEL', -20, { pos: [0, 25.01, -23], yaw: 0 }),
     gate(ID + '-cp1', 'FIRST GAP', -52, { pos: [0, 23.01, -55], yaw: 0 }),
@@ -2297,7 +2266,7 @@ const LEVEL = {
   finish: { min: [-60, 16, -178], max: [60, 116, -156] },
   signs: [
     { pos: [0, 27.6, 5.5], yaw: Math.PI, text: 'LESSON 4 — ON THE ROPE' },
-    { pos: [-4.4, 26.4, -3], yaw: 0, text: 'E — ROPE\nAIM AT THE GREEN AND HOLD E' },
+    { pos: [-4.4, 26.4, -3], yaw: 0, text: 'E — ROPE\nAIM AT THE CATWALK AND HOLD E' },
     { pos: [4.4, 26.4, -10], yaw: 0, text: 'IT NEVER PULLS YOU.\nYOU JUST FALL AROUND IT' },
     { pos: [-4.4, 26.4, -17], yaw: 0, text: 'LOOK AWAY — IT STILL HOLDS.\nLET E GO AND IT DROPS' },
     { pos: [4.4, 26.4, -24], yaw: 0, text: 'NOW A GAP.\nTHROW IT FROM THE EDGE' },
@@ -2336,10 +2305,14 @@ const boxes = [];
 function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
 
 const KILL_Y = -5;
-const AH = 0.35;                                  // anchors are 0.7 m cubes
-function anchor(id, x, y, z, approach) {
-  add(id, 'grapple', [x - AH, y - AH, z - AH], [x + AH, y + AH, z + AH]);
-  boxes[boxes.length - 1].approach = approach;
+// A service catwalk carried across the gap between the towers on either side. `y` is its SOFFIT - the
+// underside the rope bites - and the walkway and its handrails all sit ON TOP of it, so no part of the
+// structure ever reaches down into the swing below it.
+const SPAN_T = 1.0;
+function span(id, x, y, z, halfW = 20, halfD = 0.9) {
+  add(id, 'floor', [x - halfW, y, z - halfD], [x + halfW, y + SPAN_T, z + halfD]);
+  add(id + '-rail-a', 'wall', [x - halfW, y + SPAN_T, z - halfD], [x + halfW, y + SPAN_T + 0.8, z - halfD + 0.18]);
+  add(id + '-rail-b', 'wall', [x - halfW, y + SPAN_T, z + halfD - 0.18], [x + halfW, y + SPAN_T + 0.8, z + halfD]);
 }
 // A gate spans the whole corridor and rises to y 150: an F reel throws a body a long way over a deck, and a
 // checkpoint you sail over is a checkpoint skipped.
@@ -2350,20 +2323,20 @@ const deck = (id, top, z0, z1, half = 6) => add(id, 'floor', [-half, top - 1, z1
 
 // ------------------------------------------------------------------------------- A  STRAIGHT UP
 deck('deck-a', 15, 6, -40);
-anchor('g1', 0, 30, -16, [0, 15, -6]);
+span('span-1', 0, 30, -16);
 
 // ------------------------------------------------------------------------------- B  FIRST SHOT  (16 m, +11)
-anchor('g2', 0, 32, -50, [0, 15, -37]);
+span('span-2', 0, 32, -50);
 deck('deck-b', 26, -56, -74);
 
 // ------------------------------------------------------------------------------- C  SECOND SHOT  (16 m, +11)
-anchor('g3', 0, 43, -84, [0, 26, -71]);
+span('span-3', 0, 43, -84);
 deck('deck-c', 37, -90, -108);
 
 // ------------------------------------------------------------------------------- D  CHAIN  (two shots)
-anchor('g4', 0, 54, -118, [0, 37, -105]);
+span('span-4', 0, 54, -118);
 deck('deck-d', 48, -124, -140);
-anchor('g5', 0, 65, -150, [0, 48, -137]);
+span('span-5', 0, 65, -150);
 deck('deck-fin', 59, -156, -174);
 add('deck-fin-back', 'wall', [-6, 59, -175], [6, 63, -174]);
 
@@ -2384,8 +2357,7 @@ const LEVEL = {
   killY: KILL_Y,
   boxes,
   movers: [],
-  anchors: boxes.filter((b) => b.kind === 'grapple')
-    .map((b) => ({ id: b.id, point: [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2) })),
+  anchors: [],
   checkpoints: [
     gate(ID + '-cp0', 'STRAIGHT UP', -34, { pos: [0, 15.01, -37], yaw: 0 }),
     gate(ID + '-cp1', 'FIRST SHOT', -66, { pos: [0, 26.01, -69], yaw: 0 }),
@@ -2402,7 +2374,7 @@ const LEVEL = {
     { pos: [-4.4, 16.4, -38], yaw: 0, text: 'NOW UPWARDS FOR REAL:\n11 M OF CLIMB' },
     { pos: [4.4, 27.4, -58], yaw: 0, text: 'NO JUMP AND NO SWING\nGETS YOU UP HERE' },
     { pos: [-4.4, 27.4, -72], yaw: 0, text: 'AGAIN — ONE MORE STOREY' },
-    { pos: [4.4, 38.4, -92], yaw: 0, text: 'AIM GREEN, E, THEN F' },
+    { pos: [4.4, 38.4, -92], yaw: 0, text: 'AIM THE CATWALK, E, THEN F' },
     { pos: [-4.4, 38.4, -106], yaw: 0, text: 'TWO IN A ROW NOW.\nLAND AND SHOOT AGAIN' },
     { pos: [4.4, 49.4, -126], yaw: 0, text: 'LAST SHOT — THE FINISH DECK' },
   ],
@@ -2436,10 +2408,14 @@ const KILL_Y = -8;
 const XL = -6, XR = 2.5;           // the lane: wide to the left, the wall plane on the right
 const WT = 0.5;
 const Y1 = 12, Y2 = 14.4, Y3 = 12.4, Y4 = 23.4;
-const AH = 0.35;
-function anchor(id, x, y, z, approach) {
-  add(id, 'grapple', [x - AH, y - AH, z - AH], [x + AH, y + AH, z + AH]);
-  boxes[boxes.length - 1].approach = approach;
+// A service catwalk carried across the gap between the towers on either side. `y` is its SOFFIT - the
+// underside the rope bites - and the walkway and its handrails all sit ON TOP of it, so no part of the
+// structure ever reaches down into the swing below it.
+const SPAN_T = 1.0;
+function span(id, x, y, z, halfW = 20, halfD = 0.9) {
+  add(id, 'floor', [x - halfW, y, z - halfD], [x + halfW, y + SPAN_T, z + halfD]);
+  add(id + '-rail-a', 'wall', [x - halfW, y + SPAN_T, z - halfD], [x + halfW, y + SPAN_T + 0.8, z - halfD + 0.18]);
+  add(id + '-rail-b', 'wall', [x - halfW, y + SPAN_T, z + halfD - 0.18], [x + halfW, y + SPAN_T + 0.8, z + halfD]);
 }
 function gate(id, name, z, respawn) {
   return { id, name, min: [-60, KILL_Y - 10, z - 2], max: [60, 150, z + 2], respawn };
@@ -2472,11 +2448,11 @@ add('rail-3-l', 'glass', [XL - WT, Y2, -140], [XL, Y2 + 3, -96]);
 add('rail-3-r', 'glass', [XR, Y2, -140], [XR + WT, Y2 + 3, -127]);
 
 // ------------------------------------------------------------------------------- 4  THE ROPE
-anchor('g1', 0, Y2 + 9.5, -150, [0, Y2, -137]);
+span('span-1', 0, Y2 + 9.5, -150);
 floor('s4-land', Y3, -158, -176, -6, 6);
 
 // ------------------------------------------------------------------------------- 5  THE REEL
-anchor('g2', 0, Y3 + 17, -186, [0, Y3, -173]);
+span('span-2', 0, Y3 + 17, -186);
 floor('s5-fin', Y4, -192, -210, -6, 6);
 add('s5-back', 'wall', [-6, Y4, -211], [6, Y4 + 4, -210]);
 
@@ -2499,8 +2475,7 @@ const LEVEL = {
   killY: KILL_Y,
   boxes,
   movers: [],
-  anchors: boxes.filter((b) => b.kind === 'grapple')
-    .map((b) => ({ id: b.id, point: [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2) })),
+  anchors: [],
   checkpoints: [
     gate(ID + '-cp0', 'FOOTWORK', -50, { pos: [0, Y2 + 0.01, -53], yaw: 0 }),
     gate(ID + '-cp1', 'THE DUCT', -90, { pos: [0, Y2 + 0.01, -93], yaw: 0 }),
@@ -2514,9 +2489,9 @@ const LEVEL = {
     { pos: [1.6, Y1 + 1.4, -36], yaw: 0, text: 'AND 2.4 M OF CLIMB —\nJUMP, THEN HOLD W' },
     { pos: [-4.6, Y2 + 2.4, -52], yaw: 0, text: 'DUCT NEXT: SPRINT, C,\nSPACE ON THE LIP' },
     { pos: [1.6, Y2 + 1.4, -70], yaw: 0, text: '8 M OF AIR\nKEEP C HELD' },
-    { pos: [-4.6, Y2 + 2.4, -92], yaw: 0, text: 'YELLOW WALL, 11 M' },
+    { pos: [-4.6, Y2 + 2.4, -92], yaw: 0, text: 'WALL RUN, 11 M' },
     { pos: [-4.6, Y2 + 1.4, -110], yaw: 0, text: 'LEAN RIGHT, JUMP AT THE EDGE,\nHOLD W' },
-    { pos: [-4.6, Y2 + 2.4, -132], yaw: 0, text: 'NOW THE ROPE: E AT THE GREEN,\nLET GO NEAR THE TOP' },
+    { pos: [-4.6, Y2 + 2.4, -132], yaw: 0, text: 'NOW THE ROPE: E AT THE CATWALK,\nLET GO NEAR THE TOP' },
     { pos: [-4.4, Y3 + 2.4, -162], yaw: 0, text: 'ONE LEFT — THE REEL' },
     { pos: [4.4, Y3 + 2.4, -174], yaw: 0, text: 'E, THEN HOLD F.\n11 M UP TO THE FINISH' },
   ],
@@ -2574,7 +2549,7 @@ const TUTORIALS_PACK = [
   {
     id: 'tut-wall',
     name: WALL.name,
-    blurb: 'The yellow walls: run along one, kick off it onto the next, and climb a chimney between two.',
+    blurb: 'The walls: run along one, kick off it onto the next, and climb a chimney between two.',
     difficulty: 1,
     category: 'tutorial',
     level: WALL,
@@ -2582,7 +2557,7 @@ const TUTORIALS_PACK = [
   {
     id: 'tut-swing',
     name: SWING.name,
-    blurb: 'E ropes a green anchor and holds while E is held. Swing the gap and let go near the top.',
+    blurb: 'E ropes whatever the crosshair is on and holds while E is held. Swing the gap and let go near the top.',
     difficulty: 1,
     category: 'tutorial',
     level: SWING,
@@ -2590,7 +2565,7 @@ const TUTORIALS_PACK = [
   {
     id: 'tut-shoot',
     name: SHOOT.name,
-    blurb: 'F winds the rope in hard and slings you past the anchor. The only way to gain height.',
+    blurb: 'F winds the rope in hard and hauls you up under the catwalk. The only way to gain height.',
     difficulty: 1,
     category: 'tutorial',
     level: SHOOT,
@@ -2636,7 +2611,6 @@ function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, ma
 
 const KILL_Y = -25;
 const W = 6;                                  // roof half width
-const AH = 0.35;                              // anchor half size (0.7 m cube)
 // a roof: `top` is its surface, 1.2 m thick, from z0 (near edge) to z1 (far edge)
 const roof = (id, top, z0, z1, half = W) => add(id, 'floor', [-half, top - 1.2, z1], [half, top, z0]);
 // a billboard across a roof: REACH.slideClearance (1.1 m) of air under it and 4.5 m of panel above that,
@@ -2646,10 +2620,6 @@ const board = (id, fy, z0, z1, half = W) => add(id, 'wall', [-half, fy + 1.1, z1
 function rail(id, side, top, z0, z1, half = W) {
   const x0 = side > 0 ? half : -half - 0.3, x1 = side > 0 ? half + 0.3 : -half;
   add(id, 'glass', [x0, top, z1], [x1, top + 1.4, z0]);
-}
-function anchor(id, x, y, z, approach) {
-  add(id, 'grapple', [x - AH, y - AH, z - AH], [x + AH, y + AH, z + AH]);
-  boxes[boxes.length - 1].approach = approach;
 }
 // A checkpoint gate spans the whole corridor and rises to y 150: an F reel can throw a body 20 m over a
 // roof, and a checkpoint you sail over is a checkpoint skipped.
@@ -2681,7 +2651,6 @@ roof('roof-10', 21, -266.5, -308);            // gap 4.5 — checkpoint 1 deck
 board('board-4', 21, -274, -279);
 rail('rail-5', 1, 21, -176.5, -202);
 rail('rail-6', -1, 21, -236.5, -262);
-anchor('g1', 0, 32, -216, [0, 21, -198]);     // optional: shoot the billboard row two roofs at a time
 
 // ------------------------------------------------------------------------------- 3  THE DROP
 roof('roof-11', 19, -312.5, -338);            // gap 4.5, down 2.0
@@ -2693,7 +2662,6 @@ roof('roof-15', 17.5, -433, -476);            // gap 4.0 and 4.5 m up: only the 
 rail('rail-7', -1, 19, -312.5, -338);
 rail('rail-8', 1, 17, -342.5, -368);
 rail('rail-9', 1, 17.5, -433, -476);
-anchor('g2', 0, 26, -356, [0, 19, -336]);     // optional: over the drop, two roofs in one shot
 
 // ------------------------------------------------------------------------------- 4  HOME STRETCH
 roof('roof-16', 17.5, -480.5, -504);          // gap 4.5
@@ -2703,7 +2671,6 @@ roof('deck-fin', 19.5, -564.5, -588);         // gap 4.5
 add('deck-fin-back', 'wall', [-W, 19.5, -588], [W, 23.5, -587]);   // backstop behind the finish
 rail('rail-10', -1, 17.5, -480.5, -504);
 rail('rail-11', 1, 19.5, -534.5, -560);
-anchor('g3', 0, 28, -516, [0, 17.5, -502]);   // optional: the mantle roof, taken from the air
 
 // ------------------------------------------------------------------------------- deco
 // Blocks under every roof and towers either side, so the gaps read as streets in a city.
@@ -2742,8 +2709,7 @@ const LEVEL = {
   killY: KILL_Y,
   boxes,
   movers: [],
-  anchors: boxes.filter((b) => b.kind === 'grapple')
-    .map((b) => ({ id: b.id, point: [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2) })),
+  anchors: [],
   checkpoints: [
     gate(ID + '-cp0', 'THE RUN', -152, { pos: [0, 21.01, -156], yaw: 0 }),
     gate(ID + '-cp1', 'BILLBOARDS', -288, { pos: [0, 21.01, -292], yaw: 0 }),
@@ -2756,7 +2722,7 @@ const LEVEL = {
     { pos: [4.6, 22.4, -58], yaw: 0, text: 'STEP UP, KEEP GOING' },
     { pos: [-4.6, 22.4, -174], yaw: 0, text: 'C — SLIDE UNDER' },
     { pos: [4.6, 22.4, -204], yaw: 0, text: 'STAY DOWN, STAY FAST' },
-    { pos: [-4.6, 22.4, -264], yaw: 0, text: 'GREEN OVERHEAD IS\nOPTIONAL' },
+    { pos: [-4.6, 22.4, -264], yaw: 0, text: 'THE ROPE HERE IS\nOPTIONAL' },
     { pos: [4.6, 20.4, -310], yaw: 0, text: 'DOWNHILL: TWO METRES\nEACH TIME' },
     { pos: [-4.6, 14.4, -404], yaw: 0, text: 'TEAL PAD AHEAD' },
     { pos: [4.6, 18.9, -478], yaw: 0, text: 'HOME STRETCH' },
@@ -2801,7 +2767,6 @@ function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, ma
 const KILL_Y = -12;
 const W = 5;                                  // channel half width
 const CLEAR = 1.1;                            // REACH.slideClearance
-const AH = 0.35;
 
 // ---------------------------------------------------------------- the channel, bay by bay
 // A bay is a slab of channel floor. `gap` is the spillway in front of it, `drop` how far it falls, `depth`
@@ -2877,12 +2842,6 @@ add('deck-fin-back', 'wall', [-W, FIN.y, FIN.z1], [W, FIN.y + 4, FIN.z1 + 1]);  
 // Both anchors hang over open sky where the ceiling has stopped. Neither is needed — every spillway under
 // them is a jump — and neither can skip anything: every checkpoint volume spans the whole channel and
 // stands 120 m tall.
-function anchor(id, x, yy, zz, approach) {
-  add(id, 'grapple', [x - AH, yy - AH, zz - AH], [x + AH, yy + AH, zz + AH]);
-  boxes[boxes.length - 1].approach = approach;
-}
-anchor('g1', 0, bayOf('f6').y + 10, at('f6', 49), [0, bayOf('f6').y, at('f6', 29)]);
-anchor('g2', 3, bayOf('s3').y + 9, at('s3', 20), [3, bayOf('s3').y, at('s3', 2)]);
 
 // ---------------------------------------------------------------- triggers
 // A checkpoint gate spans the whole channel and rises to y 120: the grapple can throw a body well over the
@@ -2910,8 +2869,7 @@ const LEVEL = {
   killY: KILL_Y,
   boxes,
   movers: [],
-  anchors: boxes.filter((b) => b.kind === 'grapple')
-    .map((b) => ({ id: b.id, point: [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2) })),
+  anchors: [],
   checkpoints: [
     gate('THE INTAKE', 'f6', 10),
     gate('THE STEPS', 'f10', 12),
@@ -2923,7 +2881,7 @@ const LEVEL = {
     { pos: [-3.6, 13.0, at('f1', 10)], yaw: 0, text: 'LOW CEILING\nSTAY DOWN' },
     { pos: [3.6, 13.0, at('f2', 1)], yaw: 0, text: 'SPACE ON THE LIP,\nKEEP C HELD' },
     { pos: [-3.6, 13.0, at('f4', 1)], yaw: 0, text: 'THE LANDING SLIDES\nFOR YOU' },
-    { pos: [3.6, 13.0, at('f6', 26)], yaw: 0, text: 'GREEN IS OPTIONAL' },
+    { pos: [3.6, 13.0, at('f6', 26)], yaw: 0, text: 'THE ROPE IS OPTIONAL' },
     { pos: [-3.6, 11.0, at('f7', 1)], yaw: 0, text: 'DOWNHILL NOW' },
     { pos: [3.6, 7.4, at('s1', 1)], yaw: 0, text: 'ROOF ON THE LEFT ONLY' },
     { pos: [-3.6, 7.4, at('s2', 1)], yaw: 0, text: 'SLIDE LEFT — FAST\nRUN RIGHT — SAFE' },
@@ -2964,17 +2922,12 @@ function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, ma
 
 const KILL_Y = -14;
 const MT = 0.5;                               // mover slab thickness
-const AH = 0.35;
 // a deck: `top` is its surface, 1.2 m thick, x0..x1 wide, z0 (near) to z1 (far)
 const deck = (id, top, x0, x1, z0, z1) => add(id, 'floor', [x0, top - 1.2, z1], [x1, top, z0]);
 // a mover whose TOP is `top` when it is at a: size sx x sz, centre travelling a -> b
 function mover(id, top, sx, sz, a, b, period, phase) {
   movers.push({ id: ID + '-' + id, size: [sx, MT, sz], a: [a[0], top - MT / 2, a[1]],
     b: [b[0], top - MT / 2 + (b[2] || 0), b[1]], period, phase, kind: 'mover' });
-}
-function anchor(id, x, y, z, approach) {
-  add(id, 'grapple', [x - AH, y - AH, z - AH], [x + AH, y + AH, z + AH]);
-  boxes[boxes.length - 1].approach = approach;
 }
 // A checkpoint gate spans the whole yard and rises to y 140: a ferry (or the hook) must never carry anybody
 // past a gate without tripping it.
@@ -3012,7 +2965,6 @@ screen('i3-screen-l', 24, -18.2, -18, -156, -168);
 mover('m7', 24, 10, 10, [-12, -178], [-12, -202], 10, 0);
 deck('deck-fin', 24, -18, -6, -208.5, -228.5);
 add('deck-fin-back', 'wall', [-18, 24, -228.5], [-6, 28, -227.5]);   // backstop behind the finish
-anchor('g1', 0, 34, -150, [8, 24, -132]);                   // the one shortcut: over both crossing ferries
 
 // ------------------------------------------------------------------------------- deco
 // Yard towers and the pylons that carry every island, well clear of the rails the ferries run on.
@@ -3036,8 +2988,7 @@ const LEVEL = {
   killY: KILL_Y,
   boxes,
   movers,
-  anchors: boxes.filter((b) => b.kind === 'grapple')
-    .map((b) => ({ id: b.id, point: [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2) })),
+  anchors: [],
   checkpoints: [
     gate(ID + '-cp0', 'THE YARD', -74, { pos: [12, 12.01, -78], yaw: 0 }),
     gate(ID + '-cp1', 'THE GANTRY', -126, { pos: [12, 24.01, -130], yaw: 0 }),
@@ -3086,7 +3037,7 @@ const boxes = [];
 function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
 
 const KILL_Y = 0;
-const AH = 0.35;
+const SPAN_W = 20;                            // half width of a canyon gantry
 const HALF = 8;                               // ledge half width
 // A checkpoint gate stands in the middle of a ledge, spans the whole canyon and rises to y 150: an F reel
 // can throw a body 20 m over a ledge, and a checkpoint you sail over is a checkpoint skipped. The respawn
@@ -3104,9 +3055,13 @@ function gateOn(id, name, ledgeId) {
 let z = -8, y = 30, cx = 0;
 const ledges = [{ id: 'l0', z0: 6, z1: -8, y: 30, cx: 0 }];
 function hop(id, { gap = 18, depth = 18, rise = -2, nx = 0, up = 11.5, ahead = 9, ledgeId }) {
+  // A gantry thrown across the canyon at the point the old anchor hung: you hook its SOFFIT, which sits
+  // at exactly that height, and nothing of it reaches down into the swing.
   const ax = Math.round((cx + (nx - cx) * 0.7) * 10) / 10, az = z - ahead, ay = y + up;
-  add(id, 'grapple', [ax - AH, ay - AH, az - AH], [ax + AH, ay + AH, az + AH]);
+  add(id, 'floor', [ax - SPAN_W, ay, az - 0.9], [ax + SPAN_W, ay + 1, az + 0.9]);
   boxes[boxes.length - 1].approach = [cx, y, z + 2];        // the last 2 m of the ledge you fire from
+  add(id + '-rail-a', 'wall', [ax - SPAN_W, ay + 1, az - 0.9], [ax + SPAN_W, ay + 1.8, az - 0.72]);
+  add(id + '-rail-b', 'wall', [ax - SPAN_W, ay + 1, az + 0.72], [ax + SPAN_W, ay + 1.8, az + 0.9]);
   const z0 = z - gap, z1 = z0 - depth, ny = y + rise;
   add(ledgeId, 'floor', [nx - HALF, ny - 1.5, z1], [nx + HALF, ny, z0]);
   ledges.push({ id: ledgeId, z0, z1, y: ny, cx: nx });
@@ -3122,27 +3077,27 @@ const sign = (ledgeId, into, dx, text) => {
 add('l0', 'floor', [-HALF, 28.5, -8], [HALF, 30, 6]);       // the launch ledge
 
 // ------------------------------------------------------------------------------- 1  THE MOUTH
-hop('g1', { ledgeId: 'l1', nx: 0 });                        // plain swing, anchor dead ahead, 2 m down
-hop('g2', { ledgeId: 'l2', nx: 0, rise: 4, up: 13 });       // this one climbs: tap F on the way through
-hop('g3', { ledgeId: 'l3', nx: 8 });                        // the line turns east
-hop('g4', { ledgeId: 'l4', nx: 10 });                       // checkpoint 0 ledge
+hop('span-1', { ledgeId: 'l1', nx: 0 });                        // plain swing, anchor dead ahead, 2 m down
+hop('span-2', { ledgeId: 'l2', nx: 0, rise: 4, up: 13 });       // this one climbs: tap F on the way through
+hop('span-3', { ledgeId: 'l3', nx: 8 });                        // the line turns east
+hop('span-4', { ledgeId: 'l4', nx: 10 });                       // checkpoint 0 ledge
 
 // ------------------------------------------------------------------------------- 2  THE NARROWS
-hop('g5', { ledgeId: 'l5', nx: 4 });
-hop('g6', { ledgeId: 'l6', nx: -4, rise: 4, up: 13 });
-hop('g7', { ledgeId: 'l7', nx: -10 });
-hop('g8', { ledgeId: 'l8', nx: -6 });                       // checkpoint 1 ledge
+hop('span-5', { ledgeId: 'l5', nx: 4 });
+hop('span-6', { ledgeId: 'l6', nx: -4, rise: 4, up: 13 });
+hop('span-7', { ledgeId: 'l7', nx: -10 });
+hop('span-8', { ledgeId: 'l8', nx: -6 });                       // checkpoint 1 ledge
 
 // ------------------------------------------------------------------------------- 3  THE STAIRS
-hop('g9', { ledgeId: 'l9', nx: 2 });
-hop('g10', { ledgeId: 'l10', nx: 8, rise: 11, gap: 16, up: 17, ahead: 10 });   // hold F: 11 m up the wall
-hop('g11', { ledgeId: 'l11', nx: 4 });
-hop('g12', { ledgeId: 'l12', nx: -4, rise: 4, up: 13 });    // checkpoint 2 ledge
+hop('span-9', { ledgeId: 'l9', nx: 2 });
+hop('span-10', { ledgeId: 'l10', nx: 8, rise: 11, gap: 16, up: 17, ahead: 10 });   // hold F: 11 m up the wall
+hop('span-11', { ledgeId: 'l11', nx: 4 });
+hop('span-12', { ledgeId: 'l12', nx: -4, rise: 4, up: 13 });    // checkpoint 2 ledge
 
 // ------------------------------------------------------------------------------- 4  THE TAILRACE
-hop('g13', { ledgeId: 'l13', nx: -10 });
-hop('g14', { ledgeId: 'l14', nx: -4, rise: 4, up: 13 });
-hop('g15', { ledgeId: 'deck-fin', nx: 2, depth: 20 });
+hop('span-13', { ledgeId: 'l13', nx: -10 });
+hop('span-14', { ledgeId: 'l14', nx: -4, rise: 4, up: 13 });
+hop('span-15', { ledgeId: 'deck-fin', nx: 2, depth: 20 });
 const FIN = ledgeOf('deck-fin');
 add('deck-fin-back', 'wall', [FIN.cx - HALF, FIN.y, FIN.z1], [FIN.cx + HALF, FIN.y + 4, FIN.z1 + 1]);
 
@@ -3162,8 +3117,7 @@ const LEVEL = {
   killY: KILL_Y,
   boxes,
   movers: [],
-  anchors: boxes.filter((b) => b.kind === 'grapple')
-    .map((b) => ({ id: b.id, point: [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2) })),
+  anchors: [],
   checkpoints: [
     gateOn('cp0', 'THE MOUTH', 'l4'),
     gateOn('cp1', 'THE NARROWS', 'l8'),
@@ -3279,9 +3233,14 @@ function rail(id, side, top, z0, z1) {
   const x0 = side > 0 ? W : -W - 0.3, x1 = side > 0 ? W + 0.3 : -W;
   add(id, 'glass', [x0, top, z1], [x1, top + 1.6, z0]);
 }
-function anchor(id, x, yy, zz, approach) {
-  add(id, 'grapple', [x - AH, yy - AH, zz - AH], [x + AH, yy + AH, zz + AH]);
-  boxes[boxes.length - 1].approach = approach;
+// A service catwalk carried across the gap between the towers on either side. `y` is its SOFFIT - the
+// underside the rope bites - and the walkway and its handrails all sit ON TOP of it, so no part of the
+// structure ever reaches down into the swing below it.
+const SPAN_T = 1.0;
+function span(id, x, y, z, halfW = 14, halfD = 0.9) {
+  add(id, 'floor', [x - halfW, y, z - halfD], [x + halfW, y + SPAN_T, z + halfD]);
+  add(id + '-rail-a', 'wall', [x - halfW, y + SPAN_T, z - halfD], [x + halfW, y + SPAN_T + 0.8, z - halfD + 0.18]);
+  add(id + '-rail-b', 'wall', [x - halfW, y + SPAN_T, z + halfD - 0.18], [x + halfW, y + SPAN_T + 0.8, z + halfD]);
 }
 function gateOn(id, name, markId, into) {
   const m = markOf(markId), zz = m.z0 - into;
@@ -3333,8 +3292,10 @@ const FIN = markOf('deck-fin');
 // Two anchors, both out over the open side of the scaffold where nothing can cut the line.
 // g1 hangs straight up the open slot of the second shaft, so an F-shot up it skips that climb; g2 hangs over
 // the crown's pad. Both lines run up the middle of the lane, where the level has no geometry at all.
-anchor('g1', 0, markOf('sh2-top').y + 10, markOf('sh2-top').z0, [0, markOf('p2b-land').y, markOf('p2b-land').z1 + 2]);
-anchor('g2', 0, markOf('p3-land').y + 10, markOf('p3-land').z0 - 4, [0, markOf('b3-land').y, markOf('b3-land').z1 + 2]);
+span('span-1', 0, markOf('sh2-top').y + 10, markOf('sh2-top').z0);
+boxes[boxes.length - 3].approach = [0, markOf('p2b-land').y, markOf('p2b-land').z1 + 2];
+span('span-2', 0, markOf('p3-land').y + 10, markOf('p3-land').z0 - 4);
+boxes[boxes.length - 3].approach = [0, markOf('b3-land').y, markOf('b3-land').z1 + 2];
 
 // ------------------------------------------------------------------------------- deco
 // The tower under the route, and scaffolding either side of it.
@@ -3351,8 +3312,7 @@ const LEVEL = {
   killY: KILL_Y,
   boxes,
   movers: [],
-  anchors: boxes.filter((b) => b.kind === 'grapple')
-    .map((b) => ({ id: b.id, point: [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2) })),
+  anchors: [],
   checkpoints: [
     gateOn('cp0', 'THE FOOTINGS', 'd2', 8),
     gateOn('cp1', 'THE PADS', 'p2b-land', 8),
@@ -3366,7 +3326,7 @@ const LEVEL = {
     { pos: [-3.2, markOf('p1-land').y + 1.4, markOf('p1-land').z0 - 4], yaw: 0, text: 'TEAL PAD: 4.5 M' },
     { pos: [3.2, markOf('p2-land').y + 1.4, markOf('p2-land').z0 - 4], yaw: 0, text: 'PAD, LEDGE, PAD' },
     { pos: [-3.2, markOf('p2b-land').y + 1.4, markOf('p2b-land').z0 - 4], yaw: 0, text: 'TWO MORE SHAFTS' },
-    { pos: [3.2, markOf('d3').y + 1.4, markOf('d3').z0 - 2], yaw: 0, text: 'RUN THE YELLOW\nACROSS THE CORNER' },
+    { pos: [3.2, markOf('d3').y + 1.4, markOf('d3').z0 - 2], yaw: 0, text: 'RUN THE WALL\nACROSS THE CORNER' },
     { pos: [-3.2, markOf('d3b').y + 1.4, markOf('d3b').z0 - 2], yaw: 0, text: 'NOW THE LEFT-HAND ONE' },
     { pos: [3.2, markOf('d3c').y + 1.4, markOf('d3c').z0 - 2], yaw: 0, text: 'ONE MORE CORNER' },
     { pos: [3.2, markOf('b3-land').y + 1.4, markOf('b3-land').z0 - 6], yaw: 0, text: 'THE CROWN' },
@@ -3399,9 +3359,10 @@ const __vl$m27_js_levels_crosstown = (function () {
 // REACH with margin: gaps 4.0 .. 4.5 m (gapSprint 5.0), ledges 2.0 m (mantleFromJump 2.4), the shaft 3.2 m
 // wide (chimneyWidth 2.4 .. 3.6), the corner 10 m (wallrunGap 12), the pad 4.5 m (bounceApex 5.0), the ducts
 // 1.1 m (slideClearance), the ferry docks 1.5 m. The two swings are 14 and 18 m, where nothing else reaches.
-// Four green anchors: g1 and g4 are the two swings the level asks for, g2 and g3 are pure shortcut — one
-// hangs over the ferry and one up the shaft, and an F-shot at either takes that unit out of the run. None of
-// them can skip a checkpoint: every gate spans the whole street and stands 150 m tall.
+// Two service catwalks carry the two swings the level asks for. The shortcut anchors that used to hang
+// over the ferry and up the shaft are gone with every other anchor: the rope bites any surface now, so the
+// building faces beside both lines are the shortcut. Nothing can skip a checkpoint: every gate spans the
+// whole street and stands 150 m tall.
 
 const ID = 'crosstown';
 const boxes = [];
@@ -3413,7 +3374,6 @@ const W = 4;                                  // lane half width
 const CH = 1.6;                               // shaft half width
 const MT = 0.5;                               // mover slab thickness
 const CLEAR = 1.1;                            // REACH.slideClearance
-const AH = 0.35;
 
 // ---------------------------------------------------------------- the city, unit by unit
 // The cursor is the front edge `z` of what has been built and the top `y` of the surface you are standing
@@ -3487,10 +3447,15 @@ function lift(id, rise, depth, period) {
   slab(id + '-land', depth, y + rise);
 }
 // an anchor hung `up` above and `ahead` of the front edge, fired from the last `2` m of the deck behind it
-function anchor(id, up, ahead, x = 0) {
-  const ay = y + up, az = z - ahead;
-  add(id, 'grapple', [x - AH, ay - AH, az - AH], [x + AH, ay + AH, az + AH]);
+// A service catwalk thrown across the avenue `up` above and `ahead` of the front edge of the deck you
+// fire from. `y` is its SOFFIT - the underside the rope bites, at exactly the height the anchor that used
+// to float here hung at - and the walkway and its rails sit ON TOP, clear of the swing beneath.
+function span(id, up, ahead, x = 0) {
+  const ay = y + up, az = z - ahead, halfW = 18;
+  add(id, 'floor', [x - halfW, ay, az - 0.9], [x + halfW, ay + 1, az + 0.9]);
   boxes[boxes.length - 1].approach = [0, y, z + 2];
+  add(id + '-rail-a', 'wall', [x - halfW, ay + 1, az - 0.9], [x + halfW, ay + 1.8, az - 0.72]);
+  add(id + '-rail-b', 'wall', [x - halfW, ay + 1, az + 0.72], [x + halfW, ay + 1.8, az + 0.9]);
 }
 function rail(id, side, top, z0, z1) {
   const x0 = side > 0 ? W : -W - 0.3, x1 = side > 0 ? W + 0.3 : -W;
@@ -3517,20 +3482,18 @@ rail('rail-1', -1, 20, -6, -24);
 rail('rail-2', 1, 20, -52.5, -76.5);
 
 // ------------------------------------------------------------------------------- 2  THE CROSSING (20 -> 26)
-anchor('g1', 11.5, 8);                        // the taught swing: 14 m of nothing under it
+span('span-1', 11.5, 8);                      // the taught swing: 14 m of nothing under it
 gapTo('b1', 14, 20, -2);                     // the landing is 2 m down: a swing spends height
-anchor('g2', 12, 18);                         // hangs over the ferry: an F-shot crosses the yard without it
 ferry('m1', 20, 18, 8);                       // the yard ferry
 lift('m2', 6, 22, 8);                         // the lift up the side — checkpoint 1 deck
 
 // ------------------------------------------------------------------------------- 3  THE STACK (26 -> 36)
 pad('s1', 5, 4.5, 16);                        // 30.5
-anchor('g3', 13, 16);                         // over the shaft: an F-shot up it skips the climb
 shaft('sh1', 5.5, 8, 6);                      // 36
 deck('c2', 20);                               // checkpoint 2 deck
 
 // ------------------------------------------------------------------------------- 4  THE RUN-IN (y 36)
-anchor('g4', 11.5, 9);                        // the long swing: 18 m
+span('span-2', 11.5, 9);                      // the long swing: 18 m
 gapTo('d1', 18, 16, -2);
 // THE SPLIT: the ceiling covers the left two thirds; the right-hand strip is open but climbs two ledges and
 // drops back down, so the covered line is faster and the open one asks nothing of you but jumps.
@@ -3560,8 +3523,7 @@ const LEVEL = {
   killY: KILL_Y,
   boxes,
   movers,
-  anchors: boxes.filter((b) => b.kind === 'grapple')
-    .map((b) => ({ id: b.id, point: [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2) })),
+  anchors: [],
   checkpoints: [
     gateOn('cp0', 'THE AVENUE', 'a5', 8),
     gateOn('cp1', 'THE CROSSING', 'm2-land', 8),
@@ -3572,8 +3534,8 @@ const LEVEL = {
     { pos: [0, 22.6, -7], yaw: 0, text: 'CROSSTOWN\nALL OF IT, YOUR WAY' },
     { pos: [-3.2, 21.4, markOf('a2').z0 - 2], yaw: 0, text: 'ROOFTOPS FIRST' },
     { pos: [3.2, 21.4, markOf('a3').z0 - 2], yaw: 0, text: 'C UNDER THE BOARD' },
-    { pos: [-3.2, 21.4, markOf('a4').z0 - 2], yaw: 0, text: 'THEN RUN THE YELLOW' },
-    { pos: [3.2, 21.4, markOf('a5').z0 - 12], yaw: 0, text: 'GREEN AHEAD:\nHOLD E, LET GO LATE' },
+    { pos: [-3.2, 21.4, markOf('a4').z0 - 2], yaw: 0, text: 'THEN RUN THE WALL' },
+    { pos: [3.2, 21.4, markOf('a5').z0 - 12], yaw: 0, text: 'CATWALK AHEAD:\nHOLD E, LET GO LATE' },
     { pos: [-3.2, 21.4, markOf('b1').z0 - 2], yaw: 0, text: 'FERRY, OR HOOK OVER IT' },
     { pos: [3.2, 27.4, markOf('m2-land').z0 - 12], yaw: 0, text: 'PAD, THEN THE SHAFT' },
     { pos: [-3.2, 37.4, markOf('c2').z0 - 12], yaw: 0, text: 'ONE LONG SWING LEFT' },
@@ -3637,7 +3599,7 @@ const LEVELS_PACK = [
   {
     id: 'canyon',
     name: CANYON.name,
-    blurb: 'Fifteen ledges in a canyon wall with nothing between them but green anchors and 18 m of air.',
+    blurb: 'Fifteen ledges in a canyon wall with nothing between them but gantries and 18 m of air.',
     difficulty: 3,
     category: 'level',
     level: CANYON,
@@ -3890,7 +3852,7 @@ const LEVEL = {
   ],
   finish: { min: [-40, 53.25, -324.5], max: [40, 133.25, -309.5] },
   signs: [
-    { pos: [0, 36.6, -7], yaw: 0, text: 'THE SPINE\nSTAY ON THE YELLOW' },
+    { pos: [0, 36.6, -7], yaw: 0, text: 'THE SPINE\nSTAY ON THE WALLS' },
     { pos: [-1.4, 35.0, -22], yaw: 0, text: '20 M ON THE WALL' },
     { pos: [1.4, 35.0, -60], yaw: 0, text: 'OTHER SIDE NOW — 18.4 M' },
     { pos: [-1.4, 36.5, -113], yaw: 0, text: 'WALLS BOTH SIDES\nKICK UP AS YOU GO' },
@@ -3931,10 +3893,14 @@ const boxes = [];
 function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
 
 const KILL_Y = 4;
-const AH = 0.35;
-function anchor(id, x, y, z, approach) {
-  add(id, 'grapple', [x - AH, y - AH, z - AH], [x + AH, y + AH, z + AH]);
-  boxes[boxes.length - 1].approach = approach;
+// A service catwalk carried across the gap between the towers on either side. `y` is its SOFFIT - the
+// underside the rope bites - and the walkway and its handrails all sit ON TOP of it, so no part of the
+// structure ever reaches down into the swing below it.
+const SPAN_T = 1.0;
+function span(id, x, y, z, halfW = 20, halfD = 0.9) {
+  add(id, 'floor', [x - halfW, y, z - halfD], [x + halfW, y + SPAN_T, z + halfD]);
+  add(id + '-rail-a', 'wall', [x - halfW, y + SPAN_T, z - halfD], [x + halfW, y + SPAN_T + 0.8, z - halfD + 0.18]);
+  add(id + '-rail-b', 'wall', [x - halfW, y + SPAN_T, z + halfD - 0.18], [x + halfW, y + SPAN_T + 0.8, z + halfD]);
 }
 // a deck: `top` is its surface, 1 m thick, from z0 (near edge) to z1 (far edge)
 function deck(id, top, z0, z1, half = 7) { add(id, 'floor', [-half, top - 1, z1], [half, top, z0]); }
@@ -3945,15 +3911,20 @@ function gate(id, name, z, respawn) {
 }
 
 deck('deck-0', 60, 10, -8, 6);
-anchor('g1', 0, 70, -28, [0, 60, -7.5]);         // 22.1 m from the approach eye
+span('span-1', 0, 70, -28);         // 22.1 m from the approach eye
+boxes[boxes.length - 3].approach = [0, 60, -7.5];
 deck('deck-1', 47, -42, -58);
-anchor('g2', 0, 67, -70, [0, 47, -57.5]);        // 22.2 m
+span('span-2', 0, 67, -70);        // 22.2 m
+boxes[boxes.length - 3].approach = [0, 47, -57.5];
 deck('deck-2', 61, -76, -92);
-anchor('g3', 0, 71, -112, [0, 61, -91.5]);       // 22.1 m
+span('span-3', 0, 71, -112);       // 22.1 m
+boxes[boxes.length - 3].approach = [0, 61, -91.5];
 deck('deck-3', 48, -126, -142);
-anchor('g4', 0, 61, -162, [0, 48, -141.5]);      // 23.4 m: the longest shot in the pack
+span('span-4', 0, 61, -162);      // 23.4 m: the longest shot in the pack
+boxes[boxes.length - 3].approach = [0, 48, -141.5];
 deck('deck-4', 44, -178, -192);
-anchor('g5', 0, 64, -206, [0, 44, -191.5]);      // 22.2 m
+span('span-5', 0, 64, -206);      // 22.2 m
+boxes[boxes.length - 3].approach = [0, 44, -191.5];
 deck('deck-fin', 58, -212, -228);
 add('deck-fin-back', 'wall', [-7, 58, -228], [7, 62, -227]);
 
@@ -3977,8 +3948,7 @@ const LEVEL = {
   killY: KILL_Y,
   boxes,
   movers: [],
-  anchors: boxes.filter((b) => b.kind === 'grapple')
-    .map((b) => ({ id: b.id, point: [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2) })),
+  anchors: [],
   checkpoints: [
     gate(ID + '-cp0', 'THE FIRST DROP', -50, { pos: [0, 47.01, -52.5], yaw: 0 }),
     gate(ID + '-cp1', 'UP THE WALL', -84, { pos: [0, 61.01, -86.5], yaw: 0 }),
@@ -3986,7 +3956,7 @@ const LEVEL = {
   ],
   finish: { min: [-60, 58, -228], max: [60, 158, -212] },
   signs: [
-    { pos: [0, 62.6, -6.5], yaw: 0, text: 'LAST LIGHT\nEVERY ANCHOR AT FULL RANGE' },
+    { pos: [0, 62.6, -6.5], yaw: 0, text: 'LAST LIGHT\nEVERY SHOT AT FULL RANGE' },
     { pos: [-4.4, 60.4, -5], yaw: 0, text: 'E — AND HOLD IT\nLET GO ON THE WAY UP' },
     { pos: [-5.4, 47.4, -56], yaw: 0, text: 'F ALL THE WAY\nLET GO AS IT SNAPS' },
     { pos: [-5.4, 61.4, -90], yaw: 0, text: 'LONG ONE — HOLD LATE' },
@@ -4044,7 +4014,7 @@ const EXTREME_PACK = [
   {
     id: 'lastlight',
     name: LASTLIGHT.name,
-    blurb: 'Grapple only, every anchor at the far end of its range: swings that drop you 13 m across 34 m of air, and F shots you have to let go of on time.',
+    blurb: 'Grapple only, every shot at the far end of its range: swings that drop you 13 m across 34 m of air, and F shots you have to let go of on time.',
     difficulty: 5,
     category: 'level',
     level: LASTLIGHT,
@@ -4328,7 +4298,7 @@ const LEVEL = {
   ],
   finish: { min: [-40, at['deck-fin'].y, at['deck-fin'].far], max: [40, at['deck-fin'].y + 60, at['deck-fin'].near] },
   signs: [
-    { pos: [0, 42.6, -7], yaw: 0, text: 'SHEER\nNOTHING BUT THE YELLOW' },
+    { pos: [0, 42.6, -7], yaw: 0, text: 'SHEER\nNOTHING BUT THE WALLS' },
     { pos: [-1.4, 41.0, -22], yaw: 0, text: '20.9 M — RIGHT WALL' },
     { pos: [1.4, 41.0, at['a-p1'].near + 1], yaw: 0, text: 'OTHER SIDE EVERY TIME' },
     { pos: [-1.4, at['a-deck'].y + 1.6, at['a-deck'].near - 4], yaw: 0, text: 'WALLS BOTH SIDES\nKICK UP AS YOU GO' },
@@ -4511,7 +4481,6 @@ const boxes = [];
 function add(id, kind, min, max) { boxes.push({ id: ID + '-' + id, kind, min, max }); }
 
 const KILL_Y = 6;
-const AH = 0.35;
 const HALF = 6;                               // every deck is 12 m wide and 5 m deep (16 m at a gate)
 
 // [surface y, near edge z, far edge z] — hop k takes off from DECKS[k] and lands on DECKS[k+1].
@@ -4536,10 +4505,17 @@ DECKS.forEach(([y, near, far], i) => {
   add(id, 'floor', [-half, y - 1, far], [half, y, near]);
   add('deco-' + id, 'deco', [-half, KILL_Y - 40, far], [half, y - 1, near]);
 });
+// Each hop hooks a WIRE: a tensioned cable strung across the canyon with its underside at exactly the
+// height the old anchor point hung at, carried on a stub bracket at each end. Thin enough that a swing
+// reads it as a line in the sky, real enough that the rope bites it.
+const WIRE_W = 22, WIRE_T = 0.36;
 ANCHORS.forEach(([ay, az], i) => {
-  add('g' + (i + 1), 'grapple', [-AH, ay - AH, az - AH], [AH, ay + AH, az + AH]);
+  const id = 'w' + (i + 1);
+  add(id, 'wall', [-WIRE_W, ay, az - WIRE_T / 2], [WIRE_W, ay + WIRE_T, az + WIRE_T / 2]);
+  add(id + '-end-l', 'wall', [-WIRE_W - 1.6, ay - 1.2, az - 0.8], [-WIRE_W, ay + 2.2, az + 0.8]);
+  add(id + '-end-r', 'wall', [WIRE_W, ay - 1.2, az - 0.8], [WIRE_W + 1.6, ay + 2.2, az + 0.8]);
   // the spot the hop is fired from: on the take-off deck, FIRE_BACK m before its far edge
-  boxes[boxes.length - 1].approach = [0, DECKS[i][0], +(DECKS[i][2] + FIRE_BACK[i]).toFixed(2)];
+  boxes[boxes.length - 3].approach = [0, DECKS[i][0], +(DECKS[i][2] + FIRE_BACK[i]).toFixed(2)];
 });
 add('deck-fin-back', 'wall', [-HALF, 20, -646.18], [HALF, 24, -645.18]);
 
@@ -4568,8 +4544,7 @@ const LEVEL = {
   killY: KILL_Y,
   boxes,
   movers: [],
-  anchors: boxes.filter((b) => b.kind === 'grapple')
-    .map((b) => ({ id: b.id, point: [0, 1, 2].map((k) => (b.min[k] + b.max[k]) / 2) })),
+  anchors: [],
   checkpoints: [
     gate('E ALONE', 4, 2.5),
     gate('F TO THE SNAP', 8, 2.5),
@@ -4579,7 +4554,7 @@ const LEVEL = {
   signs: [
     { pos: [0, 102.6, -6], yaw: 0, text: 'PIANO WIRE\nFIVE METRES OF DECK, EVERY TIME' },
     { pos: [-5.4, 100.4, -4], yaw: 0, text: 'E — AND HOLD IT\nLET GO ON THE WAY UP' },
-    { pos: [-5.4, 42.4, -212], yaw: 0, text: 'F ALL THE WAY TO THE SNAP\nIT THROWS YOU PAST THE ANCHOR' },
+    { pos: [-5.4, 42.4, -212], yaw: 0, text: 'F ALL THE WAY TO THE SNAP\nIT THROWS YOU PAST THE WIRE' },
     { pos: [-5.4, 51.4, -331], yaw: 0, text: 'E, THEN A TAP OF F\nTHESE ONES FLY FLAT' },
     { pos: [-5.4, 33.4, -484], yaw: 0, text: 'ONE OF EACH LEFT — THEN THE GATE' },
   ],
@@ -4638,7 +4613,7 @@ const NIGHTMARE_PACK = [
   {
     id: 'sheer',
     name: SHEER.name,
-    blurb: 'A trench with a yellow wall down each side and no floor at all: wall-runs from 21 to 28.5 m, three lanes climbed by wall-jumps, and 0.35 m of room on every one of them.',
+    blurb: 'A trench with a wall down each side and no floor at all: wall-runs from 21 to 28.5 m, three lanes climbed by wall-jumps, and 0.35 m of room on every one of them.',
     difficulty: 5,
     category: 'level',
     level: SHEER,
@@ -4654,7 +4629,7 @@ const NIGHTMARE_PACK = [
   {
     id: 'piano-wire',
     name: PIANO_WIRE.name,
-    blurb: 'Grapple only, six hundred metres of it, on decks five metres deep and anchors at 99% of range: E has to come off inside half a second and F inside a tenth of one.',
+    blurb: 'Grapple only, six hundred metres of it, on decks five metres deep and wires at 99% of range: E has to come off inside half a second and F inside a tenth of one.',
     difficulty: 5,
     category: 'level',
     level: PIANO_WIRE,
@@ -4712,7 +4687,7 @@ const CORE_LEVELS = [
   {
     id: 'wallrun',
     name: WALLRUN.name,
-    blurb: 'Wall-run only. Every gap and every metre of climb is taken on the yellow walls.',
+    blurb: 'Wall-run only. Every gap and every metre of climb is taken on the walls.',
     category: 'level',
     difficulty: 2,
     level: WALLRUN,
@@ -4728,7 +4703,7 @@ const CORE_LEVELS = [
   {
     id: 'grapple',
     name: GRAPPLE.name,
-    blurb: 'Grapple only. Decks strung over a void, with nothing between them but green anchors.',
+    blurb: 'Grapple only. Decks strung over a void, crossed on the underside of the bridges that span it.',
     category: 'level',
     difficulty: 4,
     level: GRAPPLE,

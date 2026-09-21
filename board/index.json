@@ -1,22 +1,6 @@
 {
- "updated": "2026-09-20T13:38:00.425Z",
+ "updated": "2026-09-21T07:29:16.884Z",
  "levels": {
-  "rjxfo-ypcflq": {
-   "name": "SKYHOOK",
-   "runs": 1,
-   "leader": {
-    "user": "Aruvine",
-    "time": 9.75
-   }
-  },
-  "12a2vum-ndygzf": {
-   "name": "THE GAUNTLET",
-   "runs": 1,
-   "leader": {
-    "user": "Aruvine",
-    "time": 17.408
-   }
-  },
   "72gxfg-qa44qc": {
    "name": "THE UNDERPASS",
    "runs": 1,
@@ -33,15 +17,7 @@
     "time": 18.883
    }
   },
-  "1v4to37-1qwl3zs": {
-   "name": "PROVING GROUND",
-   "runs": 1,
-   "leader": {
-    "user": "Aruvine",
-    "time": 25.508
-   }
-  },
-  "1pw6x8g-179irww": {
+  "oav21s-8030x0": {
    "name": "Vaultline",
    "runs": 1,
    "leader": {
@@ -49,20 +25,12 @@
     "time": 38.5
    }
   },
-  "1ewfe6-mghqb4": {
+  "1i621qe-17x3duf": {
    "name": "SHEER",
    "runs": 1,
    "leader": {
     "user": "Aruvine",
     "time": 59.308
-   }
-  },
-  "1x4u38k-mgw1v4": {
-   "name": "PIANO WIRE",
-   "runs": 1,
-   "leader": {
-    "user": "Aruvine",
-    "time": 21.733
    }
   }
  }
