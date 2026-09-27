@@ -1,15 +1,5 @@
 # aruvine.github.io
 
-Two things live here.
-
-## Wind Bot's legal pages, at the root
-
-- https://aruvine.github.io/ · https://aruvine.github.io/privacy.html · https://aruvine.github.io/terms.html
-
-Discord requires a bot's privacy policy and terms to be reachable, and a static
-site keeps them up whether or not the bot is running. Wind Bot's own code is in
-a private repository; nothing about it is here but these three pages.
-
 ## Vaultline, at /vaultline/
 
 - Play: https://aruvine.github.io/vaultline/
@@ -18,18 +8,24 @@ a private repository; nothing about it is here but these three pages.
 A first-person parkour time trial that runs in the browser. Built with three.js
 (MIT). The source of the build lives in a private repo.
 
-It used to sit at the root and moved down one level to make room for the legal
-pages. **Whatever deploys the build has to write to `vaultline/index.html` now,
-not to `index.html`**, or the next deploy puts the game back over the legal
-page.
+**Whatever deploys the build has to write to `vaultline/index.html`**, not to
+`index.html`, since the game moved down a level.
 
-## The leaderboard stays at /board/
+## The leaderboard, at /board/
 
-`board/` did **not** move, and must not: the build has
+`board/` stays at the root and must not move: the build has
 `BOARD_ORIGIN = 'https://aruvine.github.io'` and `BOARD_PATH = 'board/'` baked
 in as an absolute URL, so the live game reads the board from the root whatever
 folder the game itself is in.
 
-A run is posted from the finish screen as an issue on this repository. The
-Leaderboard action checks it against the real level geometry, keeps each
-player's best, and commits the result under `board/`. None of that changed.
+A run is posted from the finish screen as an issue here. The Leaderboard action
+checks it against the real level geometry, keeps each player's best, and commits
+the result under `board/`.
+
+## The pages at the root are redirects
+
+Wind Bot's privacy policy and terms were served from here for part of a day and
+now live on their own domain, https://windbot.app/, in the `Aruvine/windbot`
+repository. `index.html`, `privacy.html` and `terms.html` here are one-line
+redirects so links from that day still work. Edit the real pages in the other
+repository; two copies of a legal page is how the wrong one gets edited.
