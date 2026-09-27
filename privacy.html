@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Privacy Policy · Wind Bot</title>
+  <meta name="description" content="Privacy Policy for Wind Bot, a Discord bot. Learn what data we collect and how we use it." />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <nav>
+    <a href="index.html" class="nav-logo">
+      🌊 <span>Wind Bot</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="privacy.html">Privacy Policy</a></li>
+      <li><a href="terms.html">Terms of Service</a></li>
+    </ul>
+  </nav>
+
+  <div class="hero">
+    <div class="hero-badge">🔒 Legal</div>
+    <h1>Privacy Policy</h1>
+    <p>This policy explains what data Wind Bot collects, why it collects it, and how it is stored and protected.</p>
+    <span class="last-updated">📅 Last updated: September 13, 2026</span>
+  </div>
+
+  <div class="container">
+
+    <!-- Table of Contents -->
+    <div class="toc">
+      <h3>Contents</h3>
+      <ol>
+        <li><a href="#s1">Who We Are</a></li>
+        <li><a href="#s2">Data We Collect</a></li>
+        <li><a href="#s3">Messages the Bot Reads</a></li>
+        <li><a href="#s4">Why We Collect It</a></li>
+        <li><a href="#s5">Data Storage &amp; Security</a></li>
+        <li><a href="#s6">Data Retention</a></li>
+        <li><a href="#s7">Third Parties</a></li>
+        <li><a href="#s8">Your Rights</a></li>
+        <li><a href="#s9">Children's Privacy</a></li>
+        <li><a href="#s10">Changes to This Policy</a></li>
+        <li><a href="#s11">Contact</a></li>
+      </ol>
+    </div>
+
+    <div class="info-box note">
+      <span class="info-box-icon">💡</span>
+      <div>Wind Bot does <strong>not</strong> sell, rent, or share your data with any third party for advertising or commercial purposes.</div>
+    </div>
+
+    <!-- 1 -->
+    <div class="section" id="s1">
+      <div class="section-header">
+        <div class="section-num">1</div>
+        <h2>Who We Are</h2>
+      </div>
+      <p>Wind Bot ("the Bot", "we", "our") is a Discord bot providing a partner Auto-Wave ad exchange and partner statistics, along with a set of features for the DonutSMP community: the Spawner Shop, a building service, map art tickets, sponsorships and giveaways, a schematic library, and the Spawner Tycoon game (<code>/games</code>).</p>
+      <p>The Bot is operated by its developer ("Developer"). For contact information, see <a href="#s11" style="color:var(--accent2)">Section 11</a>.</p>
+    </div>
+
+    <!-- 2 -->
+    <div class="section" id="s2">
+      <div class="section-header">
+        <div class="section-num">2</div>
+        <h2>Data We Collect</h2>
+      </div>
+      <p>Wind Bot only collects data that is needed to provide its features. The table below lists the types of data stored:</p>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Data Type</th>
+            <th>Examples</th>
+            <th>Purpose</th>
+            <th>Stored?</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Guild (Server) IDs</td>
+            <td>Server identifier</td>
+            <td>Per-server configuration</td>
+            <td><span class="tag green">Yes</span></td>
+          </tr>
+          <tr>
+            <td>Server contact details</td>
+            <td>Server name, member count, owner ID, the ID of whoever added the bot</td>
+            <td>Knowing who to contact about a server, including after the bot is removed</td>
+            <td><span class="tag green">Yes</span></td>
+          </tr>
+          <tr>
+            <td>Channel &amp; Role IDs</td>
+            <td>Partner/ad/log channels, member/ping/staff roles</td>
+            <td>Auto-Wave routing, shop and ticket setup</td>
+            <td><span class="tag green">Yes</span></td>
+          </tr>
+          <tr>
+            <td>User IDs &amp; usernames</td>
+            <td>Ticket owner, buyer, seller, builder, staff, ad host, giveaway entrant</td>
+            <td>Tickets, orders, payouts, giveaways, partner tracking</td>
+            <td><span class="tag green">Yes</span></td>
+          </tr>
+          <tr>
+            <td>Linked Minecraft names (IGNs)</td>
+            <td>The DonutSMP name you link with <code>/ign</code></td>
+            <td>Tying shop activity, payments and payouts to an in-game player</td>
+            <td><span class="tag green">Yes</span></td>
+          </tr>
+          <tr>
+            <td>Account history</td>
+            <td>Past IGN changes (and who made each one), cancelled orders</td>
+            <td>Letting staff review a member's shop history for disputes and fraud</td>
+            <td><span class="tag green">Yes</span></td>
+          </tr>
+          <tr>
+            <td>In-game balances</td>
+            <td>Your DonutSMP balance at the start of a payment check, and the amount expected</td>
+            <td>Confirming a sponsorship or build payment actually arrived</td>
+            <td><span class="tag green">Yes</span></td>
+          </tr>
+          <tr>
+            <td>Ad message content</td>
+            <td>Text in your configured ad channel</td>
+            <td>Read to send Auto-Wave partner ads</td>
+            <td><span class="tag purple">Read only</span></td>
+          </tr>
+          <tr>
+            <td>Partner URLs &amp; ad deliveries</td>
+            <td>Server invite links, where an ad was delivered, member count a day later</td>
+            <td>Partner link deduplication and ad performance statistics</td>
+            <td><span class="tag green">Yes</span></td>
+          </tr>
+          <tr>
+            <td>Shop transaction data</td>
+            <td>Spawner type, quantity, price, buyer/seller/staff IDs</td>
+            <td>Orders, stock, sales stats, staff payouts and leaderboards</td>
+            <td><span class="tag green">Yes</span></td>
+          </tr>
+          <tr>
+            <td>Build orders</td>
+            <td>What you asked to be built, the agreed price, builder's share, status, dispute reasons</td>
+            <td>Running the building service and settling disputes</td>
+            <td><span class="tag green">Yes</span></td>
+          </tr>
+          <tr>
+            <td>Sponsorships, giveaways &amp; gambling</td>
+            <td>Sponsorship amounts, entrants, winners, payouts owed, cosmetic sponsor settings</td>
+            <td>Running giveaways and paying winners</td>
+            <td><span class="tag green">Yes</span></td>
+          </tr>
+          <tr>
+            <td>Spawner Tycoon progress</td>
+            <td>Your in-game-only balance, spawners, farms, base, raids, hack status</td>
+            <td>Saving your <code>/games</code> progress</td>
+            <td><span class="tag green">Yes</span></td>
+          </tr>
+          <tr>
+            <td>Staff records</td>
+            <td>Daily quotas, warnings, strikes, time on staff</td>
+            <td>Managing the shop's staff team</td>
+            <td><span class="tag green">Yes</span></td>
+          </tr>
+          <tr>
+            <td>Player numbers</td>
+            <td>A number assigned when you join the DonutSMP Discord server</td>
+            <td>Identifying players in giveaways</td>
+            <td><span class="tag green">Yes</span></td>
+          </tr>
+          <tr>
+            <td>Command usage</td>
+            <td>Which command was run, by which user ID, in which server, and when</td>
+            <td>Seeing which features are actually used</td>
+            <td><span class="tag green">Yes</span></td>
+          </tr>
+          <tr>
+            <td>Ticket transcripts</td>
+            <td>Messages sent inside a shop, support, build or map art ticket</td>
+            <td>Record of a completed or cancelled request for dispute resolution</td>
+            <td><span class="tag green">Yes</span></td>
+          </tr>
+          <tr>
+            <td>Schematics</td>
+            <td>Schematic files, attached images, title, description, credits</td>
+            <td>Publishing them to the schematic library forum</td>
+            <td><span class="tag green">Yes</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 3 -->
+    <div class="section" id="s3">
+      <div class="section-header">
+        <div class="section-num">3</div>
+        <h2>Messages the Bot Reads</h2>
+      </div>
+      <p>Wind Bot does <strong>not</strong> collect or store general chat. It reads the content of messages only in the following places, and only to run the feature named:</p>
+      <ul>
+        <li><strong>Your configured ad channel:</strong> to send your server's Auto-Wave ad.</li>
+        <li><strong>Ticket channels</strong> (shop, support, build and map art): saved as a transcript when the ticket closes.</li>
+        <li><strong>The schematic submission channel:</strong> to find a schematic file or link and publish it.</li>
+        <li><strong>Channels running a typed-answer minigame</strong> (such as Type Racer or Unscramble): only while the game is active, to check answers.</li>
+        <li><strong>Join and server boost messages</strong> in the DonutSMP server: to assign player numbers and keep the booster list up to date.</li>
+        <li><strong>Direct messages to the bot</strong> and <strong><code>/wave</code> editing sessions:</strong> when you are replying to a staff application or editing a saved wave.</li>
+      </ul>
+      <div class="info-box warning">
+        <span class="info-box-icon">⚠️</span>
+        <div>To know which of these places a new message belongs to, the bot checks where each message was sent. Messages anywhere else are ignored and not stored.</div>
+      </div>
+    </div>
+
+    <!-- 4 -->
+    <div class="section" id="s4">
+      <div class="section-header">
+        <div class="section-num">4</div>
+        <h2>Why We Collect It</h2>
+      </div>
+      <p>All data collection is tied to a specific bot feature:</p>
+      <ul>
+        <li><strong>Guild, channel &amp; role IDs:</strong> to route Auto-Wave partner ads and to run the shop and ticket systems in the correct channels.</li>
+        <li><strong>User IDs, usernames &amp; linked IGNs:</strong> to associate tickets, orders, payments and payouts with the right people, and to display partner and sales statistics.</li>
+        <li><strong>Account history:</strong> some actions destroy their own evidence (for example, re-linking an IGN overwrites the old one), so they are recorded separately to help staff resolve disputes and spot fraud.</li>
+        <li><strong>In-game balances:</strong> DonutSMP does not report who paid whom, only balances. To confirm a payment, the bot notes both players' balances when the check starts and watches for the expected change.</li>
+        <li><strong>Build orders, sponsorships &amp; giveaways:</strong> to track what is owed to whom, in-game, until it is settled.</li>
+        <li><strong>Spawner Tycoon progress:</strong> to save your game between sessions.</li>
+        <li><strong>Command usage:</strong> to learn which features people use, so unused ones can be removed and popular ones improved.</li>
+        <li><strong>Ticket transcripts:</strong> to keep a record of each request in case of a dispute.</li>
+      </ul>
+    </div>
+
+    <!-- 5 -->
+    <div class="section" id="s5">
+      <div class="section-header">
+        <div class="section-num">5</div>
+        <h2>Data Storage &amp; Security</h2>
+      </div>
+      <p>Data is stored in a <strong>Supabase (PostgreSQL) database</strong>, and the bot is hosted on <strong>Railway</strong>. Access to the database is restricted to the Developer via secret credentials that are never exposed publicly.</p>
+      <ul>
+        <li>The database is not publicly accessible.</li>
+        <li>All payments are made in-game using DonutSMP's in-game currency. The bot does not handle or store any real-world payment or financial information.</li>
+        <li>Spawner Tycoon (<code>/games</code>) money is not DonutSMP currency, has no value, and cannot be transferred in or out of the game.</li>
+        <li>Access is protected by provider access controls and Row Level Security.</li>
+      </ul>
+      <div class="info-box success">
+        <span class="info-box-icon">✅</span>
+        <div>Your data is used only to operate Wind Bot's features. It is never sold or shared for advertising.</div>
+      </div>
+    </div>
+
+    <!-- 6 -->
+    <div class="section" id="s6">
+      <div class="section-header">
+        <div class="section-num">6</div>
+        <h2>Data Retention</h2>
+      </div>
+      <ul>
+        <li><strong>Guild configuration:</strong> retained while the bot remains in your server. You may request deletion (see Section 8).</li>
+        <li><strong>Server contact details:</strong> kept after the bot is removed from a server, so the server owner can still be reached.</li>
+        <li><strong>Tickets:</strong> the ticket channel is deleted when closed; a text transcript is retained for dispute resolution.</li>
+        <li><strong>Shop, build, sponsorship and giveaway records:</strong> retained to keep the books accurate. Pending staff-payment entries are cleared once settled.</li>
+        <li><strong>Linked IGNs, account history, player numbers, staff records and command usage:</strong> not deleted automatically. They are kept until you request deletion.</li>
+        <li><strong>Spawner Tycoon progress:</strong> kept until you request deletion. Using the in-game "Install Hack" feature can reset it by design.</li>
+        <li><strong>Schematics:</strong> kept as posts in the schematic library forum until removed by staff.</li>
+        <li><strong>Partner links:</strong> daily records are deleted automatically after 30 days.</li>
+        <li><strong>Error logs:</strong> only the most recent 200 errors are kept; older entries are deleted automatically.</li>
+      </ul>
+    </div>
+
+    <!-- 7 -->
+    <div class="section" id="s7">
+      <div class="section-header">
+        <div class="section-num">7</div>
+        <h2>Third Parties</h2>
+      </div>
+      <p>Wind Bot relies on the following third-party services to function, and does not share your data with anyone else:</p>
+      <ul>
+        <li><strong>Discord API</strong> (discord.com): required for the bot to operate. Discord's own privacy policy applies to data held by Discord.</li>
+        <li><strong>Supabase</strong>: hosts the database where the data described above is stored.</li>
+        <li><strong>Railway</strong>: hosts the bot's application.</li>
+        <li><strong>DonutSMP API</strong> (api.donutsmp.net): the bot sends it linked in-game names to look up in-game balances and player statistics.</li>
+        <li><strong>DonutStats</strong> (donutstats.net): used the same way, only when the DonutSMP API is unavailable.</li>
+      </ul>
+      <p>Only in-game names are sent to DonutSMP and DonutStats. Your Discord identity is never sent to them. We do not sell, rent, or share your data with any third party for advertising or commercial purposes.</p>
+    </div>
+
+    <!-- 8 -->
+    <div class="section" id="s8">
+      <div class="section-header">
+        <div class="section-num">8</div>
+        <h2>Your Rights</h2>
+      </div>
+      <p>You have the right to:</p>
+      <ul>
+        <li><strong>Access:</strong> request a summary of what data is stored for your guild or user ID.</li>
+        <li><strong>Deletion:</strong> request that data associated with your guild or user ID be deleted, including your linked IGN, Spawner Tycoon progress and command usage records. Records we need for dispute resolution or fraud prevention, such as unsettled orders and payouts, may be kept.</li>
+        <li><strong>Correction:</strong> update stored configuration via the bot's slash commands (e.g. <code>/config setup</code>), or re-link your IGN with <code>/ign</code>.</li>
+      </ul>
+      <p>DonutSMP shop staff can view a member's shop history and correct a linked IGN. Every such change is recorded along with the staff member who made it.</p>
+      <p>To exercise these rights, contact us via <a href="#s11" style="color:var(--accent2)">Section 11</a>.</p>
+    </div>
+
+    <!-- 9 -->
+    <div class="section" id="s9">
+      <div class="section-header">
+        <div class="section-num">9</div>
+        <h2>Children's Privacy</h2>
+      </div>
+      <p>Wind Bot is not directed at children under the age of 13, and Discord's own Terms of Service require users to be at least 13 years old. We do not knowingly collect personal data from children under 13. All trading takes place in-game using DonutSMP's in-game currency, and Spawner Tycoon uses fake money with no value; no real-world money is involved in either.</p>
+    </div>
+
+    <!-- 10 -->
+    <div class="section" id="s10">
+      <div class="section-header">
+        <div class="section-num">10</div>
+        <h2>Changes to This Policy</h2>
+      </div>
+      <p>We may update this Privacy Policy from time to time. When we do, we will update the "Last updated" date at the top of this page. Continued use of the bot after changes constitutes acceptance of the revised policy.</p>
+    </div>
+
+    <!-- 11 -->
+    <div class="section" id="s11">
+      <div class="section-header">
+        <div class="section-num">11</div>
+        <h2>Contact</h2>
+      </div>
+      <p>For any privacy-related questions or data deletion requests, contact the bot developer:</p>
+      <a href="https://discord.com/users/1493273832432210042" class="contact-card">
+        <div class="contact-icon">💬</div>
+        <div>
+          <h4>Discord</h4>
+          <p>Message the developer directly on Discord</p>
+        </div>
+      </a>
+    </div>
+
+  </div>
+
+  <footer>
+    <p>© 2026 Wind Bot · <a href="privacy.html">Privacy Policy</a> · <a href="terms.html">Terms of Service</a></p>
+  </footer>
+
+</body>
+</html>

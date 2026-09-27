@@ -21,7 +21,7 @@ let text;
 if (result.status === 'accepted') {
   label = 'accepted';
   text = pushed
-    ? `${result.message}\n\nThe board updates on the site in a minute or so: https://aruvine.github.io/`
+    ? `${result.message}\n\nThe board updates on the site in a minute or so: https://aruvine.github.io/vaultline/`
     : `${result.message}\n\nThe run is valid, but saving the board failed on this attempt. Edit this issue (any small change) to retry.`;
 } else if (result.status === 'kept') {
   label = 'accepted';
