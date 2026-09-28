@@ -8,6 +8,18 @@
 A first-person parkour time trial that runs in the browser. Built with three.js
 (MIT). The source of the build lives in a private repo.
 
+![Vaultline](vaultline/preview.png)
+
+Sprint, slide, wall-run any wall, bunny-hop, air-dash and swing a grappling rope
+off any surface, across a city at golden hour. Nothing to install and no account
+to play; posting a time to the leaderboard uses a GitHub issue.
+
+Press shots at full size are in `vaultline/press/`. They are real frames of the
+current build, taken by `tools/capture-shots.mjs` in the source repo, so they can
+be retaken instead of going stale; `vaultline/preview.png` is the 1200x630 card
+the page's Open Graph tags point at, and renaming it breaks every link already
+shared.
+
 **Whatever deploys the build has to write to `vaultline/index.html`**, not to
 `index.html`, since the game moved down a level.
 
