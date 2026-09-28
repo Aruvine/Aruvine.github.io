@@ -19143,9 +19143,11 @@ const __vl$m71_js_board = (function () {
 // levels (the campaign and the five challenge courses), keyed by the very same stable level id the
 // per-level records and ghosts use.
 //
-// Where the page is served from decides how the board is reached. On the site itself the board sits
-// next to the page, so a relative 'board/' is used; anywhere else (a local file://, a copy on another
-// host) the absolute URL is fetched. Inside a sandboxed iframe that fetch is refused by the page's
+// Where the page is served from decides how the board is reached. On the site itself the board is
+// fetched same-origin from the ROOT, '/board/' — the game moved to /vaultline/ on 2026-09-27 and a
+// path relative to the page would have looked under /vaultline/board/, where a 404 reads as "nobody
+// has posted here yet"; anywhere else (a local file://, a copy on another host) the absolute URL is
+// fetched. Inside a sandboxed iframe that fetch is refused by the page's
 // CSP before it reaches the network — indistinguishable from being offline, and both mean the same
 // thing to a player, so both come back as `blocked` with one honest line to show.
 //
@@ -19198,12 +19200,12 @@ function clockText(seconds) {
 
 /**
  * The base every board file is fetched from. `loc` is window.location (or anything with `origin`).
- * On the site itself that is a relative 'board/', so the page works on a preview deployment too;
- * everywhere else it is the absolute URL.
+ * On the site itself that is '/board/' — same origin, and from the root, so the game reads the same
+ * board whatever path it is served at (/vaultline/ today); everywhere else it is the absolute URL.
  */
 function boardBase(loc) {
   const origin = loc && typeof loc.origin === 'string' ? loc.origin : '';
-  return origin === BOARD_ORIGIN ? BOARD_PATH : BOARD_URL;
+  return origin === BOARD_ORIGIN ? '/' + BOARD_PATH : BOARD_URL;
 }
 
 /** board/<levelId>.json */
