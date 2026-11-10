@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#12141c">
+  <meta name="isekai-build" content="2f283219.1">
+  <title>Isekai</title>
+  <link rel="manifest" href="/isekai/manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="/isekai/assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="/isekai/assets/icons/icon-192.png">
+  <style>
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: #12141c;
+      color: #e8e8f0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+    /* Full-viewport canvas container; the renderer appends its canvas here. */
+    #app { position: fixed; inset: 0; }
+    #app canvas { display: block; width: 100%; height: 100%; touch-action: none; outline: none; }
+    /* UI overlay root: transparent to pointer events except for its children. */
+    #overlay { position: fixed; inset: 0; pointer-events: none; }
+    #overlay > * { pointer-events: auto; }
+    .isekai-btn {
+      position: absolute;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      padding: 12px 22px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.55);
+      color: #fff;
+      font: 600 14px/1 system-ui, sans-serif;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+    .isekai-btn:hover:not(:disabled) { background: rgba(0, 0, 0, 0.8); border-color: #fff; }
+    .isekai-btn:disabled { opacity: 0.6; cursor: default; }
+    /* Why VR is unavailable or failed, readable on the Quest (no tooltips there). */
+    .isekai-hint {
+      position: absolute;
+      left: 50%;
+      bottom: 72px;
+      transform: translateX(-50%);
+      box-sizing: border-box;
+      max-width: min(560px, calc(100vw - 32px));
+      margin: 0;
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.6);
+      color: #ffe2b0;
+      font: 13px/1.4 system-ui, sans-serif;
+      text-align: center;
+    }
+    .isekai-hint[hidden] { display: none; }
+    /* Shown while the bundle downloads and starts (several MB on a Quest); main.ts removes it. */
+    .isekai-loading {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: #a9b3c9;
+      font: 15px/1.4 system-ui, sans-serif;
+      pointer-events: none !important;
+    }
+    /* "Show performance HUD in VR" (Q11): on the 2D page, before entering VR. */
+    .isekai-check {
+      position: absolute;
+      left: 16px;
+      bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.55);
+      color: #fff;
+      font: 13px/1.2 system-ui, sans-serif;
+      cursor: pointer;
+      user-select: none;
+    }
+    .isekai-check input { width: 18px; height: 18px; margin: 0; cursor: pointer; }
+    /* "Last VR session" (Q11): shown on the 2D page after a session ends. */
+    .isekai-panel {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      box-sizing: border-box;
+      width: min(360px, calc(100vw - 32px));
+      max-height: calc(100vh - 140px);
+      overflow: auto;
+      padding: 12px 14px;
+      border-radius: 8px;
+      background: rgba(12, 14, 20, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #e8e8f0;
+      font: 13px/1.4 system-ui, sans-serif;
+    }
+    .isekai-panel[hidden] { display: none; }
+    .isekai-panel h2 { margin: 0 0 8px; font-size: 15px; }
+    .isekai-panel dl { display: grid; grid-template-columns: auto 1fr; gap: 3px 12px; margin: 0 0 12px; }
+    .isekai-panel dt { color: #a9b3c9; }
+    .isekai-panel dd { margin: 0; font-variant-numeric: tabular-nums; }
+    .isekai-close {
+      float: right;
+      border: 0;
+      background: none;
+      color: #fff;
+      font: 20px/1 system-ui, sans-serif;
+      cursor: pointer;
+      padding: 0 2px;
+    }
+    .isekai-action {
+      padding: 8px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      font: 600 13px/1 system-ui, sans-serif;
+      cursor: pointer;
+    }
+    .isekai-action:hover { background: rgba(255, 255, 255, 0.2); }
+    /* Settings (2D page): button bottom left, panel above it. */
+    .isekai-corner-btn {
+      position: absolute;
+      left: 16px;
+      bottom: 70px;
+      padding: 8px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.55);
+      color: #fff;
+      font: 600 13px/1 system-ui, sans-serif;
+      cursor: pointer;
+    }
+    .isekai-corner-btn:hover { background: rgba(0, 0, 0, 0.8); border-color: #fff; }
+    .isekai-panel.isekai-settings { top: auto; right: auto; left: 16px; bottom: 116px; }
+    .isekai-row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 12px; margin: 0 0 10px; }
+    .isekai-row small { grid-column: 1 / -1; color: #a9b3c9; font-size: 12px; }
+    .isekai-row select, .isekai-row input[type="file"] { font: 13px system-ui, sans-serif; max-width: 200px; }
+    .isekai-row input[type="checkbox"] { width: 18px; height: 18px; margin: 0; justify-self: end; }
+    .isekai-row small[data-kind="error"] { color: #ffb4b4; }
+    .isekai-fade {
+      position: absolute;
+      inset: 0;
+      background: #000;
+      opacity: 0;
+      pointer-events: none !important;
+      transition-property: opacity;
+      transition-timing-function: linear;
+    }
+    .isekai-perf {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      padding: 6px 8px;
+      background: rgba(0, 0, 0, 0.6);
+      color: #9ef;
+      font: 12px/1.4 ui-monospace, Consolas, monospace;
+      white-space: pre;
+      pointer-events: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="overlay"><div id="loading" class="isekai-loading">Loading Isekai...</div></div>
+  <noscript>Isekai needs JavaScript and WebGL2.</noscript>
+  <script>
+    window.__ISEKAI_BUILD = '2f283219.1';
+    window.__ISEKAI_BASE = '/isekai/';
+  </script>
+  <!-- The bundle URL carries the build id: a new index never runs an older cached bundle (sw.js). -->
+  <script type="module" src="/isekai/main.js?v=2f283219.1"></script>
+  <script>
+    // Register the service worker only on real hosts. Localhost (dev and Playwright)
+    // must always see the freshest build, so the app-shell cache stays off there.
+    if ('serviceWorker' in navigator) {
+      var h = location.hostname;
+      if (h !== 'localhost' && h !== '127.0.0.1' && h !== '[::1]') {
+        addEventListener('load', function () {
+          navigator.serviceWorker
+            .register('/isekai/sw.js', { scope: '/isekai/' })
+            .catch(function (err) { console.warn('[sw] registration failed', err); });
+        });
+      }
+    }
+  </script>
+</body>
+</html>

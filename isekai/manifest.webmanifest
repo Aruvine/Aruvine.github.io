@@ -1,0 +1,48 @@
+{
+  "id": "/isekai/",
+  "name": "Isekai",
+  "short_name": "Isekai",
+  "description": "A browser-first anime world: import characters, give them minds, step into worlds in VR or on a flat screen.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "/isekai/",
+  "scope": "/isekai/",
+  "display": "standalone",
+  "display_override": [
+    "standalone"
+  ],
+  "orientation": "any",
+  "background_color": "#12141c",
+  "theme_color": "#12141c",
+  "categories": [
+    "games",
+    "entertainment"
+  ],
+  "prefer_related_applications": false,
+  "launch_handler": {
+    "client_mode": [
+      "navigate-existing",
+      "auto"
+    ]
+  },
+  "icons": [
+    {
+      "src": "/isekai/assets/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/isekai/assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/isekai/assets/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
