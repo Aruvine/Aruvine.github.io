@@ -1,0 +1,21 @@
+{
+  "c": {
+    "body": {
+      "kind": "static"
+    },
+    "clipmap": {
+      "idle": "Flying_Idle"
+    },
+    "shape": {
+      "model": "lib:model/monster_flying_demon"
+    }
+  },
+  "id": "monster_flying_demon",
+  "kind": "creature",
+  "label": "Demon (flying)",
+  "schemaVersion": 2,
+  "tags": [
+    "monster",
+    "flying"
+  ]
+}

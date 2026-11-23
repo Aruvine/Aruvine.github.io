@@ -1,0 +1,83 @@
+{
+  "dials": [
+    {
+      "default": 1,
+      "id": "size",
+      "label": "Size",
+      "max": 4,
+      "min": 0.25,
+      "step": 0.05,
+      "unit": ""
+    },
+    {
+      "default": 10,
+      "id": "amount",
+      "label": "Amount",
+      "max": 24,
+      "min": 1,
+      "step": 1,
+      "unit": ""
+    },
+    {
+      "default": 2,
+      "id": "speed",
+      "label": "Speed",
+      "max": 20,
+      "min": 0,
+      "step": 0.1,
+      "unit": "m/s"
+    }
+  ],
+  "id": "pop_ring",
+  "kind": "burst",
+  "label": "Pop ring",
+  "layers": [
+    {
+      "blend": "cutout",
+      "color": "a",
+      "fade": 1,
+      "grow": [
+        0.2,
+        1.5
+      ],
+      "id": "ring",
+      "mesh": "ring",
+      "prim": "shape",
+      "size": {
+        "dial": "size",
+        "times": 0.4
+      }
+    },
+    {
+      "color": "b",
+      "count": {
+        "dial": "amount"
+      },
+      "dir": "out",
+      "id": "dots",
+      "mode": "burst",
+      "particleLife": 0.3,
+      "prim": "sprites",
+      "size": {
+        "dial": "size",
+        "times": 0.06
+      },
+      "sizeEnd": 0,
+      "speed": {
+        "dial": "speed"
+      },
+      "spread": 180,
+      "sprite": "ring"
+    }
+  ],
+  "life": 0.4,
+  "palette": {
+    "a": "#ffffff",
+    "b": "#ffd060"
+  },
+  "schemaVersion": 2,
+  "sound": "lib:sfx/pop",
+  "tags": [
+    "pop"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "bytes": 386648,
+  "file": "adventurer_barbarian.glb",
+  "height": 2.398,
+  "id": "adventurer_barbarian",
+  "label": "Adventurer: Barbarian",
+  "licence": "kaykit_adventurers",
+  "rig": "glbHumanoid",
+  "schemaVersion": 2,
+  "sha256": "d37824a1d6e8e8af57ef9ae4a87e9271c3986210fbc432fb44670749a577ccac",
+  "triangles": 7123,
+  "yaw": 0
+}

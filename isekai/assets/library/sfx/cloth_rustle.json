@@ -1,0 +1,18 @@
+{
+  "bytes": 9403,
+  "channels": 1,
+  "file": "cloth_rustle.ogg",
+  "id": "cloth_rustle",
+  "kind": "sample",
+  "label": "Cloth rustle",
+  "licence": "kenney_rpg_audio",
+  "range": 10,
+  "schemaVersion": 2,
+  "seconds": 0.661,
+  "sha256": "b6d5bdf2bc88bac1709c6dce76cf823fadd151cb35ecd6b38108cb97ba185d1e",
+  "since": 2,
+  "tags": [
+    "cloth"
+  ],
+  "volume": 0.8
+}

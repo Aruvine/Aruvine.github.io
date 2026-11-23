@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 2,
+  "power": "summon",
+  "prefabs": [
+    {
+      "schemaVersion": 2,
+      "id": "summoned_ally",
+      "label": "Summoned ally",
+      "kind": "character",
+      "tags": [
+        "ally"
+      ],
+      "icon": "lib:icon/summon",
+      "c": {
+        "shape": {
+          "model": "lib:model/skeleton_minion",
+          "scale": 0.6
+        },
+        "clipmap": {
+          "idle": "lib:clip/idle",
+          "move": "lib:clip/walk",
+          "run": "lib:clip/run",
+          "attack": "lib:clip/punch_jab",
+          "hit": "lib:clip/hit_front",
+          "defeat": "lib:clip/knockout"
+        },
+        "body": {
+          "kind": "kinematic"
+        },
+        "pools": {
+          "health": {
+            "max": 40
+          }
+        },
+        "stats": {
+          "moveSpeed": 4
+        },
+        "brain": {
+          "preset": "follow",
+          "target": "nearestEnemy",
+          "aggression": 1,
+          "powers": "auto"
+        }
+      },
+      "defeat": {
+        "exit": "smoke",
+        "seconds": 0.5
+      }
+    }
+  ]
+}

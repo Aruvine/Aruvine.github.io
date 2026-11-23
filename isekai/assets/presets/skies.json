@@ -1,0 +1,869 @@
+{
+  "items": [
+    {
+      "clouds": 0.25,
+      "dataOnly": false,
+      "id": "clearDay",
+      "keys": [
+        {
+          "ambient": "#1a2238",
+          "at": "00:00",
+          "fog": "#18223a",
+          "horizon": "#1d2a4c",
+          "sun": "#c8d4ff",
+          "zenith": "#0b1430"
+        },
+        {
+          "ambient": "#534e5f",
+          "at": "05:00",
+          "fog": "#786b6d",
+          "horizon": "#886f6b",
+          "sun": "#e4d7d0",
+          "zenith": "#243865"
+        },
+        {
+          "ambient": "#8c7a86",
+          "at": "06:00",
+          "fog": "#d8b4a0",
+          "horizon": "#f2b48a",
+          "sun": "#ffd9a0",
+          "zenith": "#3c5c9a"
+        },
+        {
+          "ambient": "#b0b2c1",
+          "at": "08:00",
+          "fog": "#d3d0d2",
+          "horizon": "#cfccd0",
+          "sun": "#ffeac4",
+          "zenith": "#3471c4"
+        },
+        {
+          "ambient": "#c8d8e8",
+          "at": "12:00",
+          "fog": "#cfe2f4",
+          "horizon": "#b8dcff",
+          "sun": "#fff6dc",
+          "zenith": "#2f7fe0"
+        },
+        {
+          "ambient": "#afacb8",
+          "at": "16:30",
+          "fog": "#d3c5c4",
+          "horizon": "#d0c2c0",
+          "sun": "#ffdab1",
+          "zenith": "#3266b9"
+        },
+        {
+          "ambient": "#8a6a70",
+          "at": "18:00",
+          "fog": "#d89a7c",
+          "horizon": "#f59a62",
+          "sun": "#ffb070",
+          "zenith": "#36407e"
+        },
+        {
+          "ambient": "#473f4e",
+          "at": "19:30",
+          "fog": "#655254",
+          "horizon": "#735755",
+          "sun": "#dec6c6",
+          "zenith": "#1c264f"
+        }
+      ],
+      "label": "Clear day"
+    },
+    {
+      "clouds": 0.85,
+      "dataOnly": false,
+      "id": "softOvercast",
+      "keys": [
+        {
+          "ambient": "#1e232b",
+          "at": "00:00",
+          "fog": "#272c34",
+          "horizon": "#262c36",
+          "sun": "#a8b0bc",
+          "zenith": "#14181f"
+        },
+        {
+          "ambient": "#54585e",
+          "at": "05:00",
+          "fog": "#6b6b6d",
+          "horizon": "#6d6b6d",
+          "sun": "#c8c4c2",
+          "zenith": "#393f49"
+        },
+        {
+          "ambient": "#8a8c90",
+          "at": "06:00",
+          "fog": "#aeaaa6",
+          "horizon": "#b4aaa4",
+          "sun": "#e8d8c8",
+          "zenith": "#5e6672"
+        },
+        {
+          "ambient": "#a6aab0",
+          "at": "08:00",
+          "fog": "#c1c2c4",
+          "horizon": "#c6c6c7",
+          "sun": "#efe8de",
+          "zenith": "#7b8592"
+        },
+        {
+          "ambient": "#b8bec6",
+          "at": "12:00",
+          "fog": "#cdd2d8",
+          "horizon": "#d2d8de",
+          "sun": "#f4f2ec",
+          "zenith": "#8e9aa8"
+        },
+        {
+          "ambient": "#a0a3aa",
+          "at": "16:30",
+          "fog": "#bcbabb",
+          "horizon": "#c4bfc0",
+          "sun": "#eddecf",
+          "zenith": "#76808f"
+        },
+        {
+          "ambient": "#7c7a80",
+          "at": "18:00",
+          "fog": "#a29590",
+          "horizon": "#b09a92",
+          "sun": "#e2c0a4",
+          "zenith": "#525a6a"
+        },
+        {
+          "ambient": "#44464d",
+          "at": "19:30",
+          "fog": "#585659",
+          "horizon": "#5d585b",
+          "sun": "#bfb6b2",
+          "zenith": "#2d323d"
+        }
+      ],
+      "label": "Soft overcast"
+    },
+    {
+      "clouds": 0.35,
+      "dataOnly": false,
+      "id": "goldenDusk",
+      "keys": [
+        {
+          "ambient": "#241a2c",
+          "at": "00:00",
+          "fog": "#2e2234",
+          "horizon": "#3a2440",
+          "sun": "#ffd8a8",
+          "zenith": "#160f26"
+        },
+        {
+          "ambient": "#5f4a4c",
+          "at": "05:00",
+          "fog": "#89695e",
+          "horizon": "#9d6d59",
+          "sun": "#ffd499",
+          "zenith": "#30254f"
+        },
+        {
+          "ambient": "#9a7a6c",
+          "at": "06:00",
+          "fog": "#e4b088",
+          "horizon": "#ffb672",
+          "sun": "#ffcf8a",
+          "zenith": "#4a3a78"
+        },
+        {
+          "ambient": "#bfa990",
+          "at": "08:00",
+          "fog": "#ebcaa0",
+          "horizon": "#ffd092",
+          "sun": "#ffe3aa",
+          "zenith": "#4a6aad"
+        },
+        {
+          "ambient": "#d8c8a8",
+          "at": "12:00",
+          "fog": "#f0dcb0",
+          "horizon": "#ffe2a8",
+          "sun": "#fff0c0",
+          "zenith": "#4a8ad0"
+        },
+        {
+          "ambient": "#c8a986",
+          "at": "16:30",
+          "fog": "#f0c490",
+          "horizon": "#ffc57d",
+          "sun": "#ffdd9a",
+          "zenith": "#506ab1"
+        },
+        {
+          "ambient": "#b07a52",
+          "at": "18:00",
+          "fog": "#f0a060",
+          "horizon": "#ff9a3c",
+          "sun": "#ffc060",
+          "zenith": "#5a3a82"
+        },
+        {
+          "ambient": "#5c403b",
+          "at": "19:30",
+          "fog": "#7c5446",
+          "horizon": "#89533e",
+          "sun": "#ffce8b",
+          "zenith": "#31204b"
+        }
+      ],
+      "label": "Golden dusk"
+    },
+    {
+      "clouds": 0.1,
+      "dataOnly": false,
+      "id": "deepNight",
+      "keys": [
+        {
+          "ambient": "#0c1224",
+          "at": "00:00",
+          "fog": "#081022",
+          "horizon": "#0a1430",
+          "sun": "#d0dcff",
+          "zenith": "#02040e"
+        },
+        {
+          "ambient": "#1b2036",
+          "at": "05:00",
+          "fog": "#212641",
+          "horizon": "#32375d",
+          "sun": "#c8c6e8",
+          "zenith": "#0b122c"
+        },
+        {
+          "ambient": "#2a2e48",
+          "at": "06:00",
+          "fog": "#3a3c60",
+          "horizon": "#5a5a8a",
+          "sun": "#c0b0d0",
+          "zenith": "#14204a"
+        },
+        {
+          "ambient": "#3b4767",
+          "at": "08:00",
+          "fog": "#475479",
+          "horizon": "#5a6da3",
+          "sun": "#d3d2ec",
+          "zenith": "#193066"
+        },
+        {
+          "ambient": "#46587c",
+          "at": "12:00",
+          "fog": "#50648a",
+          "horizon": "#5a7ab4",
+          "sun": "#e0e8ff",
+          "zenith": "#1c3a78"
+        },
+        {
+          "ambient": "#394666",
+          "at": "16:30",
+          "fog": "#454f72",
+          "horizon": "#546098",
+          "sun": "#d6cbe6",
+          "zenith": "#182d63"
+        },
+        {
+          "ambient": "#262a44",
+          "at": "18:00",
+          "fog": "#34304e",
+          "horizon": "#4a3a6e",
+          "sun": "#c8a0c0",
+          "zenith": "#121a44"
+        },
+        {
+          "ambient": "#161c31",
+          "at": "19:30",
+          "fog": "#1a1d34",
+          "horizon": "#242349",
+          "sun": "#cdc4e6",
+          "zenith": "#080d24"
+        }
+      ],
+      "label": "Deep night"
+    },
+    {
+      "clouds": 1,
+      "dataOnly": false,
+      "id": "stormGrey",
+      "keys": [
+        {
+          "ambient": "#101216",
+          "at": "00:00",
+          "fog": "#14171c",
+          "horizon": "#16191e",
+          "sun": "#7a8090",
+          "zenith": "#08090c"
+        },
+        {
+          "ambient": "#26292e",
+          "at": "05:00",
+          "fog": "#32363b",
+          "horizon": "#393c40",
+          "sun": "#8f9098",
+          "zenith": "#1a1d22"
+        },
+        {
+          "ambient": "#3c4046",
+          "at": "06:00",
+          "fog": "#50545a",
+          "horizon": "#5c5e62",
+          "sun": "#a4a0a0",
+          "zenith": "#2c3138"
+        },
+        {
+          "ambient": "#4e545c",
+          "at": "08:00",
+          "fog": "#626870",
+          "horizon": "#6f757c",
+          "sun": "#b7b8ba",
+          "zenith": "#373e46"
+        },
+        {
+          "ambient": "#5a626a",
+          "at": "12:00",
+          "fog": "#6e767e",
+          "horizon": "#7c858e",
+          "sun": "#c4c8cc",
+          "zenith": "#3e4650"
+        },
+        {
+          "ambient": "#4c5259",
+          "at": "16:30",
+          "fog": "#606368",
+          "horizon": "#6e7076",
+          "sun": "#b4afaf",
+          "zenith": "#343b45"
+        },
+        {
+          "ambient": "#383a40",
+          "at": "18:00",
+          "fog": "#4a4648",
+          "horizon": "#5a5052",
+          "sun": "#9c8a84",
+          "zenith": "#262a34"
+        },
+        {
+          "ambient": "#202227",
+          "at": "19:30",
+          "fog": "#2a2a2e",
+          "horizon": "#312f33",
+          "sun": "#88848b",
+          "zenith": "#14161c"
+        }
+      ],
+      "label": "Storm grey"
+    },
+    {
+      "clouds": 0.4,
+      "dataOnly": false,
+      "id": "pinkDawn",
+      "keys": [
+        {
+          "ambient": "#24182e",
+          "at": "00:00",
+          "fog": "#2e2038",
+          "horizon": "#3a2448",
+          "sun": "#f0c8e0",
+          "zenith": "#1a1030"
+        },
+        {
+          "ambient": "#725c73",
+          "at": "05:00",
+          "fog": "#917084",
+          "horizon": "#9d6a88",
+          "sun": "#f8ccde",
+          "zenith": "#42356c"
+        },
+        {
+          "ambient": "#c0a0b8",
+          "at": "06:00",
+          "fog": "#f4c0d0",
+          "horizon": "#ffb0c8",
+          "sun": "#ffd0dc",
+          "zenith": "#6a5aa8"
+        },
+        {
+          "ambient": "#cebdd0",
+          "at": "08:00",
+          "fog": "#f2d1de",
+          "horizon": "#ffc8db",
+          "sun": "#ffe6ed",
+          "zenith": "#6a86ce"
+        },
+        {
+          "ambient": "#d8d0e0",
+          "at": "12:00",
+          "fog": "#f0dce8",
+          "horizon": "#ffd8e8",
+          "sun": "#fff4f8",
+          "zenith": "#6aa4e8"
+        },
+        {
+          "ambient": "#c5b4c8",
+          "at": "16:30",
+          "fog": "#edc7d6",
+          "horizon": "#ffbfd3",
+          "sun": "#ffdfe6",
+          "zenith": "#6480c7"
+        },
+        {
+          "ambient": "#a88aa4",
+          "at": "18:00",
+          "fog": "#e8a8bc",
+          "horizon": "#ff9ab4",
+          "sun": "#ffc0cc",
+          "zenith": "#5a4a96"
+        },
+        {
+          "ambient": "#59465d",
+          "at": "19:30",
+          "fog": "#78566d",
+          "horizon": "#895373",
+          "sun": "#f6c5d8",
+          "zenith": "#342759"
+        }
+      ],
+      "label": "Pink dawn"
+    },
+    {
+      "clouds": 0.15,
+      "dataOnly": false,
+      "id": "tealAurora",
+      "keys": [
+        {
+          "ambient": "#0a2a2c",
+          "at": "00:00",
+          "fog": "#08302e",
+          "horizon": "#0c4a4a",
+          "sun": "#b0fff0",
+          "zenith": "#021418"
+        },
+        {
+          "ambient": "#224a4b",
+          "at": "05:00",
+          "fog": "#306864",
+          "horizon": "#3b857d",
+          "sun": "#c0fcec",
+          "zenith": "#0e2f39"
+        },
+        {
+          "ambient": "#3a6a6a",
+          "at": "06:00",
+          "fog": "#58a09a",
+          "horizon": "#6ac0b0",
+          "sun": "#d0f8e8",
+          "zenith": "#1a4a5a"
+        },
+        {
+          "ambient": "#699e9b",
+          "at": "08:00",
+          "fog": "#83c4bd",
+          "horizon": "#8fd9cd",
+          "sun": "#e3fcf2",
+          "zenith": "#247084"
+        },
+        {
+          "ambient": "#88c0bc",
+          "at": "12:00",
+          "fog": "#a0dcd4",
+          "horizon": "#a8eae0",
+          "sun": "#f0fff8",
+          "zenith": "#2a8aa0"
+        },
+        {
+          "ambient": "#649796",
+          "at": "16:30",
+          "fog": "#79bab4",
+          "horizon": "#82d0c6",
+          "sun": "#ddf9eb",
+          "zenith": "#206b80"
+        },
+        {
+          "ambient": "#2e5a5c",
+          "at": "18:00",
+          "fog": "#3e8884",
+          "horizon": "#4aa8a0",
+          "sun": "#c0f0d8",
+          "zenith": "#123c50"
+        },
+        {
+          "ambient": "#183d3f",
+          "at": "19:30",
+          "fog": "#1e5350",
+          "horizon": "#25706c",
+          "sun": "#b6f9e6",
+          "zenith": "#08242e"
+        }
+      ],
+      "label": "Teal aurora"
+    },
+    {
+      "clouds": 0.7,
+      "dataOnly": false,
+      "id": "ashRed",
+      "keys": [
+        {
+          "ambient": "#200c0a",
+          "at": "00:00",
+          "fog": "#2a100c",
+          "horizon": "#3a1210",
+          "sun": "#ff9070",
+          "zenith": "#140606"
+        },
+        {
+          "ambient": "#451e19",
+          "at": "05:00",
+          "fog": "#5a281e",
+          "horizon": "#7d3125",
+          "sun": "#ff9568",
+          "zenith": "#2f100f"
+        },
+        {
+          "ambient": "#6a3028",
+          "at": "06:00",
+          "fog": "#8a4030",
+          "horizon": "#c0503a",
+          "sun": "#ff9a60",
+          "zenith": "#4a1a18"
+        },
+        {
+          "ambient": "#7d493b",
+          "at": "08:00",
+          "fog": "#9c5d49",
+          "horizon": "#c57357",
+          "sun": "#ffb67d",
+          "zenith": "#5d2d28"
+        },
+        {
+          "ambient": "#8a5a48",
+          "at": "12:00",
+          "fog": "#a8705a",
+          "horizon": "#c88a6a",
+          "sun": "#ffc890",
+          "zenith": "#6a3a32"
+        },
+        {
+          "ambient": "#774438",
+          "at": "16:30",
+          "fog": "#965644",
+          "horizon": "#c26a50",
+          "sun": "#ffa970",
+          "zenith": "#582b25"
+        },
+        {
+          "ambient": "#5a2420",
+          "at": "18:00",
+          "fog": "#7a3024",
+          "horizon": "#b83a28",
+          "sun": "#ff7a40",
+          "zenith": "#3e1412"
+        },
+        {
+          "ambient": "#371613",
+          "at": "19:30",
+          "fog": "#4a1d16",
+          "horizon": "#6c221a",
+          "sun": "#ff875d",
+          "zenith": "#250c0b"
+        }
+      ],
+      "label": "Ash red"
+    },
+    {
+      "clouds": 0.55,
+      "dataOnly": true,
+      "id": "mistyMorning",
+      "keys": [
+        {
+          "ambient": "#1c242c",
+          "at": "00:00",
+          "fog": "#2a3440",
+          "horizon": "#2a343e",
+          "sun": "#b8c4d0",
+          "zenith": "#121a22"
+        },
+        {
+          "ambient": "#626a70",
+          "at": "05:00",
+          "fog": "#7f868b",
+          "horizon": "#81888b",
+          "sun": "#d6d8d4",
+          "zenith": "#465563"
+        },
+        {
+          "ambient": "#a8b0b4",
+          "at": "06:00",
+          "fog": "#d4d8d6",
+          "horizon": "#d8dcd8",
+          "sun": "#f4ecd8",
+          "zenith": "#7a90a4"
+        },
+        {
+          "ambient": "#b9c1c6",
+          "at": "08:00",
+          "fog": "#dbe0e2",
+          "horizon": "#dfe6e6",
+          "sun": "#fbf4e6",
+          "zenith": "#85a3bc"
+        },
+        {
+          "ambient": "#c4ccd2",
+          "at": "12:00",
+          "fog": "#e0e6ea",
+          "horizon": "#e4ecf0",
+          "sun": "#fffaf0",
+          "zenith": "#8cb0cc"
+        },
+        {
+          "ambient": "#aeb4ba",
+          "at": "16:30",
+          "fog": "#d2d3d4",
+          "horizon": "#d9d9d8",
+          "sun": "#f7ebdb",
+          "zenith": "#7a96af"
+        },
+        {
+          "ambient": "#8e9096",
+          "at": "18:00",
+          "fog": "#bcb6b2",
+          "horizon": "#c8bcb4",
+          "sun": "#ecd4bc",
+          "zenith": "#5e6e84"
+        },
+        {
+          "ambient": "#4a4f56",
+          "at": "19:30",
+          "fog": "#64686e",
+          "horizon": "#696a6d",
+          "sun": "#cdcac8",
+          "zenith": "#303c49"
+        }
+      ],
+      "label": "Misty morning"
+    },
+    {
+      "clouds": 0.05,
+      "dataOnly": true,
+      "id": "desertNoon",
+      "keys": [
+        {
+          "ambient": "#1c1824",
+          "at": "00:00",
+          "fog": "#262030",
+          "horizon": "#2c2434",
+          "sun": "#f0e0c0",
+          "zenith": "#0e0c20"
+        },
+        {
+          "ambient": "#665852",
+          "at": "05:00",
+          "fog": "#837064",
+          "horizon": "#8e7662",
+          "sun": "#f8e0b4",
+          "zenith": "#343b60"
+        },
+        {
+          "ambient": "#b09880",
+          "at": "06:00",
+          "fog": "#e0c098",
+          "horizon": "#f0c890",
+          "sun": "#ffe0a8",
+          "zenith": "#5a6aa0"
+        },
+        {
+          "ambient": "#d2bc9d",
+          "at": "08:00",
+          "fog": "#ebd4b0",
+          "horizon": "#f2d6a3",
+          "sun": "#fff1d1",
+          "zenith": "#477dcb"
+        },
+        {
+          "ambient": "#e8d4b0",
+          "at": "12:00",
+          "fog": "#f2e2c0",
+          "horizon": "#f4e0b0",
+          "sun": "#fffcec",
+          "zenith": "#3a8ae8"
+        },
+        {
+          "ambient": "#d2b290",
+          "at": "16:30",
+          "fog": "#ebc99e",
+          "horizon": "#f2ca90",
+          "sun": "#ffe7be",
+          "zenith": "#406cbc"
+        },
+        {
+          "ambient": "#b08060",
+          "at": "18:00",
+          "fog": "#e0a46c",
+          "horizon": "#f0a860",
+          "sun": "#ffc878",
+          "zenith": "#4a3e7a"
+        },
+        {
+          "ambient": "#57423c",
+          "at": "19:30",
+          "fog": "#705548",
+          "horizon": "#7a5946",
+          "sun": "#f6d6a3",
+          "zenith": "#262044"
+        }
+      ],
+      "label": "Desert noon"
+    },
+    {
+      "clouds": 0.3,
+      "dataOnly": true,
+      "id": "bloodMoon",
+      "keys": [
+        {
+          "ambient": "#22060c",
+          "at": "00:00",
+          "fog": "#2c0a10",
+          "horizon": "#3a0812",
+          "sun": "#ff4a3a",
+          "zenith": "#100208"
+        },
+        {
+          "ambient": "#3e1820",
+          "at": "05:00",
+          "fog": "#531f28",
+          "horizon": "#6d242e",
+          "sun": "#ff6a52",
+          "zenith": "#250b18"
+        },
+        {
+          "ambient": "#5a2a34",
+          "at": "06:00",
+          "fog": "#7a3440",
+          "horizon": "#a0404a",
+          "sun": "#ff8a6a",
+          "zenith": "#3a1428"
+        },
+        {
+          "ambient": "#77505d",
+          "at": "08:00",
+          "fog": "#96626b",
+          "horizon": "#b36c74",
+          "sun": "#ffb49e",
+          "zenith": "#4d3459"
+        },
+        {
+          "ambient": "#8a6a78",
+          "at": "12:00",
+          "fog": "#a88088",
+          "horizon": "#c08a90",
+          "sun": "#ffd0c0",
+          "zenith": "#5a4a7a"
+        },
+        {
+          "ambient": "#774a56",
+          "at": "16:30",
+          "fog": "#965a62",
+          "horizon": "#c0646a",
+          "sun": "#ffa18d",
+          "zenith": "#4d325a"
+        },
+        {
+          "ambient": "#5a1a24",
+          "at": "18:00",
+          "fog": "#7a2028",
+          "horizon": "#c02a30",
+          "sun": "#ff5a40",
+          "zenith": "#3a0e2a"
+        },
+        {
+          "ambient": "#380e16",
+          "at": "19:30",
+          "fog": "#4b131a",
+          "horizon": "#70161e",
+          "sun": "#ff503c",
+          "zenith": "#210716"
+        }
+      ],
+      "label": "Blood moon"
+    },
+    {
+      "clouds": 0.3,
+      "dataOnly": true,
+      "id": "violetTwilight",
+      "keys": [
+        {
+          "ambient": "#1a1230",
+          "at": "00:00",
+          "fog": "#22183c",
+          "horizon": "#2a1a4a",
+          "sun": "#d8c0ff",
+          "zenith": "#0e0820"
+        },
+        {
+          "ambient": "#52456c",
+          "at": "05:00",
+          "fog": "#6b5a84",
+          "horizon": "#795d95",
+          "sun": "#e4c8ff",
+          "zenith": "#2c2158"
+        },
+        {
+          "ambient": "#8a78a8",
+          "at": "06:00",
+          "fog": "#b49ccc",
+          "horizon": "#c8a0e0",
+          "sun": "#f0d0ff",
+          "zenith": "#4a3a90"
+        },
+        {
+          "ambient": "#a69ac5",
+          "at": "08:00",
+          "fog": "#c5b6df",
+          "horizon": "#cdb8ec",
+          "sun": "#f7e6ff",
+          "zenith": "#5460bb"
+        },
+        {
+          "ambient": "#b8b0d8",
+          "at": "12:00",
+          "fog": "#d0c8ec",
+          "horizon": "#d0c8f4",
+          "sun": "#fbf4ff",
+          "zenith": "#5a7ad8"
+        },
+        {
+          "ambient": "#998abb",
+          "at": "16:30",
+          "fog": "#baa5d7",
+          "horizon": "#c3a5e6",
+          "sun": "#f3d6f9",
+          "zenith": "#4d58b6"
+        },
+        {
+          "ambient": "#6a5090",
+          "at": "18:00",
+          "fog": "#9a70b8",
+          "horizon": "#b070d0",
+          "sun": "#e8a8f0",
+          "zenith": "#3a2482"
+        },
+        {
+          "ambient": "#3a2b56",
+          "at": "19:30",
+          "fog": "#523b6e",
+          "horizon": "#603c80",
+          "sun": "#deb6f9",
+          "zenith": "#201347"
+        }
+      ],
+      "label": "Violet twilight"
+    }
+  ],
+  "schemaVersion": 2
+}

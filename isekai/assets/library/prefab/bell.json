@@ -1,0 +1,217 @@
+{
+  "c": {
+    "body": {
+      "kind": "static"
+    },
+    "display": {
+      "kind": "badge",
+      "showWithin": 15,
+      "text": "Rings: {var:self.rings}"
+    },
+    "interact": {
+      "how": "use",
+      "prompt": "Ring"
+    },
+    "pools": {
+      "health": {
+        "max": 1000,
+        "regen": 1000
+      }
+    },
+    "shape": {
+      "model": {
+        "prim": "cylinder",
+        "size": [
+          0.8,
+          1.5,
+          0.8
+        ]
+      },
+      "tint": "#d4a017"
+    },
+    "vars": {
+      "rings": {
+        "init": 0,
+        "label": "Rings",
+        "scope": "entity",
+        "type": "number"
+      }
+    }
+  },
+  "cards": [
+    {
+      "do": [
+        {
+          "act": "setState",
+          "state": "ringing",
+          "who": "self"
+        },
+        {
+          "act": "setVar",
+          "op": "add",
+          "value": 1,
+          "var": "self.rings"
+        },
+        {
+          "act": "wait",
+          "s": {
+            "dial": "ring_time"
+          }
+        },
+        {
+          "act": "setState",
+          "state": "still",
+          "who": "self"
+        }
+      ],
+      "id": "ring",
+      "label": "When hit, ring and count",
+      "on": {
+        "event": "hit",
+        "who": "self"
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "setState",
+          "state": "ringing",
+          "who": "self"
+        },
+        {
+          "act": "setVar",
+          "op": "add",
+          "value": 1,
+          "var": "self.rings"
+        },
+        {
+          "act": "wait",
+          "s": {
+            "dial": "ring_time"
+          }
+        },
+        {
+          "act": "setState",
+          "state": "still",
+          "who": "self"
+        }
+      ],
+      "id": "ring_asked",
+      "label": "When asked to ring, ring and count",
+      "on": {
+        "event": "signal",
+        "name": "ring"
+      }
+    }
+  ],
+  "dials": [
+    {
+      "default": 0.5,
+      "id": "ring_time",
+      "label": "Ring time",
+      "max": 5,
+      "min": 0.1,
+      "step": 0.1,
+      "unit": "s"
+    }
+  ],
+  "id": "bell",
+  "ideas": [
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "ring",
+          "to": "self"
+        }
+      ],
+      "id": "ring_every",
+      "label": "Ring every 5 seconds",
+      "on": {
+        "event": "timer",
+        "every": 5
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "open",
+          "to": {
+            "filter": {
+              "tagsAny": [
+                "door"
+              ]
+            },
+            "from": "around",
+            "limit": 1,
+            "order": "nearest",
+            "r": 32,
+            "shape": "sphere"
+          }
+        }
+      ],
+      "id": "open_on_ring",
+      "label": "When rung, open the door",
+      "on": {
+        "event": "var",
+        "var": "self.rings"
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "if",
+          "cond": {
+            "cmp": {
+              "a": {
+                "read": "var:self.rings"
+              },
+              "b": 3,
+              "op": "=="
+            }
+          },
+          "then": [
+            {
+              "act": "signal",
+              "name": "light",
+              "to": {
+                "filter": {
+                  "tagsAny": [
+                    "lamp"
+                  ]
+                },
+                "from": "around",
+                "limit": 1,
+                "order": "nearest",
+                "r": 32,
+                "shape": "sphere"
+              }
+            }
+          ]
+        }
+      ],
+      "id": "lamp_on_three",
+      "label": "When rung 3 times, light the lamp",
+      "on": {
+        "event": "var",
+        "var": "self.rings"
+      }
+    }
+  ],
+  "kind": "gadget",
+  "label": "Bell",
+  "schemaVersion": 2,
+  "state": "still",
+  "states": {
+    "ringing": {
+      "label": "Ringing"
+    },
+    "still": {
+      "label": "Still"
+    }
+  },
+  "tags": [
+    "bell"
+  ]
+}

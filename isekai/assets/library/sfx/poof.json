@@ -1,0 +1,23 @@
+{
+  "id": "poof",
+  "kind": "synth",
+  "label": "Poof",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.4,
+    "decay": 0.25,
+    "duty": 0.5,
+    "freqRamp": -0.2,
+    "hpfFreq": 0,
+    "lpfFreq": 0.45,
+    "punch": 0.2,
+    "sustain": 0.06,
+    "wave": "noise"
+  },
+  "tags": [
+    "pop"
+  ]
+}

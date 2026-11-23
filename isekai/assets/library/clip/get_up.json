@@ -1,0 +1,12 @@
+{
+  "file": "get_up.vrma",
+  "group": "reactions",
+  "id": "get_up",
+  "label": "Get up",
+  "licence": "ual_2",
+  "loop": false,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 1.5333,
+  "since": 2
+}

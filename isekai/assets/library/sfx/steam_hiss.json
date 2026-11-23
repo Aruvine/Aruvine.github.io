@@ -1,0 +1,23 @@
+{
+  "id": "steam_hiss",
+  "kind": "synth",
+  "label": "Steam hiss",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0.05,
+    "baseFreq": 0.7,
+    "decay": 0.4,
+    "freqRamp": 0,
+    "hpfFreq": 0.4,
+    "lpfFreq": 0.9,
+    "punch": 0,
+    "sustain": 0.35,
+    "wave": "noise"
+  },
+  "tags": [
+    "blast"
+  ],
+  "volume": 0.7
+}

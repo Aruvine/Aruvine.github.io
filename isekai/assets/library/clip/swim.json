@@ -1,0 +1,12 @@
+{
+  "file": "swim.vrma",
+  "group": "locomotion",
+  "id": "swim",
+  "label": "Swim",
+  "licence": "ual_1",
+  "loop": true,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 1.3333,
+  "since": 2
+}

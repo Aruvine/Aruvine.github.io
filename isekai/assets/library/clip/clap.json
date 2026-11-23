@@ -1,0 +1,12 @@
+{
+  "file": "clap.vrma",
+  "group": "emotes",
+  "id": "clap",
+  "label": "Clap",
+  "licence": "own",
+  "loop": false,
+  "origin": "made",
+  "schemaVersion": 2,
+  "seconds": 2,
+  "since": 2
+}

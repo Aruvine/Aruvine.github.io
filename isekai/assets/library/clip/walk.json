@@ -1,0 +1,12 @@
+{
+  "file": "walk.vrma",
+  "group": "locomotion",
+  "id": "walk",
+  "label": "Walk",
+  "licence": "ual_1",
+  "loop": true,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 1.3333,
+  "since": 2
+}

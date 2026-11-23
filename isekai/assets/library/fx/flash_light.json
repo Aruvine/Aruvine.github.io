@@ -1,0 +1,36 @@
+{
+  "dials": [
+    {
+      "default": 6,
+      "id": "range",
+      "label": "Range",
+      "max": 20,
+      "min": 0.5,
+      "step": 0.5,
+      "unit": "m"
+    }
+  ],
+  "id": "flash_light",
+  "kind": "light",
+  "label": "Flash light",
+  "layers": [
+    {
+      "flash": 0.25,
+      "id": "flash",
+      "intensity": 3,
+      "prim": "light",
+      "range": {
+        "dial": "range"
+      }
+    }
+  ],
+  "life": 0.25,
+  "palette": {
+    "a": "#ffffff",
+    "b": "#ffffff"
+  },
+  "schemaVersion": 2,
+  "tags": [
+    "flash"
+  ]
+}

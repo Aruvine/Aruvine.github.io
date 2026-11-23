@@ -1,0 +1,13 @@
+{
+  "bytes": 170652,
+  "file": "monster_flying_armabee.glb",
+  "height": 1.89,
+  "id": "monster_flying_armabee",
+  "label": "Armabee (flying)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "18273d067d72f6db28c5421ad264872337dd6c39faa3ae01b342255e31ce63e3",
+  "triangles": 2280,
+  "yaw": 0
+}

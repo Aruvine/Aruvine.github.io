@@ -1,0 +1,12 @@
+{
+  "file": "transform_crouch.vrma",
+  "group": "caster",
+  "id": "transform_crouch",
+  "label": "Transform",
+  "licence": "own",
+  "loop": false,
+  "origin": "made",
+  "schemaVersion": 2,
+  "seconds": 2,
+  "since": 2
+}

@@ -1,0 +1,13 @@
+{
+  "bytes": 341688,
+  "file": "adventurer_knight.glb",
+  "height": 2.543,
+  "id": "adventurer_knight",
+  "label": "Adventurer: Knight",
+  "licence": "kaykit_adventurers",
+  "rig": "glbHumanoid",
+  "schemaVersion": 2,
+  "sha256": "e484370733824a0740683e7f6040aae0d20e5efd4107dde1175d6a2ad7e2f199",
+  "triangles": 5800,
+  "yaw": 0
+}

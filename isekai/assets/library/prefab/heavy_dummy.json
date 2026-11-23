@@ -1,0 +1,104 @@
+{
+  "c": {
+    "body": {
+      "kind": "kinematic"
+    },
+    "display": {
+      "kind": "healthBar"
+    },
+    "pools": {
+      "health": {
+        "max": 300
+      }
+    },
+    "shape": {
+      "model": "lib:model/adventurer_knight",
+      "outerMeshes": [
+        "Knight_Helmet",
+        "Knight_HelmetVisor",
+        "Knight_Cape"
+      ],
+      "scale": 0.79
+    }
+  },
+  "cards": [
+    {
+      "do": [
+        {
+          "act": "status",
+          "op": "add",
+          "seconds": 1,
+          "status": "blocking",
+          "who": "self"
+        }
+      ],
+      "id": "guard",
+      "label": "Every 3 seconds, block for 1 second",
+      "on": {
+        "event": "timer",
+        "every": 3
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "clip",
+          "clip": "lib:clip/punch_windup",
+          "layer": "upper",
+          "who": "self"
+        },
+        {
+          "act": "wait",
+          "s": 0.5
+        },
+        {
+          "act": "if",
+          "cond": {
+            "all": [
+              {
+                "where": {
+                  "m": 1.8,
+                  "of": "self",
+                  "test": "within",
+                  "who": "player"
+                }
+              },
+              {
+                "where": {
+                  "of": "self",
+                  "test": "inFront",
+                  "who": "player"
+                }
+              }
+            ]
+          },
+          "then": [
+            {
+              "act": "damage",
+              "amount": 10,
+              "part": "auto",
+              "to": "player"
+            }
+          ]
+        }
+      ],
+      "id": "swing",
+      "label": "Every 4 seconds, swing at the player in front",
+      "on": {
+        "event": "timer",
+        "every": 4
+      }
+    }
+  ],
+  "defeat": {
+    "exit": "smoke",
+    "seconds": 1.5
+  },
+  "id": "heavy_dummy",
+  "kind": "character",
+  "label": "Heavy dummy",
+  "schemaVersion": 2,
+  "tags": [
+    "dummy"
+  ]
+}

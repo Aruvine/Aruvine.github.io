@@ -1,0 +1,26 @@
+{
+  "id": "howl_short",
+  "kind": "synth",
+  "label": "Short howl",
+  "licence": "own",
+  "range": 40,
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0.2,
+    "baseFreq": 0.3,
+    "decay": 0.35,
+    "duty": 0.4,
+    "freqDramp": -0.1,
+    "freqRamp": 0.05,
+    "lpfFreq": 0.6,
+    "punch": 0,
+    "sustain": 0.25,
+    "vibSpeed": 0.35,
+    "vibStrength": 0.3,
+    "wave": "sawtooth"
+  },
+  "tags": [
+    "charge"
+  ]
+}

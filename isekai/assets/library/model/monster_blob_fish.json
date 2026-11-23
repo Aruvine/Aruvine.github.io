@@ -1,0 +1,13 @@
+{
+  "bytes": 156012,
+  "file": "monster_blob_fish.glb",
+  "height": 2.826,
+  "id": "monster_blob_fish",
+  "label": "Fish (blob)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "f61c30404b90821de8357db1f06316a89d6bed961da3f219d86f54e54a185c7a",
+  "triangles": 3346,
+  "yaw": 0
+}

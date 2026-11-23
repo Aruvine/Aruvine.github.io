@@ -1,0 +1,238 @@
+{
+  "ai": {
+    "use": "never"
+  },
+  "aim": {
+    "assistDeg": 5,
+    "from": "aim",
+    "origin": "triggerHand",
+    "range": {
+      "dial": "range"
+    }
+  },
+  "archetype": "movement",
+  "casterClip": {
+    "clip": "lib:clip/line_throw",
+    "layer": "upper",
+    "phase": "fly"
+  },
+  "dials": [
+    {
+      "default": 40,
+      "id": "range",
+      "label": "Range",
+      "max": 60,
+      "min": 5,
+      "unit": "m"
+    },
+    {
+      "default": 12,
+      "id": "reel_speed",
+      "label": "Reel speed",
+      "max": 25,
+      "min": 3,
+      "unit": "m/s"
+    },
+    {
+      "default": 0.3,
+      "id": "cooldown",
+      "label": "Cooldown",
+      "max": 5,
+      "min": 0.1,
+      "unit": "s"
+    }
+  ],
+  "gate": {
+    "blockedBy": [
+      "stunned",
+      "held",
+      "down"
+    ],
+    "cooldown": {
+      "dial": "cooldown"
+    },
+    "perHand": true
+  },
+  "icon": "lib:icon/hook",
+  "id": "movement",
+  "label": "Grapple line",
+  "phases": [
+    {
+      "blocks": [
+        {
+          "do": {
+            "act": "tether",
+            "from": {
+              "socket": "triggerHand"
+            },
+            "hookOn": "hookable",
+            "line": "lib:fx/steel_line",
+            "op": "out",
+            "range": {
+              "dial": "range"
+            },
+            "speed": 60,
+            "who": "caster"
+          },
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "sound",
+            "at": {
+              "of": "caster"
+            },
+            "op": "play",
+            "sound": "lib:sfx/line_shot"
+          },
+          "t": 0
+        }
+      ],
+      "exits": [
+        {
+          "on": "lineHooked",
+          "to": "hang"
+        },
+        {
+          "on": "lineMissed",
+          "to": "end"
+        },
+        {
+          "on": "time",
+          "to": "end"
+        }
+      ],
+      "id": "fly",
+      "label": "Hook flies",
+      "max": 0.7
+    },
+    {
+      "blocks": [
+        {
+          "do": {
+            "act": "tether",
+            "op": "hold",
+            "swing": true,
+            "who": "caster"
+          },
+          "t": 0
+        }
+      ],
+      "exits": [
+        {
+          "on": "pressed",
+          "to": "tap"
+        },
+        {
+          "if": {
+            "all": [
+              {
+                "input": {
+                  "is": "held"
+                }
+              },
+              {
+                "not": {
+                  "arrived": {}
+                }
+              }
+            ]
+          },
+          "on": "cond",
+          "to": "reel"
+        },
+        {
+          "on": "time",
+          "to": "end"
+        }
+      ],
+      "id": "hang",
+      "label": "Hang",
+      "max": 60
+    },
+    {
+      "blocks": [],
+      "exits": [
+        {
+          "on": "released",
+          "to": "end"
+        },
+        {
+          "on": "time",
+          "to": "reel"
+        }
+      ],
+      "id": "tap",
+      "label": "Let go or reel",
+      "max": 0.25
+    },
+    {
+      "blocks": [
+        {
+          "do": {
+            "act": "tether",
+            "op": "pull",
+            "speed": {
+              "dial": "reel_speed"
+            },
+            "what": "caster",
+            "who": "caster"
+          },
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "sound",
+            "at": {
+              "of": "caster"
+            },
+            "op": "loop",
+            "sound": "lib:sfx/wind_rush"
+          },
+          "label": "Wind sound",
+          "len": 10,
+          "t": 0
+        }
+      ],
+      "exits": [
+        {
+          "on": "released",
+          "to": "hang"
+        },
+        {
+          "on": "arrived",
+          "to": "hang"
+        },
+        {
+          "on": "blocked",
+          "to": "hang"
+        },
+        {
+          "on": "time",
+          "to": "hang"
+        }
+      ],
+      "id": "reel",
+      "label": "Reel in",
+      "max": 10
+    }
+  ],
+  "schemaVersion": 2,
+  "tags": [
+    "movement"
+  ],
+  "trigger": {
+    "input": {
+      "button": {
+        "act": "slot",
+        "edge": "press"
+      },
+      "hand": {
+        "hand": "either",
+        "minSpeed": 2.5,
+        "motion": "throw"
+      }
+    },
+    "kind": "press"
+  }
+}

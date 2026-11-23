@@ -1,0 +1,46 @@
+{
+  "dials": [
+    {
+      "default": 0.6,
+      "id": "amount",
+      "label": "Amount",
+      "max": 1,
+      "min": 0,
+      "step": 0.05,
+      "unit": ""
+    },
+    {
+      "default": 1,
+      "id": "life",
+      "label": "Lasts",
+      "max": 10,
+      "min": 0.05,
+      "step": 0.05,
+      "unit": "s"
+    }
+  ],
+  "id": "vignette_dark",
+  "kind": "screen",
+  "label": "Vignette dark",
+  "layers": [
+    {
+      "amount": {
+        "dial": "amount"
+      },
+      "color": "a",
+      "id": "screen",
+      "kind": "vignette",
+      "prim": "screen",
+      "seconds": 1
+    }
+  ],
+  "life": 0,
+  "palette": {
+    "a": "#000000",
+    "b": "#1a0c30"
+  },
+  "schemaVersion": 2,
+  "tags": [
+    "mood"
+  ]
+}

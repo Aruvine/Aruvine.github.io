@@ -1,0 +1,12 @@
+{
+  "file": "raise_command.vrma",
+  "group": "caster",
+  "id": "raise_command",
+  "label": "Command to rise",
+  "licence": "own",
+  "loop": false,
+  "origin": "made",
+  "schemaVersion": 2,
+  "seconds": 1.6,
+  "since": 2
+}

@@ -1,0 +1,17 @@
+{
+  "bytes": 4564,
+  "channels": 1,
+  "file": "impact_metal.ogg",
+  "id": "impact_metal",
+  "kind": "sample",
+  "label": "Metal impact",
+  "licence": "kenney_impact",
+  "range": 30,
+  "schemaVersion": 2,
+  "seconds": 0.168,
+  "sha256": "c6161d146d5628298b4a25551c43014eb023bc4ed84bd7ff6efd5008ffd9f5e0",
+  "since": 2,
+  "tags": [
+    "impact"
+  ]
+}

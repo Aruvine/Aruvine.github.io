@@ -1,0 +1,58 @@
+{
+  "dials": [
+    {
+      "default": 4,
+      "id": "size",
+      "label": "Size",
+      "max": 16,
+      "min": 1,
+      "step": 0.5,
+      "unit": "m"
+    }
+  ],
+  "id": "ward_wall",
+  "kind": "shell",
+  "label": "Ward wall",
+  "layers": [
+    {
+      "blend": "cutout",
+      "color": "a",
+      "fade": 0,
+      "id": "wall",
+      "mesh": "beamQuad",
+      "prim": "shape",
+      "role": "core",
+      "size": {
+        "dial": "size"
+      }
+    },
+    {
+      "blend": "add",
+      "color": "b",
+      "dir": "up",
+      "from": "disc",
+      "fromR": {
+        "dial": "size",
+        "times": 0.5
+      },
+      "id": "motes",
+      "mode": "stream",
+      "particleLife": 1,
+      "prim": "sprites",
+      "rate": 6,
+      "size": 0.05,
+      "sizeEnd": 0,
+      "speed": 0.4,
+      "sprite": "mote"
+    }
+  ],
+  "life": 0,
+  "palette": {
+    "a": "#ffd860",
+    "b": "#fff6c8"
+  },
+  "schemaVersion": 2,
+  "tags": [
+    "shield"
+  ]
+}

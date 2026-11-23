@@ -1,0 +1,23 @@
+{
+  "id": "dash",
+  "kind": "synth",
+  "label": "Dash",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0.02,
+    "baseFreq": 0.5,
+    "decay": 0.18,
+    "freqRamp": 0.1,
+    "hpfFreq": 0.08,
+    "lpfFreq": 0.55,
+    "lpfRamp": -0.2,
+    "punch": 0,
+    "sustain": 0.06,
+    "wave": "noise"
+  },
+  "tags": [
+    "whoosh"
+  ]
+}

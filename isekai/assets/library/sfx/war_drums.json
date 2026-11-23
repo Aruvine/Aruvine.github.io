@@ -1,0 +1,20 @@
+{
+  "bus": "ambient",
+  "bytes": 176444,
+  "channels": 1,
+  "file": "war_drums.wav",
+  "id": "war_drums",
+  "kind": "sample",
+  "label": "War drums",
+  "licence": "own",
+  "loop": true,
+  "maxVoices": 1,
+  "range": 60,
+  "schemaVersion": 2,
+  "seconds": 4,
+  "sha256": "5818a9c158831a4b0eda88c8b958a05a0a807f7d4adc142233ffd67c3db90614",
+  "since": 2,
+  "tags": [
+    "drums"
+  ]
+}

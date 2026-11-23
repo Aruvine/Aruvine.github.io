@@ -1,0 +1,26 @@
+{
+  "id": "wind_rush",
+  "kind": "synth",
+  "label": "Wind rush",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0.3,
+    "baseFreq": 0.5,
+    "decay": 0.4,
+    "freqRamp": 0.1,
+    "hpfFreq": 0.08,
+    "lpfFreq": 0.25,
+    "lpfRamp": 0.05,
+    "punch": 0,
+    "sustain": 0.4,
+    "vibSpeed": 0.2,
+    "vibStrength": 0.3,
+    "wave": "noise"
+  },
+  "tags": [
+    "whoosh"
+  ],
+  "volume": 0.8
+}

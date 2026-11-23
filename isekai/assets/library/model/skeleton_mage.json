@@ -1,0 +1,13 @@
+{
+  "bytes": 265676,
+  "file": "skeleton_mage.glb",
+  "height": 2.63,
+  "id": "skeleton_mage",
+  "label": "Skeleton Mage",
+  "licence": "kaykit_skeletons",
+  "rig": "glbHumanoid",
+  "schemaVersion": 2,
+  "sha256": "aee903d0febd151dbc49a4784ad4135862b20c1b025bf433b98a08d52e5f7849",
+  "triangles": 4588,
+  "yaw": 0
+}

@@ -1,0 +1,462 @@
+{
+  "items": [
+    {
+      "characters": {
+        "outlineWidthMultiplier": 1,
+        "rim": 0.2,
+        "shadeShift": 0,
+        "toonyMultiplier": 1.1
+      },
+      "dataOnly": false,
+      "grade": {
+        "contrast": 1.05,
+        "posterize": 0,
+        "saturation": 1.15,
+        "tint": "#fff8ec"
+      },
+      "id": "sunnyCel",
+      "label": "Sunny Cel",
+      "outline": {
+        "color": "#1e1a2a",
+        "mode": "characters",
+        "width": 1.5
+      },
+      "palette": {},
+      "pattern": {
+        "kind": "none",
+        "scale": 0.1
+      },
+      "ramp": {
+        "positions": [
+          0.35,
+          0.7
+        ],
+        "shadeTint": "#6a74b8",
+        "softness": 0.08,
+        "steps": 3
+      },
+      "sky": "clearDay",
+      "water": "#2f86c8"
+    },
+    {
+      "characters": {
+        "outlineWidthMultiplier": 1.4,
+        "rim": 0,
+        "shadeShift": -0.1,
+        "toonyMultiplier": 0.8
+      },
+      "dataOnly": false,
+      "grade": {
+        "contrast": 1.2,
+        "posterize": 0,
+        "saturation": 0.25,
+        "tint": "#f2eee2"
+      },
+      "id": "inkWash",
+      "label": "Ink Wash",
+      "outline": {
+        "color": "#141414",
+        "mode": "all",
+        "width": 2
+      },
+      "palette": {},
+      "pattern": {
+        "kind": "hatch",
+        "scale": 0.06
+      },
+      "ramp": {
+        "positions": [
+          0.2,
+          0.45,
+          0.75
+        ],
+        "shadeTint": "#3a3a44",
+        "softness": 0.35,
+        "steps": 4
+      },
+      "sky": "softOvercast",
+      "water": "#5a6a72"
+    },
+    {
+      "characters": {
+        "outlineWidthMultiplier": 1,
+        "rim": 0.8,
+        "shadeShift": 0.1,
+        "toonyMultiplier": 1.3
+      },
+      "dataOnly": false,
+      "grade": {
+        "contrast": 1.25,
+        "posterize": 0,
+        "saturation": 1.5,
+        "tint": "#d8e0ff"
+      },
+      "id": "neonNight",
+      "label": "Neon Night",
+      "outline": {
+        "color": "#ff4ad8",
+        "mode": "all",
+        "width": 1.5
+      },
+      "palette": {},
+      "pattern": {
+        "kind": "none",
+        "scale": 0.1
+      },
+      "ramp": {
+        "positions": [
+          0.5
+        ],
+        "shadeTint": "#3a1a6a",
+        "softness": 0.05,
+        "steps": 2
+      },
+      "sky": "deepNight",
+      "water": "#14305a"
+    },
+    {
+      "characters": {
+        "outlineWidthMultiplier": 0.8,
+        "rim": 0.3,
+        "shadeShift": 0.15,
+        "toonyMultiplier": 0.9
+      },
+      "dataOnly": false,
+      "grade": {
+        "contrast": 0.85,
+        "posterize": 0,
+        "saturation": 0.75,
+        "tint": "#fff0f4"
+      },
+      "id": "pastelDay",
+      "label": "Pastel Day",
+      "outline": {
+        "color": "#6a5a80",
+        "mode": "characters",
+        "width": 1
+      },
+      "palette": {},
+      "pattern": {
+        "kind": "none",
+        "scale": 0.1
+      },
+      "ramp": {
+        "positions": [
+          0.3,
+          0.65
+        ],
+        "shadeTint": "#b0a0d8",
+        "softness": 0.3,
+        "steps": 3
+      },
+      "sky": "pinkDawn",
+      "water": "#8ac8e0"
+    },
+    {
+      "characters": {
+        "outlineWidthMultiplier": 1,
+        "rim": 0.5,
+        "shadeShift": -0.05,
+        "toonyMultiplier": 1.1
+      },
+      "dataOnly": false,
+      "grade": {
+        "contrast": 1.1,
+        "posterize": 0,
+        "saturation": 1.2,
+        "tint": "#ffd8b0"
+      },
+      "id": "duskEmber",
+      "label": "Dusk Ember",
+      "outline": {
+        "color": "#2a1010",
+        "mode": "characters",
+        "width": 1.5
+      },
+      "palette": {},
+      "pattern": {
+        "kind": "none",
+        "scale": 0.1
+      },
+      "ramp": {
+        "positions": [
+          0.4,
+          0.72
+        ],
+        "shadeTint": "#7a3a5a",
+        "softness": 0.12,
+        "steps": 3
+      },
+      "sky": "goldenDusk",
+      "water": "#4a3a5a"
+    },
+    {
+      "characters": {
+        "outlineWidthMultiplier": 1.6,
+        "rim": 0,
+        "shadeShift": 0,
+        "toonyMultiplier": 1.5
+      },
+      "dataOnly": false,
+      "grade": {
+        "contrast": 1.4,
+        "posterize": 4,
+        "saturation": 0,
+        "tint": "#ffffff"
+      },
+      "id": "monoManga",
+      "label": "Mono Manga",
+      "outline": {
+        "color": "#000000",
+        "mode": "all",
+        "width": 2.5
+      },
+      "palette": {},
+      "pattern": {
+        "kind": "dots",
+        "scale": 0.04
+      },
+      "ramp": {
+        "positions": [
+          0.45
+        ],
+        "shadeTint": "#303030",
+        "softness": 0,
+        "steps": 2
+      },
+      "sky": "softOvercast",
+      "water": "#808080"
+    },
+    {
+      "characters": {
+        "outlineWidthMultiplier": 0.9,
+        "rim": 0.1,
+        "shadeShift": 0.05,
+        "toonyMultiplier": 0.9
+      },
+      "dataOnly": false,
+      "grade": {
+        "contrast": 0.95,
+        "posterize": 12,
+        "saturation": 0.95,
+        "tint": "#f8ecd4"
+      },
+      "id": "storybook",
+      "label": "Storybook",
+      "outline": {
+        "color": "#4a3020",
+        "mode": "all",
+        "width": 1
+      },
+      "palette": {},
+      "pattern": {
+        "kind": "hatch",
+        "scale": 0.12
+      },
+      "ramp": {
+        "positions": [
+          0.15,
+          0.35,
+          0.6,
+          0.82
+        ],
+        "shadeTint": "#8a6a5a",
+        "softness": 0.4,
+        "steps": 5
+      },
+      "sky": "clearDay",
+      "water": "#3a8aa8"
+    },
+    {
+      "characters": {
+        "outlineWidthMultiplier": 0,
+        "rim": 0.4,
+        "shadeShift": -0.15,
+        "toonyMultiplier": 1
+      },
+      "dataOnly": false,
+      "grade": {
+        "contrast": 1.15,
+        "posterize": 0,
+        "saturation": 0.6,
+        "tint": "#dce8f4"
+      },
+      "id": "coldSteel",
+      "label": "Cold Steel",
+      "outline": {
+        "color": "#10141a",
+        "mode": "none",
+        "width": 0
+      },
+      "palette": {},
+      "pattern": {
+        "kind": "none",
+        "scale": 0.1
+      },
+      "ramp": {
+        "positions": [
+          0.3,
+          0.6
+        ],
+        "shadeTint": "#3a4a60",
+        "softness": 0.15,
+        "steps": 3
+      },
+      "sky": "stormGrey",
+      "water": "#2a3a48"
+    },
+    {
+      "characters": {
+        "outlineWidthMultiplier": 1.3,
+        "rim": 0.1,
+        "shadeShift": 0,
+        "toonyMultiplier": 1.4
+      },
+      "dataOnly": true,
+      "grade": {
+        "contrast": 1.1,
+        "posterize": 8,
+        "saturation": 0.9,
+        "tint": "#f4e4c4"
+      },
+      "id": "retroCel",
+      "label": "Retro Cel",
+      "outline": {
+        "color": "#2a1a1a",
+        "mode": "characters",
+        "width": 2
+      },
+      "palette": {},
+      "pattern": {
+        "kind": "dots",
+        "scale": 0.08
+      },
+      "ramp": {
+        "positions": [
+          0.55
+        ],
+        "shadeTint": "#5a4a7a",
+        "softness": 0.02,
+        "steps": 2
+      },
+      "sky": "goldenDusk",
+      "water": "#3a6a9a"
+    },
+    {
+      "characters": {
+        "outlineWidthMultiplier": 0.9,
+        "rim": 0.35,
+        "shadeShift": 0.1,
+        "toonyMultiplier": 1
+      },
+      "dataOnly": true,
+      "grade": {
+        "contrast": 0.95,
+        "posterize": 0,
+        "saturation": 1.05,
+        "tint": "#ffeaf0"
+      },
+      "id": "sakuraSpring",
+      "label": "Sakura Spring",
+      "outline": {
+        "color": "#7a3a5a",
+        "mode": "characters",
+        "width": 1
+      },
+      "palette": {},
+      "pattern": {
+        "kind": "none",
+        "scale": 0.1
+      },
+      "ramp": {
+        "positions": [
+          0.32,
+          0.68
+        ],
+        "shadeTint": "#c08ab0",
+        "softness": 0.22,
+        "steps": 3
+      },
+      "sky": "pinkDawn",
+      "water": "#6ab4d8"
+    },
+    {
+      "characters": {
+        "outlineWidthMultiplier": 1,
+        "rim": 0.25,
+        "shadeShift": -0.1,
+        "toonyMultiplier": 1
+      },
+      "dataOnly": true,
+      "grade": {
+        "contrast": 1.05,
+        "posterize": 0,
+        "saturation": 0.9,
+        "tint": "#e4f4dc"
+      },
+      "id": "forestShade",
+      "label": "Forest Shade",
+      "outline": {
+        "color": "#14261a",
+        "mode": "characters",
+        "width": 1.2
+      },
+      "palette": {},
+      "pattern": {
+        "kind": "hatch",
+        "scale": 0.15
+      },
+      "ramp": {
+        "positions": [
+          0.25,
+          0.5,
+          0.78
+        ],
+        "shadeTint": "#2a4a3a",
+        "softness": 0.2,
+        "steps": 4
+      },
+      "sky": "mistyMorning",
+      "water": "#2a5a4a"
+    },
+    {
+      "characters": {
+        "outlineWidthMultiplier": 0,
+        "rim": 0.3,
+        "shadeShift": 0.05,
+        "toonyMultiplier": 1.1
+      },
+      "dataOnly": true,
+      "grade": {
+        "contrast": 1.15,
+        "posterize": 0,
+        "saturation": 1.1,
+        "tint": "#fff0d0"
+      },
+      "id": "desertSun",
+      "label": "Desert Sun",
+      "outline": {
+        "color": "#3a2010",
+        "mode": "none",
+        "width": 0
+      },
+      "palette": {},
+      "pattern": {
+        "kind": "none",
+        "scale": 0.1
+      },
+      "ramp": {
+        "positions": [
+          0.38,
+          0.74
+        ],
+        "shadeTint": "#9a6a4a",
+        "softness": 0.1,
+        "steps": 3
+      },
+      "sky": "desertNoon",
+      "water": "#2a9ab0"
+    }
+  ],
+  "schemaVersion": 2
+}

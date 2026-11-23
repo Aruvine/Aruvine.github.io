@@ -1,0 +1,81 @@
+{
+  "c": {
+    "body": {
+      "kind": "dynamic",
+      "mass": 40
+    },
+    "display": {
+      "kind": "healthBar"
+    },
+    "emitter": {
+      "effect": "lib:fx/magic_glow",
+      "socket": "back"
+    },
+    "parts": {
+      "default": {
+        "mul": 0.5
+      },
+      "list": [
+        {
+          "id": "weak_spot",
+          "label": "Weak spot",
+          "mul": 4,
+          "onlyFrom": {
+            "deg": 60
+          },
+          "shape": {
+            "sphere": 0.4
+          },
+          "socket": "back"
+        }
+      ]
+    },
+    "pools": {
+      "health": {
+        "max": 100
+      }
+    },
+    "shape": {
+      "model": "lib:model/adventurer_mage",
+      "outerMeshes": [
+        "Mage_Hat",
+        "Mage_Cape"
+      ],
+      "scale": 0.68
+    }
+  },
+  "defeat": {
+    "exit": "smoke",
+    "seconds": 1.5
+  },
+  "id": "training_dummy",
+  "ideas": [
+    {
+      "do": [
+        {
+          "act": "spawn",
+          "at": {
+            "ring": {
+              "around": "self",
+              "r": 1.5
+            }
+          },
+          "count": 3,
+          "what": "lib:prefab/training_dummy"
+        }
+      ],
+      "id": "more_on_defeat",
+      "label": "When defeated, create 3 more",
+      "on": {
+        "event": "defeated",
+        "who": "self"
+      }
+    }
+  ],
+  "kind": "character",
+  "label": "Training dummy",
+  "schemaVersion": 2,
+  "tags": [
+    "dummy"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "bytes": 4683,
+  "channels": 1,
+  "file": "body_fall.ogg",
+  "id": "body_fall",
+  "kind": "sample",
+  "label": "Body falls",
+  "licence": "kenney_impact",
+  "range": 25,
+  "schemaVersion": 2,
+  "seconds": 0.53,
+  "sha256": "32d4dbec6c06afd700eb92ab7c6f87aa7043f44b1d3123ca921ef90f411fccf4",
+  "since": 2,
+  "tags": [
+    "impact"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "id": "energy_loop",
+  "kind": "synth",
+  "label": "Energy loop",
+  "licence": "own",
+  "loop": true,
+  "maxVoices": 2,
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0.1,
+    "baseFreq": 0.25,
+    "decay": 0.1,
+    "duty": 0.4,
+    "freqRamp": 0,
+    "lpfFreq": 0.5,
+    "punch": 0,
+    "sustain": 0.7,
+    "vibSpeed": 0.55,
+    "vibStrength": 0.35,
+    "wave": "sawtooth"
+  },
+  "tags": [
+    "charge"
+  ]
+}

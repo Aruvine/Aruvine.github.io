@@ -1,0 +1,15 @@
+{
+  "curls": {
+    "index": 0,
+    "little": 1,
+    "middle": 0,
+    "ring": 1,
+    "thumb": 0.8
+  },
+  "id": "peace",
+  "label": "Peace",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 4,
+  "spread": 1
+}

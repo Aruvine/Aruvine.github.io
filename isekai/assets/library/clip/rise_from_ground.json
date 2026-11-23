@@ -1,0 +1,12 @@
+{
+  "file": "rise_from_ground.vrma",
+  "group": "caster",
+  "id": "rise_from_ground",
+  "label": "Rise from the ground",
+  "licence": "kaykit_animations",
+  "loop": false,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 1.3,
+  "since": 2
+}

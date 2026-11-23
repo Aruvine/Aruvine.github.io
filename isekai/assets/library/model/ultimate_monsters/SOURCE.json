@@ -1,0 +1,14 @@
+{
+  "pack": "ultimate_monsters",
+  "publisher": "Quaternius",
+  "title": "Ultimate Monsters",
+  "tier": "Standard",
+  "version": "",
+  "licence": "CC0-1.0",
+  "page": "https://quaternius.com/packs/ultimatemonsters.html",
+  "licenceQuote": "License CC0",
+  "fetchedOn": "2026-11-14",
+  "zipSha256": "8dc5f04b8c7c491b2fd0c606305af3ce132a7737d97e1ada273dc496fcbb1fbd",
+  "files": 30,
+  "use": "creature"
+}

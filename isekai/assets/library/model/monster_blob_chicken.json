@@ -1,0 +1,13 @@
+{
+  "bytes": 137600,
+  "file": "monster_blob_chicken.glb",
+  "height": 2.394,
+  "id": "monster_blob_chicken",
+  "label": "Chicken (blob)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "ecba48d6eaa3c0a1112a3b12ee0648b1b5fe0235cf7ae6603a999a70f6e5f70c",
+  "triangles": 2904,
+  "yaw": 0
+}

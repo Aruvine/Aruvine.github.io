@@ -1,0 +1,24 @@
+{
+  "id": "pluck",
+  "kind": "synth",
+  "label": "Pluck",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.4,
+    "decay": 0.3,
+    "duty": 0.5,
+    "freqRamp": 0,
+    "hpfFreq": 0.05,
+    "lpfFreq": 0.5,
+    "lpfRamp": -0.2,
+    "punch": 0.6,
+    "sustain": 0.01,
+    "wave": "sawtooth"
+  },
+  "tags": [
+    "pop"
+  ]
+}

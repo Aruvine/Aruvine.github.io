@@ -1,0 +1,13 @@
+{
+  "bytes": 160756,
+  "file": "monster_blob_mushnub_evolved.glb",
+  "height": 4.461,
+  "id": "monster_blob_mushnub_evolved",
+  "label": "Mushnub Evolved (blob)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "6f8743e212f25c6f219e2d94cd41475fd20e430a8b8139cdb3c9f09ce1d16eef",
+  "triangles": 3072,
+  "yaw": 0
+}

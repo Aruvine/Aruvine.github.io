@@ -1,0 +1,448 @@
+{
+  "items": [
+    {
+      "bytes": 21520,
+      "collider": "box",
+      "grid": 2,
+      "id": "ground_tile",
+      "kind": "piece",
+      "kit": "core",
+      "label": "Ground tile",
+      "licence": "platformer_kit",
+      "lods": 1,
+      "materials": 1,
+      "sha256": [
+        "383537852da08bccf69278fe94300f14f223f75ad64359025f2615f36467db5f"
+      ],
+      "since": 1,
+      "size": [
+        2,
+        0.48,
+        2
+      ],
+      "sockets": [
+        {
+          "at": [
+            0,
+            0.48,
+            -1
+          ],
+          "dir": [
+            0,
+            0,
+            -1
+          ],
+          "id": "edge_n",
+          "kind": "floorEdge"
+        },
+        {
+          "at": [
+            1,
+            0.48,
+            0
+          ],
+          "dir": [
+            1,
+            0,
+            0
+          ],
+          "id": "edge_e",
+          "kind": "floorEdge"
+        },
+        {
+          "at": [
+            0,
+            0.48,
+            1
+          ],
+          "dir": [
+            0,
+            0,
+            1
+          ],
+          "id": "edge_s",
+          "kind": "floorEdge"
+        },
+        {
+          "at": [
+            -1,
+            0.48,
+            0
+          ],
+          "dir": [
+            -1,
+            0,
+            0
+          ],
+          "id": "edge_w",
+          "kind": "floorEdge"
+        }
+      ],
+      "tags": [
+        "ground"
+      ],
+      "theme": "core",
+      "triangles": 92
+    },
+    {
+      "bytes": 18116,
+      "collider": "box",
+      "grid": 1,
+      "id": "wall",
+      "kind": "piece",
+      "kit": "core",
+      "label": "Wall",
+      "licence": "graveyard_kit",
+      "lods": 1,
+      "materials": 1,
+      "sha256": [
+        "f5b98e0318d564078b6859c5656381fde65f6809c3f17fde255f370db3cf78c0"
+      ],
+      "since": 1,
+      "size": [
+        2,
+        1.45,
+        0.4
+      ],
+      "sockets": [
+        {
+          "at": [
+            -1,
+            0,
+            0
+          ],
+          "dir": [
+            -1,
+            0,
+            0
+          ],
+          "id": "end_a",
+          "kind": "wallEnd"
+        },
+        {
+          "at": [
+            1,
+            0,
+            0
+          ],
+          "dir": [
+            1,
+            0,
+            0
+          ],
+          "id": "end_b",
+          "kind": "wallEnd"
+        }
+      ],
+      "tags": [
+        "wall",
+        "stone"
+      ],
+      "theme": "core",
+      "triangles": 60
+    },
+    {
+      "bytes": 51132,
+      "collider": "box",
+      "grid": 1,
+      "id": "fence",
+      "kind": "piece",
+      "kit": "core",
+      "label": "Fence",
+      "licence": "graveyard_kit",
+      "lods": 1,
+      "materials": 1,
+      "sha256": [
+        "5d774ec9e2a73ba556c72c28edcff643689a85e8617bf7360e945e6496339d0f"
+      ],
+      "since": 1,
+      "size": [
+        2,
+        1.24,
+        0.37
+      ],
+      "sockets": [
+        {
+          "at": [
+            -1,
+            0,
+            0
+          ],
+          "dir": [
+            -1,
+            0,
+            0
+          ],
+          "id": "end_a",
+          "kind": "wallEnd"
+        },
+        {
+          "at": [
+            1,
+            0,
+            0
+          ],
+          "dir": [
+            1,
+            0,
+            0
+          ],
+          "id": "end_b",
+          "kind": "wallEnd"
+        }
+      ],
+      "tags": [
+        "fence",
+        "wood"
+      ],
+      "theme": "core",
+      "triangles": 432
+    },
+    {
+      "bytes": 25632,
+      "collider": "box",
+      "grid": 0.5,
+      "id": "crate",
+      "kind": "piece",
+      "kit": "core",
+      "label": "Crate",
+      "licence": "platformer_kit",
+      "lods": 1,
+      "materials": 1,
+      "sha256": [
+        "49d82b414798a58137fdf2f856897d57d663c98e58497256f7a852d54a23163f"
+      ],
+      "since": 1,
+      "size": [
+        1,
+        1,
+        1
+      ],
+      "sockets": [
+        {
+          "at": [
+            0,
+            1,
+            0
+          ],
+          "dir": [
+            0,
+            1,
+            0
+          ],
+          "id": "top",
+          "kind": "stack"
+        },
+        {
+          "at": [
+            0,
+            0,
+            0
+          ],
+          "dir": [
+            0,
+            -1,
+            0
+          ],
+          "id": "bottom",
+          "kind": "stack"
+        }
+      ],
+      "tags": [
+        "prop",
+        "wood"
+      ],
+      "theme": "core",
+      "triangles": 156
+    },
+    {
+      "bytes": 54056,
+      "collider": "hull",
+      "grid": 1,
+      "id": "tree",
+      "kind": "piece",
+      "kit": "core",
+      "label": "Tree",
+      "licence": "platformer_kit",
+      "lods": 1,
+      "materials": 1,
+      "sha256": [
+        "c8d1976cfff6994797c7102287e1bad8f8dff7c0513c5d55cbdfe752d44d1cea"
+      ],
+      "since": 1,
+      "size": [
+        2.72,
+        4.83,
+        2.77
+      ],
+      "tags": [
+        "nature"
+      ],
+      "theme": "core",
+      "triangles": 408
+    },
+    {
+      "bytes": 48044,
+      "collider": "hull",
+      "grid": 0.5,
+      "id": "rock",
+      "kind": "piece",
+      "kit": "core",
+      "label": "Rock",
+      "licence": "graveyard_kit",
+      "lods": 1,
+      "materials": 1,
+      "sha256": [
+        "6c58f1c511111e03daac916b7c8ae39f222d599cd6ad6ba37512bef44ef9dd35"
+      ],
+      "since": 1,
+      "size": [
+        1.61,
+        0.57,
+        1.45
+      ],
+      "tags": [
+        "nature",
+        "stone"
+      ],
+      "theme": "core",
+      "triangles": 364
+    },
+    {
+      "bytes": 45664,
+      "collider": "box",
+      "grid": 0.5,
+      "id": "lamp",
+      "kind": "piece",
+      "kit": "core",
+      "label": "Lamp post",
+      "licence": "graveyard_kit",
+      "lods": 1,
+      "materials": 1,
+      "sha256": [
+        "a0a917f70d38d528d348ff12fb42991edf3d1621cf271fc16f8e9e39ada2568a"
+      ],
+      "since": 1,
+      "size": [
+        0.42,
+        2.53,
+        0.93
+      ],
+      "tags": [
+        "light"
+      ],
+      "theme": "core",
+      "triangles": 352
+    },
+    {
+      "bytes": 4880,
+      "collider": "none",
+      "grid": 0.5,
+      "id": "glow",
+      "kind": "piece",
+      "kit": "core",
+      "label": "Glow",
+      "licence": "own",
+      "lods": 1,
+      "materials": 1,
+      "sha256": [
+        "a8efe789577fe580fe7513282bfa5a482eabf03b7115dde0e45782f1da14ee7b"
+      ],
+      "since": 1,
+      "size": [
+        0.5,
+        0.5,
+        0.5
+      ],
+      "tags": [
+        "light"
+      ],
+      "theme": "core",
+      "triangles": 192
+    },
+    {
+      "bytes": 39964,
+      "collider": "box",
+      "grid": 1,
+      "id": "gate",
+      "kind": "piece",
+      "kit": "core",
+      "label": "Gate",
+      "licence": "graveyard_kit",
+      "lods": 1,
+      "materials": 1,
+      "sha256": [
+        "7a20c9fb27274c6b87d58e0bd8d0e90841e57089c70bb7d97772a347098bdd7f"
+      ],
+      "since": 1,
+      "size": [
+        2,
+        1.24,
+        0.41
+      ],
+      "sockets": [
+        {
+          "at": [
+            -1,
+            0,
+            0
+          ],
+          "dir": [
+            -1,
+            0,
+            0
+          ],
+          "id": "end_a",
+          "kind": "wallEnd"
+        },
+        {
+          "at": [
+            1,
+            0,
+            0
+          ],
+          "dir": [
+            1,
+            0,
+            0
+          ],
+          "id": "end_b",
+          "kind": "wallEnd"
+        }
+      ],
+      "tags": [
+        "gate",
+        "fence"
+      ],
+      "theme": "core",
+      "triangles": 296
+    },
+    {
+      "bytes": 7964,
+      "collider": "box",
+      "grid": 0.5,
+      "id": "bell",
+      "kind": "piece",
+      "kit": "core",
+      "label": "Bell",
+      "licence": "own",
+      "lods": 1,
+      "materials": 1,
+      "sha256": [
+        "913b15f3ae61cc1b7258f7e021374780620261fbbf138cf9bbf839f166f1e5c4"
+      ],
+      "since": 1,
+      "size": [
+        0.8,
+        1,
+        0.8
+      ],
+      "tags": [
+        "gadget"
+      ],
+      "theme": "core",
+      "triangles": 352
+    }
+  ],
+  "schemaVersion": 2
+}

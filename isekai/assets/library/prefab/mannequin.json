@@ -1,0 +1,17 @@
+{
+  "c": {
+    "body": {
+      "kind": "static"
+    },
+    "shape": {
+      "model": "lib:model/mannequin"
+    }
+  },
+  "id": "mannequin",
+  "kind": "character",
+  "label": "Mannequin",
+  "schemaVersion": 2,
+  "tags": [
+    "mannequin"
+  ]
+}

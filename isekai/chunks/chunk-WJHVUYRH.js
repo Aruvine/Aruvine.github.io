@@ -1,0 +1,2 @@
+function n(t,e,s){return{...t.snapshot(),instances:[],slot:e,savedAt:s}}function l(t,e,s,r=a){return t.write(n(e,s,r()))}function a(){return new Date().toISOString().replace(/\.\d{3}Z$/,"Z")}var i=class{constructor(e,s=6e4){this.save=e;this.everyMs=s}save;everyMs;last=null;busy=!1;async afterSteps(e){if(this.last===null&&(this.last=e),this.busy||e-this.last<this.everyMs)return null;this.busy=!0,this.last=e;try{return await this.save()}finally{this.busy=!1}}reset(e){this.last=e}};export{l as a,a as b,i as c};
+//# sourceMappingURL=chunk-WJHVUYRH.js.map

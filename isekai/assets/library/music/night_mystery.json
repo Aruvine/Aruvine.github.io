@@ -1,0 +1,20 @@
+{
+  "bus": "music",
+  "bytes": 1917603,
+  "channels": 2,
+  "file": "night_mystery.ogg",
+  "id": "night_mystery",
+  "kind": "music",
+  "label": "Night mystery",
+  "licence": "super_16bit_sounds",
+  "loop": true,
+  "pitchVar": 0,
+  "schemaVersion": 2,
+  "seconds": 76.8,
+  "sha256": "01202209f3d94267b418f20e2e7b43cc123000ba0b5d1fdaab87d0ad9566839c",
+  "since": 2,
+  "space": "flat",
+  "tags": [
+    "night"
+  ]
+}

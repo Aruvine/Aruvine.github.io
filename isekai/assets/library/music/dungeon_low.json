@@ -1,0 +1,20 @@
+{
+  "bus": "music",
+  "bytes": 511941,
+  "channels": 2,
+  "file": "dungeon_low.ogg",
+  "id": "dungeon_low",
+  "kind": "music",
+  "label": "Low dungeon",
+  "licence": "retro_rpg_music",
+  "loop": true,
+  "pitchVar": 0,
+  "schemaVersion": 2,
+  "seconds": 32,
+  "sha256": "accc0b01bc094bb383d2161db3635262ec333d4403a8519bdacc3e483563bd11",
+  "since": 2,
+  "space": "flat",
+  "tags": [
+    "dungeon"
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "snap_back",
+  "kind": "synth",
+  "label": "Snap back",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.45,
+    "decay": 0.15,
+    "freqRamp": -0.45,
+    "hpfFreq": 0.08,
+    "lpfFreq": 0.9,
+    "lpfRamp": 0,
+    "punch": 0.5,
+    "sustain": 0.03,
+    "wave": "sawtooth"
+  },
+  "tags": [
+    "whoosh"
+  ]
+}

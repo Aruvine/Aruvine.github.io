@@ -1,0 +1,13 @@
+{
+  "bytes": 126060,
+  "file": "monster_blob_alien.glb",
+  "height": 3.158,
+  "id": "monster_blob_alien",
+  "label": "Alien (blob)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "1d96eb9499e418efa8a4c9e19bf4af802bd8a9eb70637827a90ba8460389e38d",
+  "triangles": 2616,
+  "yaw": 0
+}

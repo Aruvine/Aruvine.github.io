@@ -1,0 +1,59 @@
+{
+  "dials": [
+    {
+      "default": 2,
+      "id": "size",
+      "label": "Size",
+      "max": 8,
+      "min": 0.5,
+      "step": 0.1,
+      "unit": "m"
+    }
+  ],
+  "id": "heal_circle",
+  "kind": "groundMark",
+  "label": "Heal circle",
+  "layers": [
+    {
+      "color": "a",
+      "edge": "soft",
+      "id": "circle",
+      "prim": "decal",
+      "pulse": 0.8,
+      "r": {
+        "dial": "size"
+      },
+      "shape": "glyphCircle"
+    },
+    {
+      "blend": "add",
+      "color": "b",
+      "dir": "up",
+      "from": "disc",
+      "fromR": {
+        "dial": "size",
+        "times": 0.9
+      },
+      "id": "motes",
+      "mode": "stream",
+      "particleLife": 1.5,
+      "prim": "sprites",
+      "rate": 10,
+      "rise": 0.3,
+      "size": 0.06,
+      "sizeEnd": 0,
+      "speed": 0.5,
+      "sprite": "mote"
+    }
+  ],
+  "life": 0,
+  "palette": {
+    "a": "#5aff9a",
+    "b": "#e0ffe8"
+  },
+  "schemaVersion": 2,
+  "sound": "lib:sfx/heal_shimmer",
+  "tags": [
+    "heal"
+  ]
+}

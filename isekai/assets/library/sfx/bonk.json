@@ -1,0 +1,22 @@
+{
+  "id": "bonk",
+  "kind": "synth",
+  "label": "Bonk",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.4,
+    "decay": 0.2,
+    "freqRamp": -0.35,
+    "hpfFreq": 0.02,
+    "lpfFreq": 1,
+    "punch": 0.6,
+    "sustain": 0.03,
+    "wave": "sine"
+  },
+  "tags": [
+    "hit"
+  ]
+}

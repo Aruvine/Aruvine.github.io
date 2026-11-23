@@ -1,0 +1,12 @@
+{
+  "file": "punch_windup.vrma",
+  "group": "caster",
+  "id": "punch_windup",
+  "label": "Wind-up punch",
+  "licence": "ual_2",
+  "loop": false,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 0.4667,
+  "since": 2
+}

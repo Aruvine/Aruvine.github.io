@@ -1,0 +1,23 @@
+{
+  "id": "line_shot",
+  "kind": "synth",
+  "label": "Line shot",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.6,
+    "decay": 0.2,
+    "freqRamp": -0.25,
+    "hpfFreq": 0.08,
+    "lpfFreq": 0.7,
+    "lpfRamp": 0,
+    "punch": 0,
+    "sustain": 0.05,
+    "wave": "sawtooth"
+  },
+  "tags": [
+    "whoosh"
+  ]
+}

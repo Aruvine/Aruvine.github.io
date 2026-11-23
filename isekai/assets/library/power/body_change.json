@@ -1,0 +1,170 @@
+{
+  "ai": {
+    "minInterval": 10,
+    "needsLos": true,
+    "priority": 2,
+    "range": [
+      0,
+      3
+    ],
+    "use": "auto"
+  },
+  "archetype": "body_change",
+  "casterClip": {
+    "clip": "lib:clip/fist_clench",
+    "layer": "upper",
+    "phase": "big"
+  },
+  "dials": [
+    {
+      "default": 3,
+      "id": "scale",
+      "label": "Size",
+      "max": 12,
+      "min": 1,
+      "unit": "×"
+    },
+    {
+      "default": 5,
+      "id": "duration",
+      "label": "Lasts",
+      "max": 60,
+      "min": 1,
+      "unit": "s"
+    },
+    {
+      "default": 2,
+      "id": "damage",
+      "label": "Damage",
+      "max": 5,
+      "min": 1,
+      "unit": "×"
+    },
+    {
+      "default": 10,
+      "id": "cooldown",
+      "label": "Cooldown",
+      "max": 120,
+      "min": 1,
+      "unit": "s"
+    }
+  ],
+  "gate": {
+    "blockedBy": [
+      "stunned",
+      "held",
+      "down"
+    ],
+    "cooldown": {
+      "dial": "cooldown"
+    }
+  },
+  "icon": "lib:icon/giant_fist",
+  "id": "body_change",
+  "label": "Giant fist",
+  "phases": [
+    {
+      "blocks": [
+        {
+          "do": {
+            "act": "body",
+            "effect": "partSize",
+            "op": "start",
+            "part": "triggerHand",
+            "scale": {
+              "dial": "scale"
+            },
+            "seconds": 0.2,
+            "who": "caster"
+          },
+          "id": "fist",
+          "label": "the big fist",
+          "t": 0
+        },
+        {
+          "bind": true,
+          "do": {
+            "act": "modify",
+            "id": "giant_fist_damage",
+            "op": "mul",
+            "prop": "damageDealt",
+            "value": {
+              "dial": "damage"
+            },
+            "who": "caster"
+          },
+          "id": "harder",
+          "label": "harder",
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "fx",
+            "at": {
+              "of": "caster",
+              "socket": "triggerHand"
+            },
+            "effect": "lib:fx/magic_glow"
+          },
+          "id": "glow",
+          "label": "the glow",
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "sound",
+            "at": {
+              "of": "caster"
+            },
+            "op": "play",
+            "sound": "lib:sfx/power_up"
+          },
+          "id": "swell",
+          "t": 0
+        }
+      ],
+      "exits": [
+        {
+          "if": {
+            "cmp": {
+              "a": {
+                "read": "phaseTime"
+              },
+              "b": {
+                "dial": "duration"
+              },
+              "op": ">="
+            }
+          },
+          "on": "cond",
+          "to": "end"
+        },
+        {
+          "on": "time",
+          "to": "end"
+        }
+      ],
+      "id": "big",
+      "label": "Big fist",
+      "max": 60
+    }
+  ],
+  "schemaVersion": 2,
+  "tags": [
+    "body"
+  ],
+  "trigger": {
+    "input": {
+      "button": {
+        "act": "slot",
+        "edge": "press"
+      },
+      "hand": {
+        "hand": "either",
+        "holdMs": 300,
+        "pose": "fist"
+      }
+    },
+    "kind": "press"
+  }
+}

@@ -1,0 +1,66 @@
+{
+  "dials": [
+    {
+      "default": 0.3,
+      "id": "size",
+      "label": "Size",
+      "max": 4,
+      "min": 0.05,
+      "step": 0.05,
+      "unit": "m"
+    },
+    {
+      "default": 120,
+      "id": "spin",
+      "label": "Spin",
+      "max": 720,
+      "min": -720,
+      "step": 10,
+      "unit": "°/s"
+    }
+  ],
+  "id": "energy_orb",
+  "kind": "meshEffect",
+  "label": "Energy orb",
+  "layers": [
+    {
+      "blend": "cutout",
+      "color": "a",
+      "fade": 0.3,
+      "id": "mesh",
+      "mesh": "puff",
+      "prim": "shape",
+      "size": {
+        "dial": "size"
+      },
+      "spin": {
+        "dial": "spin"
+      }
+    },
+    {
+      "blend": "add",
+      "color": "b",
+      "dir": "out",
+      "id": "motes",
+      "mode": "stream",
+      "particleLife": 0.4,
+      "prim": "sprites",
+      "rate": 12,
+      "size": 0.05,
+      "sizeEnd": 0,
+      "speed": 0.2,
+      "spread": 180,
+      "sprite": "mote"
+    }
+  ],
+  "life": 1,
+  "palette": {
+    "a": "#7ff0ff",
+    "b": "#ffffff"
+  },
+  "schemaVersion": 2,
+  "sound": "lib:sfx/charge_hold",
+  "tags": [
+    "energy"
+  ]
+}

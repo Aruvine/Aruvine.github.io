@@ -1,0 +1,19 @@
+{
+  "bytes": 4420,
+  "channels": 1,
+  "file": "step_wood.ogg",
+  "id": "step_wood",
+  "kind": "sample",
+  "label": "Step on wood",
+  "licence": "kenney_impact",
+  "maxVoices": 4,
+  "range": 15,
+  "schemaVersion": 2,
+  "seconds": 0.274,
+  "sha256": "c81926c739b467b59761e60685e78a2b11cd53b598bad3dd2b839677888ae4fa",
+  "since": 2,
+  "tags": [
+    "step"
+  ],
+  "volume": 0.7
+}

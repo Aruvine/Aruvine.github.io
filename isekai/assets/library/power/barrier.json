@@ -1,0 +1,156 @@
+{
+  "ai": {
+    "minInterval": 8,
+    "needsLos": true,
+    "priority": 2,
+    "range": [
+      0,
+      10
+    ],
+    "use": "auto"
+  },
+  "archetype": "barrier",
+  "casterClip": {
+    "clip": "lib:clip/guard_up",
+    "layer": "upper",
+    "phase": "shell"
+  },
+  "dials": [
+    {
+      "default": 3,
+      "id": "duration",
+      "label": "Duration",
+      "max": 10,
+      "min": 0.5,
+      "unit": "s"
+    },
+    {
+      "default": 1.5,
+      "id": "radius",
+      "label": "Radius",
+      "max": 5,
+      "min": 0.5,
+      "unit": "m"
+    },
+    {
+      "default": 8,
+      "id": "cooldown",
+      "label": "Cooldown",
+      "max": 60,
+      "min": 1,
+      "unit": "s"
+    }
+  ],
+  "gate": {
+    "blockedBy": [
+      "stunned",
+      "held",
+      "down"
+    ],
+    "cooldown": {
+      "dial": "cooldown"
+    }
+  },
+  "icon": "lib:icon/barrier",
+  "id": "barrier",
+  "label": "Barrier",
+  "phases": [
+    {
+      "blocks": [
+        {
+          "do": {
+            "act": "modify",
+            "op": "mul",
+            "prop": "damageTaken",
+            "value": 0,
+            "who": "caster"
+          },
+          "id": "unhurt",
+          "label": "the shell",
+          "len": 10,
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "modify",
+            "op": "mul",
+            "prop": "moveSpeed",
+            "value": 0,
+            "who": "caster"
+          },
+          "id": "still",
+          "label": "standing still",
+          "len": 10,
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "fx",
+            "at": {
+              "of": "caster"
+            },
+            "effect": "lib:fx/barrier_dome",
+            "scale": {
+              "dial": "radius",
+              "times": 0.667
+            }
+          },
+          "id": "dome",
+          "label": "the dome",
+          "len": 10,
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "sound",
+            "at": {
+              "of": "caster"
+            },
+            "op": "play",
+            "sound": "lib:sfx/shield_hit"
+          },
+          "t": 0
+        }
+      ],
+      "exits": [
+        {
+          "if": {
+            "cmp": {
+              "a": {
+                "read": "phaseTime"
+              },
+              "b": {
+                "dial": "duration"
+              },
+              "op": ">="
+            }
+          },
+          "on": "cond",
+          "to": "end"
+        },
+        {
+          "on": "time",
+          "to": "end"
+        }
+      ],
+      "id": "shell",
+      "label": "Shell",
+      "max": 10
+    }
+  ],
+  "schemaVersion": 2,
+  "trigger": {
+    "input": {
+      "button": {
+        "act": "slot",
+        "edge": "press"
+      },
+      "hand": {
+        "hand": "both",
+        "holdMs": 200,
+        "pose": "hand_forward"
+      }
+    },
+    "kind": "press"
+  }
+}

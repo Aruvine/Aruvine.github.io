@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 2,
+  "power": "clone",
+  "prefabs": [
+    {
+      "schemaVersion": 2,
+      "id": "echo_role",
+      "label": "Echo",
+      "kind": "role",
+      "tags": [
+        "echo"
+      ],
+      "c": {
+        "brain": {
+          "preset": "follow",
+          "target": "nearestEnemy",
+          "sight": 20,
+          "hearing": 10,
+          "aggression": 1,
+          "powers": "auto"
+        }
+      },
+      "cards": [
+        {
+          "id": "pop_when_hit",
+          "label": "Vanishes in smoke when hit",
+          "on": {
+            "event": "hit",
+            "role": "taker"
+          },
+          "do": [
+            {
+              "act": "remove",
+              "who": "self",
+              "exit": "smoke"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

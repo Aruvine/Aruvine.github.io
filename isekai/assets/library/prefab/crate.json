@@ -1,0 +1,96 @@
+{
+  "c": {
+    "body": {
+      "kind": "dynamic",
+      "mass": 20
+    },
+    "display": {
+      "kind": "badge",
+      "showWithin": 8,
+      "text": "Bumps: {var:self.bumps}"
+    },
+    "shape": {
+      "model": {
+        "prim": "box",
+        "size": [
+          1,
+          1,
+          1
+        ]
+      },
+      "tint": "#a0773f"
+    },
+    "vars": {
+      "bumps": {
+        "init": 0,
+        "label": "Bumps",
+        "scope": "entity",
+        "type": "number"
+      }
+    }
+  },
+  "id": "crate",
+  "ideas": [
+    {
+      "do": [
+        {
+          "act": "setVar",
+          "op": "add",
+          "value": 1,
+          "var": "self.bumps"
+        }
+      ],
+      "id": "count_bumps",
+      "label": "When bumped hard, count the bump",
+      "on": {
+        "event": "contact",
+        "minSpeed": 2,
+        "who": "player"
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "remove",
+          "who": "self"
+        }
+      ],
+      "id": "vanish_on_bump",
+      "label": "When bumped hard, vanish",
+      "on": {
+        "event": "contact",
+        "minSpeed": 2,
+        "who": "player"
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "spawn",
+          "at": {
+            "of": "self",
+            "offset": [
+              0,
+              1.1,
+              0
+            ]
+          },
+          "life": 120,
+          "what": "lib:prefab/crate"
+        }
+      ],
+      "id": "stack_more",
+      "label": "Every 20 seconds, put one more crate on top",
+      "on": {
+        "event": "timer",
+        "every": 20
+      }
+    }
+  ],
+  "kind": "prop",
+  "label": "Crate",
+  "schemaVersion": 2,
+  "tags": [
+    "crate"
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "dials": [
+    {
+      "default": 4,
+      "id": "range",
+      "label": "Range",
+      "max": 20,
+      "min": 0.5,
+      "step": 0.5,
+      "unit": "m"
+    }
+  ],
+  "id": "magic_glow",
+  "kind": "light",
+  "label": "Magic glow",
+  "layers": [
+    {
+      "id": "glow",
+      "intensity": 1.2,
+      "prim": "light",
+      "range": {
+        "dial": "range"
+      }
+    }
+  ],
+  "life": 0,
+  "palette": {
+    "a": "#8a7bff",
+    "b": "#d0c8ff"
+  },
+  "schemaVersion": 2,
+  "tags": [
+    "magic"
+  ]
+}

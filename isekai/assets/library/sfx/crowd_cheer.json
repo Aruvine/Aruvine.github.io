@@ -1,0 +1,19 @@
+{
+  "bus": "ambient",
+  "bytes": 110294,
+  "channels": 1,
+  "file": "crowd_cheer.wav",
+  "id": "crowd_cheer",
+  "kind": "sample",
+  "label": "Crowd cheers",
+  "licence": "own",
+  "maxVoices": 2,
+  "range": 50,
+  "schemaVersion": 2,
+  "seconds": 2.5,
+  "sha256": "77b9a24c85676d5037307ee8b712430ebb775a084e69c58d546c02c09a712097",
+  "since": 2,
+  "tags": [
+    "crowd"
+  ]
+}

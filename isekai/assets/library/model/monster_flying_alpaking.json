@@ -1,0 +1,13 @@
+{
+  "bytes": 175976,
+  "file": "monster_flying_alpaking.glb",
+  "height": 2.139,
+  "id": "monster_flying_alpaking",
+  "label": "Alpaking (flying)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "2bf5e4b6fccf1e6d4f4975786cdea0c4e4e712b50c6956cd1b9e4b4d24150c25",
+  "triangles": 2508,
+  "yaw": 0
+}

@@ -1,0 +1,28 @@
+{
+  "id": "static",
+  "kind": "synth",
+  "label": "Static",
+  "licence": "own",
+  "loop": true,
+  "maxVoices": 2,
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.9,
+    "decay": 0.1,
+    "duty": 0.3,
+    "dutyRamp": 0.1,
+    "freqLimit": 0,
+    "freqRamp": 0,
+    "hpfFreq": 0.5,
+    "lpfFreq": 1,
+    "punch": 0,
+    "sustain": 0.8,
+    "wave": "noise"
+  },
+  "tags": [
+    "zap"
+  ],
+  "volume": 0.5
+}

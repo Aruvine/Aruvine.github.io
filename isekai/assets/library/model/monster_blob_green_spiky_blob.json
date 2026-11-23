@@ -1,0 +1,13 @@
+{
+  "bytes": 211160,
+  "file": "monster_blob_green_spiky_blob.glb",
+  "height": 4.159,
+  "id": "monster_blob_green_spiky_blob",
+  "label": "Green Spiky Blob (blob)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "a2d780883e855ce4cf24625ed270cbd296f1d2ece8a80090f6b36222ea55e5b4",
+  "triangles": 4888,
+  "yaw": 0
+}

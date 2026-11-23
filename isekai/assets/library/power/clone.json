@@ -1,0 +1,183 @@
+{
+  "ai": {
+    "aim": "atLaunch",
+    "minInterval": 30,
+    "needsLos": false,
+    "priority": 3,
+    "range": [
+      0,
+      15
+    ],
+    "telegraph": 0.4,
+    "use": "auto"
+  },
+  "archetype": "clone",
+  "casterClip": {
+    "clip": "lib:clip/seal_three",
+    "layer": "upper",
+    "phase": "cast"
+  },
+  "dials": [
+    {
+      "default": 3,
+      "id": "count",
+      "label": "Echoes",
+      "max": 8,
+      "min": 1,
+      "unit": ""
+    },
+    {
+      "default": 15,
+      "id": "life",
+      "label": "Lifetime",
+      "max": 120,
+      "min": 3,
+      "unit": "s"
+    },
+    {
+      "default": 4,
+      "id": "within",
+      "label": "Sign time",
+      "max": 10,
+      "min": 1,
+      "unit": "s"
+    },
+    {
+      "default": 20,
+      "id": "cooldown",
+      "label": "Cooldown",
+      "max": 600,
+      "min": 1,
+      "unit": "s"
+    }
+  ],
+  "gate": {
+    "blockedBy": [
+      "stunned",
+      "held",
+      "down"
+    ],
+    "cooldown": {
+      "dial": "cooldown"
+    },
+    "cost": [
+      {
+        "amount": 15,
+        "pool": "energy"
+      }
+    ],
+    "maxAlive": {
+      "n": 1,
+      "of": "caster",
+      "tag": "echo"
+    }
+  },
+  "icon": "lib:icon/three",
+  "id": "clone",
+  "label": "Echoes",
+  "phases": [
+    {
+      "blocks": [
+        {
+          "do": {
+            "act": "spawn",
+            "at": {
+              "ring": {
+                "around": "caster",
+                "r": 1.5
+              }
+            },
+            "count": {
+              "dial": "count"
+            },
+            "enter": "smoke",
+            "exit": "smoke",
+            "life": {
+              "dial": "life"
+            },
+            "overlay": "echo_role",
+            "owner": "caster",
+            "tags": [
+              "echo"
+            ],
+            "team": "caster",
+            "what": {
+              "copyOf": "caster"
+            }
+          },
+          "id": "make_echoes",
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "sound",
+            "at": {
+              "of": "caster"
+            },
+            "op": "play",
+            "sound": "lib:sfx/poof_triple"
+          },
+          "t": 0
+        }
+      ],
+      "exits": [
+        {
+          "on": "time",
+          "to": "end"
+        }
+      ],
+      "id": "cast",
+      "label": "Cast",
+      "max": 0.3
+    }
+  ],
+  "schemaVersion": 2,
+  "tags": [
+    "clone"
+  ],
+  "trigger": {
+    "kind": "sequence",
+    "stepCue": {
+      "fx": "lib:fx/seal_glyph",
+      "sound": "lib:sfx/seal_tick"
+    },
+    "steps": [
+      {
+        "button": {
+          "act": "dirUp",
+          "edge": "press"
+        },
+        "hand": {
+          "hand": "either",
+          "holdMs": 120,
+          "pose": "point"
+        }
+      },
+      {
+        "button": {
+          "act": "dirLeft",
+          "edge": "press"
+        },
+        "hand": {
+          "hand": "either",
+          "holdMs": 120,
+          "pose": "peace"
+        }
+      },
+      {
+        "button": {
+          "act": "dirRight",
+          "edge": "press"
+        },
+        "hand": {
+          "hand": "either",
+          "holdMs": 120,
+          "pose": "open_palm"
+        }
+      }
+    ],
+    "within": {
+      "dial": "within"
+    }
+  }
+}

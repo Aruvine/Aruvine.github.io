@@ -1,0 +1,13 @@
+{
+  "bytes": 111616,
+  "file": "monster_blob_pigeon.glb",
+  "height": 1.787,
+  "id": "monster_blob_pigeon",
+  "label": "Pigeon (blob)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "bf4f45740b7658ca806107c994f7bdee28938d90d9c2ad8f8581c0a6f95aefd7",
+  "triangles": 2184,
+  "yaw": 0
+}

@@ -1,0 +1,15 @@
+{
+  "bus": "music",
+  "id": "silence",
+  "kind": "music",
+  "label": "Silence",
+  "licence": "own",
+  "loop": true,
+  "pitchVar": 0,
+  "schemaVersion": 2,
+  "since": 2,
+  "space": "flat",
+  "tags": [
+    "silence"
+  ]
+}

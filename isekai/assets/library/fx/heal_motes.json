@@ -1,0 +1,87 @@
+{
+  "dials": [
+    {
+      "default": 1,
+      "id": "size",
+      "label": "Size",
+      "max": 4,
+      "min": 0.25,
+      "step": 0.05,
+      "unit": ""
+    },
+    {
+      "default": 10,
+      "id": "amount",
+      "label": "Amount",
+      "max": 30,
+      "min": 1,
+      "step": 1,
+      "unit": ""
+    },
+    {
+      "default": 0.5,
+      "id": "speed",
+      "label": "Speed",
+      "max": 20,
+      "min": 0,
+      "step": 0.1,
+      "unit": "m/s"
+    }
+  ],
+  "id": "heal_motes",
+  "kind": "stream",
+  "label": "Heal motes",
+  "layers": [
+    {
+      "blend": "add",
+      "dir": "up",
+      "from": "body",
+      "id": "motes",
+      "mode": "stream",
+      "particleLife": 1.4,
+      "prim": "sprites",
+      "rate": {
+        "dial": "amount"
+      },
+      "rise": 0.5,
+      "size": {
+        "dial": "size",
+        "times": 0.06
+      },
+      "sizeEnd": 0,
+      "speed": {
+        "dial": "speed"
+      },
+      "spread": 15,
+      "sprite": "mote"
+    },
+    {
+      "color": "b",
+      "dir": "up",
+      "from": "body",
+      "id": "crosses",
+      "mode": "stream",
+      "particleLife": 1,
+      "prim": "sprites",
+      "rate": 3,
+      "size": {
+        "dial": "size",
+        "times": 0.08
+      },
+      "sizeEnd": 0,
+      "speed": 0.6,
+      "spread": 20,
+      "sprite": "star"
+    }
+  ],
+  "life": 0,
+  "palette": {
+    "a": "#7dffa8",
+    "b": "#e8fff0"
+  },
+  "schemaVersion": 2,
+  "sound": "lib:sfx/heal_shimmer",
+  "tags": [
+    "heal"
+  ]
+}

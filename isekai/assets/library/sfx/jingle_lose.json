@@ -1,0 +1,20 @@
+{
+  "bus": "ui",
+  "bytes": 21177,
+  "channels": 2,
+  "file": "jingle_lose.ogg",
+  "id": "jingle_lose",
+  "kind": "sample",
+  "label": "Lose jingle",
+  "licence": "kenney_music_jingles",
+  "maxVoices": 1,
+  "pitchVar": 0,
+  "schemaVersion": 2,
+  "seconds": 0.835,
+  "sha256": "ee06814cd4e703bdd501b8035d143061b7fa21cf3b5ab2d0cb4e014dabf1054a",
+  "since": 2,
+  "space": "flat",
+  "tags": [
+    "jingle"
+  ]
+}

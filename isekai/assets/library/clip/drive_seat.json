@@ -1,0 +1,12 @@
+{
+  "file": "drive_seat.vrma",
+  "group": "everyday",
+  "id": "drive_seat",
+  "label": "Drive",
+  "licence": "ual_1",
+  "loop": true,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 1.6667,
+  "since": 2
+}

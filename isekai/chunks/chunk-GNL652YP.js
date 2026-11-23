@@ -1,0 +1,2 @@
+var o=null,n=null;function l(){return o}function s(e){o=e,e||(n=null)}function i(){return o?Promise.resolve(o):(n??=import("./set-AH5ILNVZ.js").then(e=>(s(e.RecogniserCore),e.RecogniserCore),e=>{throw n=null,e}),n)}var r=-1/0,t=5e3;function c(){o||n||Date.now()-r<t||i().catch(e=>{r=Date.now(),console.warn("[input] the recognisers did not load",e)})}export{l as a,s as b,c};
+//# sourceMappingURL=chunk-GNL652YP.js.map

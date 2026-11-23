@@ -1,0 +1,146 @@
+{
+  "c": {
+    "body": {
+      "kind": "static"
+    },
+    "display": {
+      "kind": "badge",
+      "showWithin": 15,
+      "text": "Count: {var:self.count}"
+    },
+    "shape": {
+      "model": {
+        "prim": "box",
+        "size": [
+          0.3,
+          1.8,
+          0.3
+        ]
+      },
+      "tint": "#c86a5a"
+    },
+    "vars": {
+      "count": {
+        "init": 0,
+        "label": "Count",
+        "scope": "entity",
+        "type": "number"
+      }
+    }
+  },
+  "cards": [
+    {
+      "do": [
+        {
+          "act": "setVar",
+          "op": "add",
+          "value": 1,
+          "var": "self.count"
+        }
+      ],
+      "id": "count",
+      "label": "When asked to count, count up",
+      "on": {
+        "event": "signal",
+        "name": "count"
+      }
+    }
+  ],
+  "dials": [
+    {
+      "default": 3,
+      "id": "goal",
+      "label": "Goal",
+      "max": 100,
+      "min": 1,
+      "step": 1,
+      "unit": ""
+    }
+  ],
+  "id": "counter_post",
+  "ideas": [
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "open",
+          "to": {
+            "filter": {
+              "tagsAny": [
+                "door"
+              ]
+            },
+            "from": "around",
+            "limit": 1,
+            "order": "nearest",
+            "r": 32,
+            "shape": "sphere"
+          }
+        }
+      ],
+      "id": "open_at_goal",
+      "label": "At the goal, open the door",
+      "on": {
+        "event": "var",
+        "reaches": {
+          "dial": "goal"
+        },
+        "var": "self.count"
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "ring",
+          "to": {
+            "filter": {
+              "tagsAny": [
+                "bell"
+              ]
+            },
+            "from": "around",
+            "limit": 1,
+            "order": "nearest",
+            "r": 32,
+            "shape": "sphere"
+          }
+        }
+      ],
+      "id": "ring_at_goal",
+      "label": "At the goal, ring the bell",
+      "on": {
+        "event": "var",
+        "reaches": {
+          "dial": "goal"
+        },
+        "var": "self.count"
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "setVar",
+          "op": "set",
+          "value": 0,
+          "var": "self.count"
+        }
+      ],
+      "id": "reset_at_goal",
+      "label": "At the goal, start again at 0",
+      "on": {
+        "event": "var",
+        "reaches": {
+          "dial": "goal"
+        },
+        "var": "self.count"
+      }
+    }
+  ],
+  "kind": "gadget",
+  "label": "Counter post",
+  "schemaVersion": 2,
+  "tags": [
+    "counter"
+  ]
+}

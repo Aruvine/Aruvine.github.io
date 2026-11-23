@@ -1,0 +1,13 @@
+{
+  "bytes": 324304,
+  "file": "monster_flying_hywirl.glb",
+  "height": 2.732,
+  "id": "monster_flying_hywirl",
+  "label": "Hywirl (flying)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "f58dd31393355662abe87f42865c8f52f0ec516ca1c335cb97fe7e175fc10229",
+  "triangles": 3296,
+  "yaw": 0
+}

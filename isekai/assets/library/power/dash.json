@@ -1,0 +1,144 @@
+{
+  "ai": {
+    "minInterval": 3,
+    "needsLos": true,
+    "priority": 1,
+    "range": [
+      0,
+      {
+        "dial": "distance",
+        "times": 0.9
+      }
+    ],
+    "use": "auto"
+  },
+  "aim": {
+    "assistDeg": 0,
+    "from": "aim",
+    "ground": true,
+    "origin": "head",
+    "range": {
+      "dial": "distance"
+    }
+  },
+  "archetype": "dash",
+  "casterClip": {
+    "clip": "lib:clip/dash_lean",
+    "layer": "upper",
+    "phase": "dash"
+  },
+  "dials": [
+    {
+      "default": 6,
+      "id": "distance",
+      "label": "Distance",
+      "max": 20,
+      "min": 1,
+      "unit": "m"
+    },
+    {
+      "default": 20,
+      "id": "speed",
+      "label": "Speed",
+      "max": 40,
+      "min": 5,
+      "unit": "m/s"
+    },
+    {
+      "default": 1.5,
+      "id": "cooldown",
+      "label": "Cooldown",
+      "max": 10,
+      "min": 0.2,
+      "unit": "s"
+    }
+  ],
+  "gate": {
+    "blockedBy": [
+      "stunned",
+      "held",
+      "down"
+    ],
+    "cooldown": {
+      "dial": "cooldown"
+    }
+  },
+  "icon": "lib:icon/dash",
+  "id": "dash",
+  "label": "Dash",
+  "phases": [
+    {
+      "blocks": [
+        {
+          "do": {
+            "act": "move",
+            "afterimage": {
+              "count": 2,
+              "seconds": 0.3
+            },
+            "kind": "dash",
+            "speed": {
+              "dial": "speed"
+            },
+            "to": "aimPoint",
+            "who": "caster"
+          },
+          "id": "move",
+          "label": "the dash",
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "sound",
+            "at": {
+              "of": "caster"
+            },
+            "op": "play",
+            "sound": "lib:sfx/dash"
+          },
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "fx",
+            "at": {
+              "of": "caster"
+            },
+            "effect": "lib:fx/dust_kick"
+          },
+          "t": 0
+        }
+      ],
+      "exits": [
+        {
+          "on": "arrived",
+          "to": "end"
+        },
+        {
+          "on": "blocked",
+          "to": "end"
+        },
+        {
+          "on": "time",
+          "to": "end"
+        }
+      ],
+      "id": "dash",
+      "label": "Dash",
+      "max": 4
+    }
+  ],
+  "schemaVersion": 2,
+  "trigger": {
+    "input": {
+      "button": {
+        "act": "slot",
+        "edge": "press"
+      },
+      "hand": {
+        "body": "lean"
+      }
+    },
+    "kind": "press"
+  }
+}

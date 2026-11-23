@@ -1,0 +1,23 @@
+{
+  "id": "grip",
+  "kind": "synth",
+  "label": "Grip",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.45,
+    "decay": 0.08,
+    "freqRamp": -0.1,
+    "hpfFreq": 0.02,
+    "lpfFreq": 0.5,
+    "punch": 0.2,
+    "sustain": 0.02,
+    "wave": "noise"
+  },
+  "tags": [
+    "hit"
+  ],
+  "volume": 0.7
+}

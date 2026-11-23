@@ -1,0 +1,56 @@
+{
+  "dials": [
+    {
+      "default": 0.12,
+      "id": "size",
+      "label": "Size",
+      "max": 2,
+      "min": 0.05,
+      "step": 0.01,
+      "unit": "m"
+    },
+    {
+      "default": 1,
+      "id": "speed",
+      "label": "Speed",
+      "max": 20,
+      "min": 0,
+      "step": 0.1,
+      "unit": "m/s"
+    }
+  ],
+  "id": "sweat_drop",
+  "kind": "spriteCard",
+  "label": "Sweat drop",
+  "layers": [
+    {
+      "blend": "cutout",
+      "color": "a",
+      "fade": 0.3,
+      "grow": [
+        1,
+        1.1
+      ],
+      "id": "card",
+      "mesh": "puff",
+      "offset": [
+        0.18,
+        1.85,
+        0
+      ],
+      "prim": "shape",
+      "size": {
+        "dial": "size"
+      }
+    }
+  ],
+  "life": 1.2,
+  "palette": {
+    "a": "#8fd8ff",
+    "b": "#ffffff"
+  },
+  "schemaVersion": 2,
+  "tags": [
+    "mood"
+  ]
+}

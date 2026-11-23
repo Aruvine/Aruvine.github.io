@@ -1,0 +1,36 @@
+{
+  "c": {
+    "body": {
+      "kind": "kinematic"
+    },
+    "brain": {
+      "aggression": 0.5,
+      "powers": "auto",
+      "preset": "fighter",
+      "target": "nearestEnemy"
+    },
+    "display": {
+      "kind": "healthBar"
+    },
+    "pools": {
+      "health": {
+        "max": 200
+      }
+    },
+    "shape": {
+      "model": "lib:model/adventurer_barbarian",
+      "scale": 0.73
+    }
+  },
+  "defeat": {
+    "exit": "smoke",
+    "seconds": 1.5
+  },
+  "id": "sparring_partner",
+  "kind": "character",
+  "label": "Sparring partner",
+  "schemaVersion": 2,
+  "tags": [
+    "sparring"
+  ]
+}

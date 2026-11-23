@@ -1,0 +1,20 @@
+{
+  "bus": "ui",
+  "bytes": 15969,
+  "channels": 2,
+  "file": "jingle_quest.ogg",
+  "id": "jingle_quest",
+  "kind": "sample",
+  "label": "Quest jingle",
+  "licence": "kenney_music_jingles",
+  "maxVoices": 1,
+  "pitchVar": 0,
+  "schemaVersion": 2,
+  "seconds": 0.993,
+  "sha256": "f5fc4c01b106e6317acaee1bffb51704e41c85b0fa7529dff86b447bdabf150c",
+  "since": 2,
+  "space": "flat",
+  "tags": [
+    "jingle"
+  ]
+}

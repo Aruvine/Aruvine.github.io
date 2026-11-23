@@ -1,0 +1,12 @@
+{
+  "file": "charge_two_hands.vrma",
+  "group": "caster",
+  "id": "charge_two_hands",
+  "label": "Charge with both hands",
+  "licence": "ual_1",
+  "loop": true,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 2.1,
+  "since": 2
+}

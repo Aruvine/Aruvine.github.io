@@ -1,0 +1,132 @@
+{
+  "c": {
+    "body": {
+      "kind": "static"
+    },
+    "display": {
+      "kind": "badge",
+      "showWithin": 20,
+      "text": "Count: {var:self.count}"
+    },
+    "shape": {
+      "model": {
+        "prim": "box",
+        "size": [
+          2,
+          1.2,
+          0.15
+        ]
+      },
+      "tint": "#d8d2c0"
+    },
+    "vars": {
+      "count": {
+        "init": 0,
+        "label": "Count",
+        "scope": "entity",
+        "type": "number"
+      }
+    }
+  },
+  "cards": [
+    {
+      "do": [
+        {
+          "act": "setVar",
+          "op": "add",
+          "value": {
+            "dial": "by"
+          },
+          "var": "self.count"
+        }
+      ],
+      "id": "count",
+      "label": "When asked to count, count up",
+      "on": {
+        "event": "signal",
+        "name": "count"
+      }
+    }
+  ],
+  "dials": [
+    {
+      "default": 1,
+      "id": "by",
+      "label": "Counts by",
+      "max": 100,
+      "min": 1,
+      "step": 1,
+      "unit": ""
+    }
+  ],
+  "id": "sign",
+  "ideas": [
+    {
+      "do": [
+        {
+          "act": "setVar",
+          "op": "add",
+          "value": {
+            "dial": "by"
+          },
+          "var": "self.count"
+        }
+      ],
+      "id": "count_every",
+      "label": "Count up every second",
+      "on": {
+        "event": "timer",
+        "every": 1
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "setVar",
+          "op": "set",
+          "value": 0,
+          "var": "self.count"
+        }
+      ],
+      "id": "wrap_at_100",
+      "label": "At 100, start again at 0",
+      "on": {
+        "event": "var",
+        "reaches": 100,
+        "var": "self.count"
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "ring",
+          "to": {
+            "filter": {
+              "tagsAny": [
+                "bell"
+              ]
+            },
+            "from": "around",
+            "limit": 1,
+            "order": "nearest",
+            "r": 32,
+            "shape": "sphere"
+          }
+        }
+      ],
+      "id": "ring_on_count",
+      "label": "Each time it counts, ring the bell",
+      "on": {
+        "event": "signal",
+        "name": "count"
+      }
+    }
+  ],
+  "kind": "prop",
+  "label": "Sign",
+  "schemaVersion": 2,
+  "tags": [
+    "sign"
+  ]
+}

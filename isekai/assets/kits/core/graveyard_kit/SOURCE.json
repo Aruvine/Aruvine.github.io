@@ -1,0 +1,41 @@
+{
+  "pack": "graveyard_kit",
+  "publisher": "Kenney",
+  "title": "Graveyard Kit",
+  "tier": "free",
+  "version": "5.0",
+  "licence": "CC0-1.0",
+  "page": "https://kenney.nl/assets/graveyard-kit",
+  "licenceQuote": "License: Creative Commons CC0",
+  "fetchedOn": "2026-11-14",
+  "zipSha256": "1a93613f2e5675f3310acf49ec9ef13ae7adeb756ac3b205bfb6cc9311a81062",
+  "files": 5,
+  "use": "kit",
+  "pieces": [
+    {
+      "id": "wall",
+      "from": "stone_wall.glb",
+      "scale": 2
+    },
+    {
+      "id": "fence",
+      "from": "fence.glb",
+      "scale": 2
+    },
+    {
+      "id": "rock",
+      "from": "rocks.glb",
+      "scale": 1.5
+    },
+    {
+      "id": "lamp",
+      "from": "lightpost_single.glb",
+      "scale": 2
+    },
+    {
+      "id": "gate",
+      "from": "fence_gate.glb",
+      "scale": 2
+    }
+  ]
+}

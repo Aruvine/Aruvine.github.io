@@ -1,0 +1,13 @@
+{
+  "bytes": 352472,
+  "file": "adventurer_mage.glb",
+  "height": 2.655,
+  "id": "adventurer_mage",
+  "label": "Adventurer: Mage",
+  "licence": "kaykit_adventurers",
+  "rig": "glbHumanoid",
+  "schemaVersion": 2,
+  "sha256": "1f7d891bde50b879c70965f155b7b765b166dc3f8518e5abb86c0002f191a26e",
+  "triangles": 6668,
+  "yaw": 0
+}

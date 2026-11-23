@@ -1,0 +1,14 @@
+{
+  "pack": "kenney_rpg_audio",
+  "publisher": "Kenney",
+  "title": "RPG Audio",
+  "tier": "free",
+  "version": "1.0",
+  "licence": "CC0-1.0",
+  "page": "https://kenney.nl/assets/rpg-audio",
+  "licenceQuote": "License: Creative Commons CC0",
+  "fetchedOn": "2026-11-14",
+  "zipSha256": "6dbeaf8544da958d8f2adcb4a4a4b76c1ade34a05f8ab9edccd327da7375f38b",
+  "files": 4,
+  "use": "sfx"
+}

@@ -1,0 +1,339 @@
+{
+  "hubPortals": [
+    "99f85028-8b33-5940-8cf2-51644ec6608a",
+    "b4e99648-94c4-5b0a-9cd5-4b563b89111f",
+    "1fa48064-7769-5600-a4af-1480e9472bfa",
+    "bd813f9b-c3fd-5d72-941a-6c96e199a110",
+    "083a5eb4-c9e6-5934-985c-389d4cb82016",
+    "4742847b-af68-50df-bb5f-f5ad84da0813",
+    "0cc48008-c1c9-5ebe-befe-2de1602c92d1",
+    null
+  ],
+  "schemaVersion": 2,
+  "worlds": [
+    {
+      "id": "65114d89-e22e-5f22-960f-372e4f67ef2f",
+      "name": "Bramble and Burrow",
+      "parts": [
+        {
+          "id": "main",
+          "seed": 11
+        },
+        {
+          "id": "night",
+          "seed": 11
+        }
+      ],
+      "path": "starters/bramble_and_burrow.isekai",
+      "slug": "bramble_and_burrow",
+      "starter": {
+        "blurb": "Walk the tall grass with your Cinderpup, meet wild monsters, order moves from the wheel and catch new friends.",
+        "kinds": [
+          "monster collecting"
+        ],
+        "label": "Bramble and Burrow",
+        "order": 10,
+        "showFrom": "M11"
+      }
+    },
+    {
+      "id": "98124d7a-242e-5121-a05e-f978649dec2c",
+      "name": "Copper Pot Showdown",
+      "parts": [
+        {
+          "id": "main",
+          "seed": 7
+        }
+      ],
+      "path": "starters/copper_pot_showdown.isekai",
+      "slug": "copper_pot_showdown",
+      "starter": {
+        "blurb": "Fetch, chop to the beat and grill to perfection: three judges decide the cooking duel against Chef Brann.",
+        "kinds": [
+          "cooking duel",
+          "rhythm"
+        ],
+        "label": "Copper Pot Showdown",
+        "order": 12,
+        "showFrom": "M09"
+      }
+    },
+    {
+      "id": "1fa48064-7769-5600-a4af-1480e9472bfa",
+      "name": "Dim Lantern Keep",
+      "parts": [
+        {
+          "id": "main",
+          "seed": 7
+        }
+      ],
+      "path": "starters/dim_lantern_keep.isekai",
+      "slug": "dim_lantern_keep",
+      "starter": {
+        "blurb": "Defeat the keep's guards and raise their marks as a shadow army that follows you.",
+        "kinds": [
+          "shadow army",
+          "dark fantasy keep"
+        ],
+        "label": "Dim Lantern Keep",
+        "order": 2,
+        "showFrom": "M03"
+      }
+    },
+    {
+      "id": "99db2ade-bcc1-5730-96cf-fa44e9bb5e9f",
+      "name": "Ember Edge Shrine",
+      "parts": [
+        {
+          "id": "main",
+          "seed": 7
+        },
+        {
+          "id": "sweep",
+          "seed": 9
+        },
+        {
+          "id": "dawn",
+          "seed": 7
+        }
+      ],
+      "path": "starters/ember_edge_shrine.isekai",
+      "slug": "ember_edge_shrine",
+      "starter": {
+        "blurb": "Cut the ashlings' necks with a sunsteel blade, call its flame, and hold out until dawn.",
+        "kinds": [
+          "sword forms",
+          "weapon release"
+        ],
+        "label": "Ember Edge Shrine",
+        "order": 9,
+        "showFrom": "M07"
+      }
+    },
+    {
+      "id": "bd813f9b-c3fd-5d72-941a-6c96e199a110",
+      "name": "The Glass Garden",
+      "parts": [
+        {
+          "id": "main",
+          "seed": 7
+        },
+        {
+          "id": "tracked",
+          "seed": 7
+        }
+      ],
+      "path": "starters/glass_garden.isekai",
+      "slug": "glass_garden",
+      "starter": {
+        "blurb": "Cast a pocket domain: the sky changes, the drones slow down and every hit lands.",
+        "kinds": [
+          "pocket domains",
+          "duel"
+        ],
+        "label": "The Glass Garden",
+        "order": 3,
+        "showFrom": "M03"
+      }
+    },
+    {
+      "id": "253bfffd-4887-52f8-b140-2894fa610116",
+      "name": "Last Greenhouse",
+      "parts": [
+        {
+          "id": "main",
+          "seed": 11
+        },
+        {
+          "id": "night",
+          "seed": 11
+        },
+        {
+          "id": "dawn",
+          "seed": 11
+        }
+      ],
+      "path": "starters/last_greenhouse.isekai",
+      "slug": "last_greenhouse",
+      "starter": {
+        "blurb": "Scavenge, barricade the doors, survive the night horde and bring the farmer back.",
+        "kinds": [
+          "survival",
+          "crafting"
+        ],
+        "label": "Last Greenhouse",
+        "order": 15,
+        "showFrom": "M07"
+      }
+    },
+    {
+      "id": "1eceb078-c93b-5f61-9f3a-33a15cae4e4c",
+      "name": "Pass: crowd",
+      "path": "worlds/pass_crowd.isekai",
+      "slug": "pass_crowd"
+    },
+    {
+      "id": "678413c0-1f52-5359-af12-de0c6980440e",
+      "name": "Pass: looks",
+      "path": "worlds/pass_looks.isekai",
+      "slug": "pass_looks"
+    },
+    {
+      "id": "99f85028-8b33-5940-8cf2-51644ec6608a",
+      "name": "Rule Yard",
+      "path": "worlds/rule_yard.isekai",
+      "slug": "rule_yard"
+    },
+    {
+      "id": "4fea3d89-74bb-585b-8a24-4b92553c7ef9",
+      "name": "Saltwind Strait",
+      "parts": [
+        {
+          "id": "main",
+          "seed": 7
+        }
+      ],
+      "path": "starters/saltwind_strait.isekai",
+      "slug": "saltwind_strait",
+      "starter": {
+        "blurb": "Sail between two islets, eat a cursed fruit that turns you to water, and win a castaway over before the squall.",
+        "kinds": [
+          "sea adventure",
+          "sailing"
+        ],
+        "label": "Saltwind Strait",
+        "order": 7,
+        "showFrom": "M09"
+      }
+    },
+    {
+      "id": "f6936045-9d64-54d8-945d-e14049d8b611",
+      "name": "Skyring Festival",
+      "parts": [
+        {
+          "id": "main",
+          "seed": 8
+        }
+      ],
+      "path": "starters/skyring_festival.isekai",
+      "slug": "skyring_festival",
+      "starter": {
+        "blurb": "Fly above the clouds, win a game of sky-ball and push your rival out of the ring.",
+        "kinds": [
+          "flight",
+          "ball game",
+          "duel"
+        ],
+        "label": "Skyring Festival",
+        "order": 8,
+        "showFrom": "M08"
+      }
+    },
+    {
+      "id": "b4e99648-94c4-5b0a-9cd5-4b563b89111f",
+      "name": "Stretchwood Yard",
+      "parts": [
+        {
+          "id": "main",
+          "seed": 7,
+          "setupPath": "starters/stretchwood_yard.main.setup.json"
+        }
+      ],
+      "path": "starters/stretchwood_yard.isekai",
+      "slug": "stretchwood_yard",
+      "starter": {
+        "blurb": "A training yard for a rubber body: punch down four lanes and fly to the bell.",
+        "kinds": [
+          "rubber body",
+          "training yard"
+        ],
+        "label": "Stretchwood Yard",
+        "order": 1,
+        "showFrom": "M03"
+      }
+    },
+    {
+      "id": "4742847b-af68-50df-bb5f-f5ad84da0813",
+      "name": "Tallwalker Marsh",
+      "parts": [
+        {
+          "id": "main",
+          "seed": 1,
+          "setupPath": "starters/tallwalker_marsh.main.setup.json"
+        },
+        {
+          "id": "giant",
+          "seed": 1
+        },
+        {
+          "id": "grab",
+          "seed": 1
+        },
+        {
+          "id": "fuzz",
+          "seed": 1
+        },
+        {
+          "id": "tiers",
+          "seed": 1
+        }
+      ],
+      "path": "starters/tallwalker_marsh.isekai",
+      "slug": "tallwalker_marsh",
+      "starter": {
+        "blurb": "Hunt a giant with grappling lines: swing, cut a leg and strike its neck.",
+        "kinds": [
+          "giant hunting",
+          "grappling lines"
+        ],
+        "label": "Tallwalker Marsh",
+        "order": 5,
+        "showFrom": "M03"
+      }
+    },
+    {
+      "id": "0cc48008-c1c9-5ebe-befe-2de1602c92d1",
+      "name": "The Ledger",
+      "parts": [
+        {
+          "id": "main",
+          "seed": 1
+        }
+      ],
+      "path": "starters/the_ledger.isekai",
+      "slug": "the_ledger",
+      "starter": {
+        "blurb": "Level up with daily squats, then clear the dungeon gates and their boss.",
+        "kinds": [
+          "levelling system",
+          "dungeon gates"
+        ],
+        "label": "The Ledger",
+        "order": 6,
+        "showFrom": "M03"
+      }
+    },
+    {
+      "id": "083a5eb4-c9e6-5934-985c-389d4cb82016",
+      "name": "Three-Seal Ridge",
+      "parts": [
+        {
+          "id": "main",
+          "seed": 1
+        }
+      ],
+      "path": "starters/three_seal_ridge.isekai",
+      "slug": "three_seal_ridge",
+      "starter": {
+        "blurb": "Make three hand signs in a row and three copies of you appear to fight.",
+        "kinds": [
+          "hand-sign techniques",
+          "clones"
+        ],
+        "label": "Three-Seal Ridge",
+        "order": 4,
+        "showFrom": "M03"
+      }
+    }
+  ]
+}

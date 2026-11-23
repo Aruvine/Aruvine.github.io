@@ -1,0 +1,13 @@
+{
+  "bytes": 114328,
+  "file": "monster_blob_ninja.glb",
+  "height": 2.987,
+  "id": "monster_blob_ninja",
+  "label": "Ninja (blob)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "c0d6289f88305873bcbc58360b129a8c8e2dbd1b3446c6cf23969772c64415dc",
+  "triangles": 2160,
+  "yaw": 0
+}

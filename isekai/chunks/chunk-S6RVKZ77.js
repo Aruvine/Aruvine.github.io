@@ -1,0 +1,2 @@
+var e=(t,a,r)=>({id:t==="empty"?"empty":`${t}_${a}`,kind:t,value:a,label:r}),i=Object.freeze([e("empty",0,"Empty"),...[50,75,100,125,150,175,200,225,250].map(t=>e("drawCalls",t,`${t} draw calls`)),...[1e5,2e5,3e5,4e5,5e5,6e5].map(t=>e("triangles",t,`${t/1e3}k triangles`)),...[32,64,128,256].map(t=>e("textureMiB",t,`${t} MiB of textures`)),...[4,8,12].map(t=>e("characters",t,`${t} animated characters`)),...[100,300,600].map(t=>e("particles",t,`${t} particles`))]);function n(t){return t?{calibration:t}:{}}export{i as a,n as b};
+//# sourceMappingURL=chunk-S6RVKZ77.js.map

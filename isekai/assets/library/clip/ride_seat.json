@@ -1,0 +1,12 @@
+{
+  "file": "ride_seat.vrma",
+  "group": "everyday",
+  "id": "ride_seat",
+  "label": "Ride",
+  "licence": "own",
+  "loop": true,
+  "origin": "made",
+  "schemaVersion": 2,
+  "seconds": 1.6667,
+  "since": 2
+}

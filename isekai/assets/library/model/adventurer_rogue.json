@@ -1,0 +1,13 @@
+{
+  "bytes": 409188,
+  "file": "adventurer_rogue.glb",
+  "height": 2.18,
+  "id": "adventurer_rogue",
+  "label": "Adventurer: Rogue",
+  "licence": "kaykit_adventurers",
+  "rig": "glbHumanoid",
+  "schemaVersion": 2,
+  "sha256": "cae5d9b2f08d53f7b4ab2617d9f42f021c546eb10920455fdcd82a110867fae4",
+  "triangles": 7562,
+  "yaw": 0
+}

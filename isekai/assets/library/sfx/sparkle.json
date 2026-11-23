@@ -1,0 +1,25 @@
+{
+  "id": "sparkle",
+  "kind": "synth",
+  "label": "Sparkle",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "arpMod": 0.6,
+    "arpSpeed": 0.75,
+    "attack": 0,
+    "baseFreq": 0.8,
+    "decay": 0.35,
+    "lpfFreq": 1,
+    "punch": 0.45,
+    "repeatSpeed": 0.6,
+    "sustain": 0.05,
+    "vibSpeed": 0.8,
+    "vibStrength": 0.1,
+    "wave": "sine"
+  },
+  "tags": [
+    "chime"
+  ]
+}

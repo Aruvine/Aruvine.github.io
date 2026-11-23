@@ -1,0 +1,12 @@
+{
+  "file": "idle.vrma",
+  "group": "locomotion",
+  "id": "idle",
+  "label": "Idle",
+  "licence": "ual_1",
+  "loop": true,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 2.5,
+  "since": 2
+}

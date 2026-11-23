@@ -1,0 +1,17 @@
+{
+  "bytes": 5271,
+  "channels": 1,
+  "file": "glass_break.ogg",
+  "id": "glass_break",
+  "kind": "sample",
+  "label": "Glass breaks",
+  "licence": "kenney_impact",
+  "range": 30,
+  "schemaVersion": 2,
+  "seconds": 0.241,
+  "sha256": "651129b20bb4894e28f189e1381de3ae4f6320bedd8b35f5106223524380ed78",
+  "since": 2,
+  "tags": [
+    "impact"
+  ]
+}

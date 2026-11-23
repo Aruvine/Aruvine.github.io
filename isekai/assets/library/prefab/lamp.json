@@ -1,0 +1,186 @@
+{
+  "c": {
+    "body": {
+      "kind": "static"
+    },
+    "display": {
+      "kind": "badge",
+      "showWithin": 15,
+      "text": "Lit: {var:self.on}"
+    },
+    "shape": {
+      "model": {
+        "prim": "cylinder",
+        "size": [
+          0.3,
+          2.2,
+          0.3
+        ]
+      },
+      "tint": "#e8d27a"
+    },
+    "vars": {
+      "on": {
+        "init": 0,
+        "label": "Lit",
+        "max": 1,
+        "min": 0,
+        "scope": "entity",
+        "type": "number"
+      }
+    }
+  },
+  "cards": [
+    {
+      "do": [
+        {
+          "act": "setState",
+          "state": "lit",
+          "who": "self"
+        },
+        {
+          "act": "setVar",
+          "op": "set",
+          "value": 1,
+          "var": "self.on"
+        }
+      ],
+      "id": "light",
+      "label": "When asked to light, light up",
+      "on": {
+        "event": "signal",
+        "name": "light"
+      }
+    }
+  ],
+  "dials": [
+    {
+      "default": 1,
+      "id": "blink",
+      "label": "Blink",
+      "max": 10,
+      "min": 0.2,
+      "step": 0.1,
+      "unit": "s"
+    },
+    {
+      "default": 5,
+      "id": "glow",
+      "label": "Glows for",
+      "max": 60,
+      "min": 0.5,
+      "step": 0.5,
+      "unit": "s"
+    }
+  ],
+  "id": "lamp",
+  "ideas": [
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "light",
+          "to": "self"
+        }
+      ],
+      "id": "light_at_start",
+      "label": "When the world starts, light up",
+      "on": {
+        "event": "start"
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "if",
+          "cond": {
+            "cmp": {
+              "a": {
+                "read": "var:self.on"
+              },
+              "b": 1,
+              "op": "=="
+            }
+          },
+          "else": [
+            {
+              "act": "setState",
+              "state": "lit",
+              "who": "self"
+            },
+            {
+              "act": "setVar",
+              "op": "set",
+              "value": 1,
+              "var": "self.on"
+            }
+          ],
+          "then": [
+            {
+              "act": "setState",
+              "state": "unlit",
+              "who": "self"
+            },
+            {
+              "act": "setVar",
+              "op": "set",
+              "value": 0,
+              "var": "self.on"
+            }
+          ]
+        }
+      ],
+      "id": "blink",
+      "label": "Blink on and off",
+      "on": {
+        "event": "timer",
+        "every": {
+          "dial": "blink"
+        }
+      }
+    },
+    {
+      "cooldown": 0.5,
+      "do": [
+        {
+          "act": "wait",
+          "s": {
+            "dial": "glow"
+          }
+        },
+        {
+          "act": "setState",
+          "state": "unlit",
+          "who": "self"
+        },
+        {
+          "act": "setVar",
+          "op": "set",
+          "value": 0,
+          "var": "self.on"
+        }
+      ],
+      "id": "dark_after",
+      "label": "Once lit, go dark again after a while",
+      "on": {
+        "event": "signal",
+        "name": "light"
+      }
+    }
+  ],
+  "kind": "prop",
+  "label": "Lamp",
+  "schemaVersion": 2,
+  "state": "unlit",
+  "states": {
+    "lit": {
+      "label": "On"
+    },
+    "unlit": {
+      "label": "Off"
+    }
+  },
+  "tags": [
+    "lamp"
+  ]
+}

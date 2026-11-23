@@ -1,0 +1,12 @@
+{
+  "file": "head_pat.vrma",
+  "group": "social",
+  "id": "head_pat",
+  "label": "Pat on the head",
+  "licence": "own",
+  "loop": true,
+  "origin": "made",
+  "schemaVersion": 2,
+  "seconds": 2,
+  "since": 2
+}

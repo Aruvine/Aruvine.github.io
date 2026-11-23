@@ -1,0 +1,13 @@
+{
+  "bytes": 358940,
+  "file": "miro_kestrel.vrm",
+  "height": 1.78,
+  "id": "miro_kestrel",
+  "label": "Miro Kestrel",
+  "licence": "own",
+  "rig": "vrm1",
+  "schemaVersion": 2,
+  "sha256": "fd2f711df5f18c34b2c66b9d50c209b5e7ef48425135e81967c3c0de77b94db4",
+  "triangles": 6596,
+  "yaw": 0
+}

@@ -1,0 +1,25 @@
+{
+  "id": "zap_long",
+  "kind": "synth",
+  "label": "Long zap",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.75,
+    "decay": 0.3,
+    "duty": 0.3,
+    "dutyRamp": 0.1,
+    "freqLimit": 0.2,
+    "freqRamp": -0.15,
+    "lpfFreq": 1,
+    "punch": 0.15,
+    "repeatSpeed": 0.4,
+    "sustain": 0.35,
+    "wave": "square"
+  },
+  "tags": [
+    "zap"
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "bytes": 244312,
+  "file": "monster_flying_glub_evolved.glb",
+  "height": 3.705,
+  "id": "monster_flying_glub_evolved",
+  "label": "Glub Evolved (flying)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "3873e18322fa385288829ac61de61228e9ddd73dd96993024506d1186fa8f5e4",
+  "triangles": 4452,
+  "yaw": 0
+}

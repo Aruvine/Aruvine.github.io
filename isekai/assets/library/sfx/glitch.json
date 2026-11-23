@@ -1,0 +1,27 @@
+{
+  "id": "glitch",
+  "kind": "synth",
+  "label": "Glitch",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "arpMod": -0.6,
+    "arpSpeed": 0.8,
+    "attack": 0,
+    "baseFreq": 0.5,
+    "decay": 0.15,
+    "duty": 0.7,
+    "dutyRamp": -0.4,
+    "freqLimit": 0.2,
+    "freqRamp": 0.05,
+    "lpfFreq": 1,
+    "punch": 0.15,
+    "repeatSpeed": 0.7,
+    "sustain": 0.15,
+    "wave": "square"
+  },
+  "tags": [
+    "zap"
+  ]
+}

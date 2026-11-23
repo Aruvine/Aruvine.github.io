@@ -1,0 +1,29 @@
+{
+  "c": {
+    "body": {
+      "kind": "static"
+    },
+    "clipmap": {
+      "attack": "Bite_Front",
+      "cheer": "Dance",
+      "defeat": "Death",
+      "hit": "HitRecieve",
+      "idle": "Idle",
+      "jump": "Jump",
+      "move": "Walk",
+      "no": "No",
+      "yes": "Yes"
+    },
+    "shape": {
+      "model": "lib:model/monster_blob_pink_blob"
+    }
+  },
+  "id": "monster_blob_pink_blob",
+  "kind": "creature",
+  "label": "Pink Blob (blob)",
+  "schemaVersion": 2,
+  "tags": [
+    "monster",
+    "blob"
+  ]
+}

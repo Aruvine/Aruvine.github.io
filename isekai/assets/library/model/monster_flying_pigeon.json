@@ -1,0 +1,13 @@
+{
+  "bytes": 223816,
+  "file": "monster_flying_pigeon.glb",
+  "height": 1.365,
+  "id": "monster_flying_pigeon",
+  "label": "Pigeon (flying)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "baa547f66f3e69f0cbe5f8c7d557ad0e88e4f65ed29b20a61f059c5e4ffb1bf2",
+  "triangles": 3512,
+  "yaw": 0
+}

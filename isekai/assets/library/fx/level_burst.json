@@ -1,0 +1,97 @@
+{
+  "dials": [
+    {
+      "default": 1,
+      "id": "size",
+      "label": "Size",
+      "max": 4,
+      "min": 0.25,
+      "step": 0.05,
+      "unit": ""
+    },
+    {
+      "default": 32,
+      "id": "amount",
+      "label": "Amount",
+      "max": 64,
+      "min": 1,
+      "step": 1,
+      "unit": ""
+    },
+    {
+      "default": 2.5,
+      "id": "speed",
+      "label": "Speed",
+      "max": 20,
+      "min": 0,
+      "step": 0.1,
+      "unit": "m/s"
+    }
+  ],
+  "id": "level_burst",
+  "kind": "burst",
+  "label": "Level burst",
+  "layers": [
+    {
+      "blend": "add",
+      "count": {
+        "dial": "amount"
+      },
+      "dir": "up",
+      "from": "disc",
+      "fromR": {
+        "dial": "size",
+        "times": 0.5
+      },
+      "id": "motes",
+      "mode": "burst",
+      "particleLife": 1,
+      "prim": "sprites",
+      "rise": 1,
+      "size": {
+        "dial": "size",
+        "times": 0.08
+      },
+      "sizeEnd": 0,
+      "speed": {
+        "dial": "speed"
+      },
+      "spread": 20,
+      "sprite": "mote"
+    },
+    {
+      "blend": "add",
+      "color": "b",
+      "fade": 0.8,
+      "grow": [
+        0.4,
+        1.5
+      ],
+      "id": "ring",
+      "life": 0.6,
+      "mesh": "ring",
+      "prim": "shape",
+      "size": {
+        "dial": "size"
+      }
+    },
+    {
+      "color": "a",
+      "flash": 0.6,
+      "id": "glow",
+      "intensity": 1.5,
+      "prim": "light",
+      "range": 4
+    }
+  ],
+  "life": 1.2,
+  "palette": {
+    "a": "#7ff0ff",
+    "b": "#fff6b0"
+  },
+  "schemaVersion": 2,
+  "sound": "lib:sfx/level_up",
+  "tags": [
+    "reward"
+  ]
+}

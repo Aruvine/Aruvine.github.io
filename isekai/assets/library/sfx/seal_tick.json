@@ -1,0 +1,23 @@
+{
+  "id": "seal_tick",
+  "kind": "synth",
+  "label": "Seal tick",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "arpMod": 0,
+    "arpSpeed": 0,
+    "attack": 0,
+    "baseFreq": 0.7,
+    "decay": 0.12,
+    "hpfFreq": 0.2,
+    "lpfFreq": 1,
+    "punch": 0.6,
+    "sustain": 0.01,
+    "wave": "sine"
+  },
+  "tags": [
+    "chime"
+  ]
+}

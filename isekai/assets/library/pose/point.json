@@ -1,0 +1,15 @@
+{
+  "curls": {
+    "index": 0,
+    "little": 1,
+    "middle": 1,
+    "ring": 1,
+    "thumb": 0.7
+  },
+  "id": "point",
+  "label": "Point",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 4,
+  "spread": 0
+}

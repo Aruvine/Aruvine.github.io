@@ -1,0 +1,12 @@
+{
+  "file": "scan_brow.vrma",
+  "group": "caster",
+  "id": "scan_brow",
+  "label": "Scan the distance",
+  "licence": "own",
+  "loop": false,
+  "origin": "made",
+  "schemaVersion": 2,
+  "seconds": 3,
+  "since": 2
+}

@@ -1,0 +1,215 @@
+{
+  "ai": {
+    "minInterval": 60,
+    "needsLos": true,
+    "priority": 3,
+    "range": [
+      0,
+      20
+    ],
+    "use": "auto"
+  },
+  "archetype": "transformation",
+  "casterClip": {
+    "clip": "lib:clip/transform_crouch",
+    "layer": "upper",
+    "phase": "powered"
+  },
+  "dials": [
+    {
+      "default": 30,
+      "id": "duration",
+      "label": "Lasts",
+      "max": 600,
+      "min": 5,
+      "unit": "s"
+    },
+    {
+      "default": 2,
+      "id": "drain",
+      "label": "Drain",
+      "max": 20,
+      "min": 0,
+      "unit": "per s"
+    },
+    {
+      "default": 1.5,
+      "id": "damage",
+      "label": "Damage",
+      "max": 3,
+      "min": 1,
+      "unit": "×"
+    },
+    {
+      "default": 60,
+      "id": "cooldown",
+      "label": "Cooldown",
+      "max": 600,
+      "min": 5,
+      "unit": "s"
+    }
+  ],
+  "gate": {
+    "blockedBy": [
+      "stunned",
+      "held",
+      "down"
+    ],
+    "cooldown": {
+      "dial": "cooldown"
+    }
+  },
+  "icon": "lib:icon/transform",
+  "id": "transformation",
+  "label": "Transform",
+  "phases": [
+    {
+      "blocks": [
+        {
+          "do": {
+            "act": "body",
+            "effect": "form",
+            "form": "powered",
+            "op": "start",
+            "who": "caster"
+          },
+          "id": "form",
+          "label": "the form",
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "fx",
+            "at": {
+              "of": "caster"
+            },
+            "effect": "lib:fx/flash_light"
+          },
+          "id": "flash",
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "sound",
+            "at": {
+              "of": "caster"
+            },
+            "op": "play",
+            "sound": "lib:sfx/power_up"
+          },
+          "id": "rise",
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "fx",
+            "at": {
+              "of": "caster"
+            },
+            "effect": "lib:fx/power_aura"
+          },
+          "id": "aura",
+          "label": "the aura",
+          "t": 0
+        },
+        {
+          "bind": true,
+          "do": {
+            "act": "modify",
+            "id": "transform_damage",
+            "op": "mul",
+            "prop": "damageDealt",
+            "value": {
+              "dial": "damage"
+            },
+            "who": "caster"
+          },
+          "id": "stronger",
+          "label": "stronger",
+          "t": 0
+        },
+        {
+          "bind": true,
+          "do": {
+            "act": "modify",
+            "id": "transform_speed",
+            "op": "mul",
+            "prop": "moveSpeed",
+            "value": 1.2,
+            "who": "caster"
+          },
+          "id": "faster",
+          "label": "faster",
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "pool",
+            "amount": {
+              "dial": "drain"
+            },
+            "op": "sub",
+            "perSecond": true,
+            "pool": "energy",
+            "who": "caster"
+          },
+          "id": "drain",
+          "label": "the drain",
+          "t": 0
+        }
+      ],
+      "exits": [
+        {
+          "if": {
+            "cmp": {
+              "a": {
+                "read": "phaseTime"
+              },
+              "b": {
+                "dial": "duration"
+              },
+              "op": ">="
+            }
+          },
+          "on": "cond",
+          "to": "end"
+        },
+        {
+          "if": {
+            "cmp": {
+              "a": {
+                "of": "caster",
+                "read": "pool:energy"
+              },
+              "b": 0,
+              "op": "<="
+            }
+          },
+          "on": "cond",
+          "to": "end"
+        }
+      ],
+      "id": "powered",
+      "label": "Transformed",
+      "max": "untilExit"
+    }
+  ],
+  "schemaVersion": 2,
+  "tags": [
+    "form"
+  ],
+  "trigger": {
+    "input": {
+      "button": {
+        "act": "slot",
+        "edge": "press"
+      },
+      "hand": {
+        "hand": "both",
+        "holdMs": 500,
+        "pose": "hand_raised"
+      }
+    },
+    "kind": "press"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "id": "throw",
+  "kind": "synth",
+  "label": "Throw",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0.06,
+    "baseFreq": 0.5,
+    "decay": 0.2,
+    "freqRamp": -0.1,
+    "hpfFreq": 0.08,
+    "lpfFreq": 0.4,
+    "lpfRamp": 0.15,
+    "punch": 0,
+    "sustain": 0.05,
+    "wave": "noise"
+  },
+  "tags": [
+    "whoosh"
+  ]
+}

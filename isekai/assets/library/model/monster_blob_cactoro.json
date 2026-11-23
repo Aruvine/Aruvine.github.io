@@ -1,0 +1,13 @@
+{
+  "bytes": 134136,
+  "file": "monster_blob_cactoro.glb",
+  "height": 3.494,
+  "id": "monster_blob_cactoro",
+  "label": "Cactoro (blob)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "2f3bcc2f2c104d7e6937e40171edbd3394ea35a8306a651a5f1251446d47a608",
+  "triangles": 2388,
+  "yaw": 0
+}

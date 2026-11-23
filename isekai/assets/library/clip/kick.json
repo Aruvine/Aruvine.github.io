@@ -1,0 +1,12 @@
+{
+  "file": "kick.vrma",
+  "group": "caster",
+  "id": "kick",
+  "label": "Kick",
+  "licence": "kaykit_animations",
+  "loop": false,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 0.9333,
+  "since": 2
+}

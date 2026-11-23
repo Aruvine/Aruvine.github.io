@@ -1,0 +1,12 @@
+{
+  "file": "sit_ground.vrma",
+  "group": "everyday",
+  "id": "sit_ground",
+  "label": "Sit on the ground",
+  "licence": "kaykit_animations",
+  "loop": true,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 4,
+  "since": 2
+}

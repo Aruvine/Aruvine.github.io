@@ -1,0 +1,23 @@
+{
+  "id": "hit_light",
+  "kind": "synth",
+  "label": "Light hit",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.5,
+    "decay": 0.2,
+    "freqRamp": -0.4,
+    "hpfFreq": 0.1,
+    "lpfFreq": 1,
+    "punch": 0.4,
+    "sustain": 0.03,
+    "wave": "noise"
+  },
+  "tags": [
+    "hit"
+  ],
+  "volume": 0.8
+}

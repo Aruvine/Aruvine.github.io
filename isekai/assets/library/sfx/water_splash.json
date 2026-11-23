@@ -1,0 +1,23 @@
+{
+  "id": "water_splash",
+  "kind": "synth",
+  "label": "Water splash",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.45,
+    "decay": 0.35,
+    "freqRamp": -0.15,
+    "hpfFreq": 0.1,
+    "lpfFreq": 0.55,
+    "lpfRamp": -0.2,
+    "punch": 0.3,
+    "sustain": 0.1,
+    "wave": "noise"
+  },
+  "tags": [
+    "blast"
+  ]
+}

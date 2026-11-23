@@ -1,0 +1,25 @@
+{
+  "id": "boing",
+  "kind": "synth",
+  "label": "Boing",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.25,
+    "decay": 0.35,
+    "duty": 0.5,
+    "freqRamp": 0.25,
+    "hpfFreq": 0.05,
+    "lpfFreq": 1,
+    "punch": 0.2,
+    "sustain": 0.1,
+    "vibSpeed": 0.55,
+    "vibStrength": 0.5,
+    "wave": "sine"
+  },
+  "tags": [
+    "pop"
+  ]
+}

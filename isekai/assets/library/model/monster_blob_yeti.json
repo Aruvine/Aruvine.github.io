@@ -1,0 +1,13 @@
+{
+  "bytes": 121520,
+  "file": "monster_blob_yeti.glb",
+  "height": 2.418,
+  "id": "monster_blob_yeti",
+  "label": "Yeti (blob)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "68b26d4793cd1567139a72a009845be1c1f3b09e871653fd254d891bcef69ad9",
+  "triangles": 2136,
+  "yaw": 0
+}

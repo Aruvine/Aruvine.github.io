@@ -1,0 +1,12 @@
+{
+  "file": "mimic_touch.vrma",
+  "group": "caster",
+  "id": "mimic_touch",
+  "label": "Copying touch",
+  "licence": "kaykit_animations",
+  "loop": false,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 1.6,
+  "since": 2
+}

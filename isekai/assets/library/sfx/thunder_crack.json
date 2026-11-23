@@ -1,0 +1,24 @@
+{
+  "id": "thunder_crack",
+  "kind": "synth",
+  "label": "Thunder crack",
+  "licence": "own",
+  "range": 120,
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.2,
+    "decay": 0.7,
+    "freqRamp": -0.08,
+    "lpfFreq": 1,
+    "punch": 0.8,
+    "repeatSpeed": 0.2,
+    "sustain": 0.3,
+    "wave": "noise"
+  },
+  "tags": [
+    "blast"
+  ],
+  "volume": 1.2
+}

@@ -1,0 +1,22 @@
+{
+  "id": "fire_burst",
+  "kind": "synth",
+  "label": "Fire burst",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.3,
+    "decay": 0.4,
+    "freqRamp": -0.2,
+    "lpfFreq": 0.7,
+    "punch": 0.6,
+    "repeatSpeed": 0.3,
+    "sustain": 0.2,
+    "wave": "noise"
+  },
+  "tags": [
+    "blast"
+  ]
+}

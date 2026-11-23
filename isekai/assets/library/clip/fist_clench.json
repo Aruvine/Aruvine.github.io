@@ -1,0 +1,12 @@
+{
+  "file": "fist_clench.vrma",
+  "group": "caster",
+  "id": "fist_clench",
+  "label": "Clench a fist",
+  "licence": "own",
+  "loop": false,
+  "origin": "made",
+  "schemaVersion": 2,
+  "seconds": 1.2,
+  "since": 2
+}

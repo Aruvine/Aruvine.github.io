@@ -1,0 +1,12 @@
+{
+  "file": "knockdown.vrma",
+  "group": "reactions",
+  "id": "knockdown",
+  "label": "Knocked down",
+  "licence": "kaykit_animations",
+  "loop": false,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 0.8,
+  "since": 2
+}

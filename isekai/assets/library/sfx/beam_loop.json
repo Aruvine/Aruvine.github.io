@@ -1,0 +1,28 @@
+{
+  "id": "beam_loop",
+  "kind": "synth",
+  "label": "Beam loop",
+  "licence": "own",
+  "loop": true,
+  "maxVoices": 2,
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.75,
+    "decay": 0.1,
+    "duty": 0.3,
+    "dutyRamp": 0.1,
+    "freqLimit": 0,
+    "freqRamp": 0,
+    "lpfFreq": 0.6,
+    "punch": 0.15,
+    "sustain": 0.7,
+    "vibSpeed": 0.7,
+    "vibStrength": 0.2,
+    "wave": "sawtooth"
+  },
+  "tags": [
+    "zap"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "file": "hit_front.vrma",
+  "group": "reactions",
+  "id": "hit_front",
+  "label": "Hit from the front",
+  "licence": "ual_1",
+  "loop": false,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 0.3333,
+  "since": 2
+}

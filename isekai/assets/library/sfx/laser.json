@@ -1,0 +1,25 @@
+{
+  "id": "laser",
+  "kind": "synth",
+  "label": "Laser",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.85,
+    "decay": 0.15,
+    "duty": 0.3,
+    "dutyRamp": 0.1,
+    "freqLimit": 0.2,
+    "freqRamp": -0.35,
+    "hpfFreq": 0.1,
+    "lpfFreq": 1,
+    "punch": 0.15,
+    "sustain": 0.1,
+    "wave": "sawtooth"
+  },
+  "tags": [
+    "zap"
+  ]
+}

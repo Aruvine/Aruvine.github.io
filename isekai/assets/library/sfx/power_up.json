@@ -1,0 +1,26 @@
+{
+  "id": "power_up",
+  "kind": "synth",
+  "label": "Power up",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "arpMod": 0.3,
+    "arpSpeed": 0.5,
+    "attack": 0.05,
+    "baseFreq": 0.3,
+    "decay": 0.3,
+    "duty": 0.4,
+    "freqRamp": 0.25,
+    "lpfFreq": 0.8,
+    "punch": 0,
+    "sustain": 0.3,
+    "vibSpeed": 0.4,
+    "vibStrength": 0.15,
+    "wave": "square"
+  },
+  "tags": [
+    "charge"
+  ]
+}

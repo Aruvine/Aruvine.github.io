@@ -1,0 +1,131 @@
+{
+  "c": {
+    "body": {
+      "kind": "kinematic"
+    },
+    "mover": {
+      "kind": "door",
+      "path": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          -3.1,
+          0
+        ]
+      ],
+      "speed": 2
+    },
+    "shape": {
+      "model": {
+        "prim": "box",
+        "size": [
+          4,
+          3,
+          0.3
+        ]
+      },
+      "tint": "#6b5a48"
+    }
+  },
+  "cards": [
+    {
+      "cooldown": 1,
+      "do": [
+        {
+          "act": "setActive",
+          "on": true,
+          "part": "mover",
+          "who": "self"
+        },
+        {
+          "act": "wait",
+          "s": {
+            "dial": "open_time"
+          }
+        },
+        {
+          "act": "setActive",
+          "on": false,
+          "part": "mover",
+          "who": "self"
+        }
+      ],
+      "id": "open",
+      "label": "When asked to open, sink, and rise again after a while",
+      "on": {
+        "event": "signal",
+        "name": "open"
+      }
+    }
+  ],
+  "dials": [
+    {
+      "default": 8,
+      "id": "open_time",
+      "label": "Stays open",
+      "max": 60,
+      "min": 1,
+      "step": 0.5,
+      "unit": "s"
+    }
+  ],
+  "id": "gate",
+  "ideas": [
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "open",
+          "to": "self"
+        }
+      ],
+      "id": "open_on_bump",
+      "label": "When bumped, open",
+      "on": {
+        "event": "contact",
+        "minSpeed": 0.5,
+        "who": "player"
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "open",
+          "to": "self"
+        }
+      ],
+      "id": "open_every",
+      "label": "Open every 20 seconds",
+      "on": {
+        "event": "timer",
+        "every": 20
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "open",
+          "to": "self"
+        }
+      ],
+      "id": "open_at_start",
+      "label": "When the world starts, open",
+      "on": {
+        "event": "start"
+      }
+    }
+  ],
+  "kind": "gadget",
+  "label": "Gate",
+  "schemaVersion": 2,
+  "tags": [
+    "gate",
+    "door"
+  ]
+}

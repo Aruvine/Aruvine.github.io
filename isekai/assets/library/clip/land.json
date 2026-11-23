@@ -1,0 +1,12 @@
+{
+  "file": "land.vrma",
+  "group": "locomotion",
+  "id": "land",
+  "label": "Land",
+  "licence": "ual_1",
+  "loop": false,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 1.2667,
+  "since": 2
+}

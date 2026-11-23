@@ -1,0 +1,13 @@
+{
+  "bytes": 87892,
+  "file": "monster_blob_green_blob.glb",
+  "height": 1.869,
+  "id": "monster_blob_green_blob",
+  "label": "Green Blob (blob)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "fc68353469e3fe36586b7051a39bfdd0a466e48187f57fb39abf3932ca72447d",
+  "triangles": 1520,
+  "yaw": 0
+}

@@ -1,0 +1,23 @@
+{
+  "id": "thud_heavy",
+  "kind": "synth",
+  "label": "Heavy thud",
+  "licence": "own",
+  "range": 35,
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.1,
+    "decay": 0.4,
+    "freqRamp": -0.2,
+    "hpfFreq": 0.02,
+    "lpfFreq": 0.35,
+    "punch": 0.6,
+    "sustain": 0.08,
+    "wave": "noise"
+  },
+  "tags": [
+    "hit"
+  ]
+}

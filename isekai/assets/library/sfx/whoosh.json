@@ -1,0 +1,23 @@
+{
+  "id": "whoosh",
+  "kind": "synth",
+  "label": "Whoosh",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0.12,
+    "baseFreq": 0.5,
+    "decay": 0.25,
+    "freqRamp": 0.1,
+    "hpfFreq": 0.08,
+    "lpfFreq": 0.35,
+    "lpfRamp": 0.15,
+    "punch": 0,
+    "sustain": 0.08,
+    "wave": "noise"
+  },
+  "tags": [
+    "whoosh"
+  ]
+}

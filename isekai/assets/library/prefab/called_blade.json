@@ -1,0 +1,22 @@
+{
+  "c": {
+    "shape": {
+      "model": {
+        "prim": "box",
+        "size": [
+          0.05,
+          1,
+          0.02
+        ]
+      },
+      "tint": "#c9d6e3"
+    }
+  },
+  "id": "called_blade",
+  "kind": "prop",
+  "label": "Called blade",
+  "schemaVersion": 2,
+  "tags": [
+    "weapon"
+  ]
+}

@@ -1,0 +1,193 @@
+{
+  "ai": {
+    "aim": "lead",
+    "minInterval": 1.5,
+    "needsLos": true,
+    "priority": 2,
+    "range": [
+      2,
+      {
+        "dial": "range",
+        "times": 0.9
+      }
+    ],
+    "telegraph": 0.3,
+    "use": "auto"
+  },
+  "aim": {
+    "assistDeg": 5,
+    "from": "aim",
+    "origin": "triggerHand",
+    "range": {
+      "dial": "range"
+    }
+  },
+  "archetype": "projectile",
+  "casterClip": {
+    "clip": "lib:clip/throw_overhand",
+    "layer": "upper",
+    "phase": "release"
+  },
+  "dials": [
+    {
+      "default": 12,
+      "id": "damage",
+      "label": "Damage",
+      "max": 200,
+      "min": 0,
+      "unit": "pt"
+    },
+    {
+      "default": 30,
+      "id": "range",
+      "label": "Range",
+      "max": 60,
+      "min": 5,
+      "unit": "m"
+    },
+    {
+      "default": 30,
+      "id": "speed",
+      "label": "Speed",
+      "max": 80,
+      "min": 5,
+      "unit": "m/s"
+    },
+    {
+      "default": 1,
+      "id": "count",
+      "label": "Count",
+      "max": 8,
+      "min": 1,
+      "unit": ""
+    },
+    {
+      "default": 0.8,
+      "id": "cooldown",
+      "label": "Cooldown",
+      "max": 10,
+      "min": 0.1,
+      "unit": "s"
+    }
+  ],
+  "gate": {
+    "blockedBy": [
+      "stunned",
+      "held",
+      "down"
+    ],
+    "cooldown": {
+      "dial": "cooldown"
+    }
+  },
+  "icon": "lib:icon/shot",
+  "id": "projectile",
+  "label": "Shot",
+  "phases": [
+    {
+      "blocks": [
+        {
+          "do": {
+            "act": "launch",
+            "count": {
+              "dial": "count"
+            },
+            "dir": "aim",
+            "filter": {
+              "rel": "enemy"
+            },
+            "from": {
+              "of": "caster",
+              "socket": "triggerHand"
+            },
+            "onEnd": [
+              {
+                "act": "fx",
+                "at": "hitPoint",
+                "effect": "lib:fx/pop_ring"
+              }
+            ],
+            "onHit": [
+              {
+                "act": "damage",
+                "amount": {
+                  "dial": "damage"
+                },
+                "part": "auto",
+                "to": "target"
+              },
+              {
+                "act": "fx",
+                "at": "hitPoint",
+                "effect": "lib:fx/impact_stars"
+              },
+              {
+                "act": "sound",
+                "at": "hitPoint",
+                "op": "play",
+                "sound": "lib:sfx/hit_light"
+              },
+              {
+                "act": "feel",
+                "amount": 0.4,
+                "kind": "haptic",
+                "seconds": 0.06,
+                "who": "caster"
+              }
+            ],
+            "range": {
+              "dial": "range"
+            },
+            "speed": {
+              "dial": "speed"
+            },
+            "spreadDeg": 12,
+            "what": {
+              "effect": "lib:fx/energy_orb",
+              "radius": 0.15
+            },
+            "who": "caster"
+          },
+          "id": "shot",
+          "label": "the shot",
+          "t": 0.1
+        },
+        {
+          "do": {
+            "act": "sound",
+            "at": {
+              "of": "caster"
+            },
+            "op": "play",
+            "sound": "lib:sfx/throw"
+          },
+          "t": 0.1
+        }
+      ],
+      "exits": [
+        {
+          "on": "time",
+          "to": "end"
+        }
+      ],
+      "id": "release",
+      "label": "Release",
+      "max": 0.4
+    }
+  ],
+  "schemaVersion": 2,
+  "trigger": {
+    "input": {
+      "button": {
+        "act": "slot",
+        "edge": "press"
+      },
+      "hand": {
+        "hand": "either",
+        "minSpeed": 3,
+        "motion": "throw"
+      }
+    },
+    "kind": "press"
+  }
+}

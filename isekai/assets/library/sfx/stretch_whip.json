@@ -1,0 +1,27 @@
+{
+  "id": "stretch_whip",
+  "kind": "synth",
+  "label": "Stretch whip",
+  "licence": "own",
+  "maxVoices": 3,
+  "pitchVar": 0.06,
+  "range": 30,
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.32,
+    "decay": 0.28,
+    "freqRamp": 0.28,
+    "hpfFreq": 0.05,
+    "lpfFreq": 0.85,
+    "lpfRamp": 0,
+    "punch": 0.35,
+    "sustain": 0.08,
+    "wave": "sawtooth"
+  },
+  "tags": [
+    "whoosh"
+  ],
+  "volume": 0.9
+}

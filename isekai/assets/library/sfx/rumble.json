@@ -1,0 +1,25 @@
+{
+  "bus": "ambient",
+  "id": "rumble",
+  "kind": "synth",
+  "label": "Rumble",
+  "licence": "own",
+  "range": 60,
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0.3,
+    "baseFreq": 0.05,
+    "decay": 0.5,
+    "freqRamp": 0,
+    "lpfFreq": 0.25,
+    "punch": 0,
+    "sustain": 0.7,
+    "vibSpeed": 0.15,
+    "vibStrength": 0.2,
+    "wave": "noise"
+  },
+  "tags": [
+    "blast"
+  ]
+}

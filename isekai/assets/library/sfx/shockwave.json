@@ -1,0 +1,23 @@
+{
+  "id": "shockwave",
+  "kind": "synth",
+  "label": "Shockwave",
+  "licence": "own",
+  "range": 60,
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.08,
+    "decay": 0.5,
+    "freqRamp": -0.05,
+    "lpfFreq": 0.4,
+    "lpfRamp": -0.1,
+    "punch": 0.7,
+    "sustain": 0.25,
+    "wave": "noise"
+  },
+  "tags": [
+    "blast"
+  ]
+}

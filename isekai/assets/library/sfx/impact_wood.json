@@ -1,0 +1,17 @@
+{
+  "bytes": 4440,
+  "channels": 1,
+  "file": "impact_wood.ogg",
+  "id": "impact_wood",
+  "kind": "sample",
+  "label": "Wood impact",
+  "licence": "kenney_impact",
+  "range": 25,
+  "schemaVersion": 2,
+  "seconds": 0.313,
+  "sha256": "b0c755e5d1b5870594f1be97f079060a0d6fc585a7bc01b66564c4cb45088359",
+  "since": 2,
+  "tags": [
+    "impact"
+  ]
+}

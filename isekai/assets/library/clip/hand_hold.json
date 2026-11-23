@@ -1,0 +1,12 @@
+{
+  "file": "hand_hold.vrma",
+  "group": "social",
+  "id": "hand_hold",
+  "label": "Hold hands",
+  "licence": "own",
+  "loop": true,
+  "origin": "made",
+  "schemaVersion": 2,
+  "seconds": 2,
+  "since": 2
+}

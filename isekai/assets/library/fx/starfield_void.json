@@ -1,0 +1,43 @@
+{
+  "dials": [
+    {
+      "default": 0.25,
+      "id": "wipe",
+      "label": "Wipe",
+      "max": 2,
+      "min": 0,
+      "step": 0.05,
+      "unit": "s"
+    }
+  ],
+  "floor": {
+    "color": "#0e1228",
+    "glow": "#3a4cff",
+    "pattern": "none"
+  },
+  "fog": {
+    "far": 40,
+    "near": 10
+  },
+  "id": "starfield_void",
+  "kind": "backdrop",
+  "label": "Starfield void",
+  "life": 0,
+  "light": {
+    "level": 0.6,
+    "tint": "#9aa8ff"
+  },
+  "schemaVersion": 2,
+  "sky": {
+    "horizon": "#1c2460",
+    "moon": false,
+    "stars": 1,
+    "top": "#02030a"
+  },
+  "tags": [
+    "backdrop"
+  ],
+  "wipe": {
+    "dial": "wipe"
+  }
+}

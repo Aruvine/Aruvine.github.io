@@ -1,0 +1,26 @@
+{
+  "id": "shield_hit",
+  "kind": "synth",
+  "label": "Shield hit",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.6,
+    "decay": 0.3,
+    "duty": 0.3,
+    "dutyRamp": 0.1,
+    "freqLimit": 0,
+    "freqRamp": -0.1,
+    "lpfFreq": 1,
+    "phaOffset": 0.25,
+    "phaRamp": -0.2,
+    "punch": 0.5,
+    "sustain": 0.05,
+    "wave": "square"
+  },
+  "tags": [
+    "zap"
+  ]
+}

@@ -1,0 +1,750 @@
+[
+  {
+    "cmd": "edit.add",
+    "kind": "power",
+    "path": "powers/long_reach.json",
+    "value": {
+      "ai": {
+        "aim": "atLaunch",
+        "hold": 1.5,
+        "holdChance": 0.3,
+        "minInterval": 2.5,
+        "needsLos": true,
+        "priority": 2,
+        "range": [
+          3,
+          {
+            "dial": "reach",
+            "times": 0.9
+          }
+        ],
+        "telegraph": 0.4,
+        "telegraphClip": "lib:clip/punch_windup",
+        "use": "auto"
+      },
+      "aim": {
+        "assistDeg": 7,
+        "from": "aim",
+        "origin": "triggerHand",
+        "range": {
+          "dial": "reach"
+        },
+        "sweep": 0.15
+      },
+      "archetype": "long_reach_strike",
+      "casterClip": {
+        "clip": "lib:clip/punch_windup",
+        "layer": "upper",
+        "phase": "windup"
+      },
+      "dials": [
+        {
+          "default": 20,
+          "id": "reach",
+          "label": "Reach",
+          "max": 60,
+          "min": 2,
+          "unit": "m"
+        },
+        {
+          "default": 40,
+          "id": "speed",
+          "label": "Speed",
+          "max": 80,
+          "min": 10,
+          "unit": "m/s"
+        },
+        {
+          "default": 40,
+          "id": "force",
+          "label": "Force",
+          "max": 200,
+          "min": 0,
+          "unit": "pt"
+        },
+        {
+          "default": 15,
+          "id": "pull_speed",
+          "label": "Pull speed",
+          "max": 30,
+          "min": 5,
+          "unit": "m/s"
+        },
+        {
+          "default": 0.4,
+          "id": "cooldown",
+          "label": "Cooldown",
+          "max": 5,
+          "min": 0.2,
+          "unit": "s"
+        }
+      ],
+      "gate": {
+        "blockedBy": [
+          "stunned",
+          "held",
+          "down"
+        ],
+        "cooldown": {
+          "dial": "cooldown"
+        },
+        "perHand": true
+      },
+      "icon": "lib:icon/fist_long",
+      "id": "long_reach",
+      "label": "Long Reach",
+      "phases": [
+        {
+          "blocks": [],
+          "exits": [
+            {
+              "on": "time",
+              "to": "launch"
+            }
+          ],
+          "id": "windup",
+          "label": "Wind-up",
+          "max": 0.25,
+          "only": "untracked"
+        },
+        {
+          "blocks": [
+            {
+              "do": {
+                "act": "body",
+                "effect": "stretch",
+                "fist": 1.3,
+                "limb": "triggerArm",
+                "max": {
+                  "dial": "reach"
+                },
+                "op": "out",
+                "poseDrive": true,
+                "speed": {
+                  "dial": "speed"
+                },
+                "tipRadius": 0.15,
+                "who": "caster"
+              },
+              "id": "arm",
+              "t": 0
+            },
+            {
+              "do": {
+                "act": "fx",
+                "at": {
+                  "of": "caster",
+                  "socket": "stretchTip"
+                },
+                "effect": "lib:fx/fist_trail",
+                "op": "start"
+              },
+              "id": "trail",
+              "label": "Trail",
+              "len": 6.5,
+              "t": 0
+            },
+            {
+              "do": {
+                "act": "sound",
+                "at": {
+                  "of": "caster"
+                },
+                "op": "play",
+                "sound": "lib:sfx/stretch_whip"
+              },
+              "id": "whip",
+              "t": 0
+            }
+          ],
+          "exits": [
+            {
+              "on": "tipHit",
+              "to": "hit"
+            },
+            {
+              "if": {
+                "input": {
+                  "is": "held"
+                }
+              },
+              "on": "tipWall",
+              "to": "grab"
+            },
+            {
+              "on": "tipWall",
+              "to": "retract"
+            },
+            {
+              "on": "tipMax",
+              "to": "full"
+            },
+            {
+              "on": "time",
+              "to": "retract"
+            }
+          ],
+          "id": "launch",
+          "label": "Launch",
+          "max": 6.5
+        },
+        {
+          "blocks": [
+            {
+              "do": {
+                "act": "damage",
+                "amount": {
+                  "base": 0.25,
+                  "plus": [
+                    {
+                      "per": "stretch",
+                      "x": 0.75
+                    }
+                  ],
+                  "times": [
+                    {
+                      "x": {
+                        "dial": "force"
+                      }
+                    }
+                  ]
+                },
+                "tags": [
+                  "blunt"
+                ],
+                "to": "target"
+              },
+              "id": "blow",
+              "t": 0
+            },
+            {
+              "do": {
+                "act": "force",
+                "dir": "aim",
+                "kind": "push",
+                "speed": {
+                  "base": 2,
+                  "plus": [
+                    {
+                      "per": "stretch",
+                      "x": 10
+                    }
+                  ]
+                },
+                "who": "target"
+              },
+              "id": "shove",
+              "t": 0
+            },
+            {
+              "do": {
+                "act": "feel",
+                "kind": "hitStop",
+                "seconds": 0.06,
+                "who": "target"
+              },
+              "id": "freeze",
+              "t": 0
+            },
+            {
+              "do": {
+                "act": "feel",
+                "amount": 0.8,
+                "kind": "haptic",
+                "seconds": 0.08,
+                "who": "caster"
+              },
+              "id": "buzz",
+              "t": 0
+            },
+            {
+              "do": {
+                "act": "fx",
+                "at": "hitPoint",
+                "effect": "lib:fx/impact_stars",
+                "op": "start"
+              },
+              "id": "stars",
+              "t": 0
+            },
+            {
+              "do": {
+                "act": "sound",
+                "at": "hitPoint",
+                "op": "play",
+                "sound": "lib:sfx/thud_heavy"
+              },
+              "id": "thud",
+              "t": 0
+            }
+          ],
+          "exits": [
+            {
+              "on": "time",
+              "to": "retract"
+            }
+          ],
+          "id": "hit",
+          "label": "Hit",
+          "max": 0.06
+        },
+        {
+          "blocks": [
+            {
+              "do": {
+                "act": "body",
+                "effect": "stretch",
+                "op": "hold",
+                "probe": 0.5,
+                "who": "caster"
+              },
+              "id": "feel_wall",
+              "t": 0
+            }
+          ],
+          "exits": [
+            {
+              "if": {
+                "input": {
+                  "is": "held"
+                }
+              },
+              "on": "cond",
+              "to": "grab"
+            },
+            {
+              "on": "time",
+              "to": "retract"
+            }
+          ],
+          "id": "full",
+          "label": "Full stretch",
+          "max": 0.25
+        },
+        {
+          "blocks": [
+            {
+              "do": {
+                "act": "body",
+                "effect": "stretch",
+                "op": "anchor",
+                "who": "caster"
+              },
+              "id": "grip",
+              "t": 0
+            },
+            {
+              "do": {
+                "act": "sound",
+                "at": {
+                  "of": "caster",
+                  "socket": "stretchTip"
+                },
+                "op": "play",
+                "sound": "lib:sfx/grip"
+              },
+              "id": "grip_sound",
+              "t": 0
+            }
+          ],
+          "exits": [
+            {
+              "on": "blocked",
+              "to": "retract"
+            },
+            {
+              "on": "time",
+              "to": "pull"
+            }
+          ],
+          "id": "grab",
+          "label": "Grab",
+          "max": 0.1
+        },
+        {
+          "blocks": [
+            {
+              "do": {
+                "act": "body",
+                "effect": "stretch",
+                "gravity": false,
+                "keepSpeed": true,
+                "op": "pull",
+                "speed": {
+                  "dial": "pull_speed"
+                },
+                "stopWithin": 1,
+                "what": "caster",
+                "who": "caster"
+              },
+              "id": "reel",
+              "t": 0
+            },
+            {
+              "do": {
+                "act": "sound",
+                "at": {
+                  "of": "caster"
+                },
+                "op": "loop",
+                "sound": "lib:sfx/wind_rush"
+              },
+              "id": "rush",
+              "label": "Wind sound",
+              "len": 12.5,
+              "t": 0
+            }
+          ],
+          "exits": [
+            {
+              "on": "arrived",
+              "to": "retract"
+            },
+            {
+              "on": "released",
+              "to": "retract"
+            },
+            {
+              "on": "blocked",
+              "to": "retract"
+            },
+            {
+              "on": "time",
+              "to": "retract"
+            }
+          ],
+          "id": "pull",
+          "label": "Pull",
+          "max": 12.5
+        },
+        {
+          "blocks": [
+            {
+              "do": {
+                "act": "body",
+                "effect": "stretch",
+                "op": "back",
+                "speed": 60,
+                "who": "caster",
+                "wobble": {
+                  "amp": {
+                    "base": 0,
+                    "plus": [
+                      {
+                        "per": "stretch",
+                        "x": 0.3
+                      }
+                    ]
+                  },
+                  "hz": 12,
+                  "seconds": 0.35
+                }
+              },
+              "id": "snap",
+              "t": 0
+            },
+            {
+              "do": {
+                "act": "sound",
+                "at": {
+                  "of": "caster"
+                },
+                "op": "play",
+                "sound": "lib:sfx/snap_back"
+              },
+              "id": "snap_sound",
+              "t": 0
+            }
+          ],
+          "exits": [
+            {
+              "on": "retracted",
+              "to": "end"
+            },
+            {
+              "on": "time",
+              "to": "end"
+            }
+          ],
+          "id": "retract",
+          "label": "Snap back",
+          "max": 1.2
+        }
+      ],
+      "schemaVersion": 2,
+      "tags": [
+        "melee",
+        "stretch"
+      ],
+      "trigger": {
+        "input": {
+          "button": {
+            "act": "slot",
+            "edge": "press"
+          },
+          "hand": {
+            "hand": "either",
+            "minSpeed": 4,
+            "motion": "punch"
+          }
+        },
+        "kind": "press"
+      }
+    }
+  },
+  {
+    "cmd": "edit.add",
+    "kind": "power",
+    "path": "powers/big_knuckle.json",
+    "value": {
+      "ai": {
+        "use": "never"
+      },
+      "casterClip": {
+        "clip": "lib:clip/fist_clench",
+        "layer": "upper",
+        "phase": "grow"
+      },
+      "gate": {
+        "blockedBy": [
+          "stunned",
+          "held",
+          "down"
+        ],
+        "cooldown": 1
+      },
+      "icon": "lib:icon/giant_fist",
+      "id": "big_knuckle",
+      "label": "Big Knuckle",
+      "phases": [
+        {
+          "blocks": [
+            {
+              "do": {
+                "act": "body",
+                "effect": "partSize",
+                "op": "start",
+                "part": "triggerHand",
+                "scale": 4,
+                "seconds": 1,
+                "who": "caster"
+              },
+              "id": "fist",
+              "keep": "instance",
+              "label": "the big fist",
+              "t": 0
+            },
+            {
+              "do": {
+                "act": "sound",
+                "at": {
+                  "of": "caster"
+                },
+                "op": "play",
+                "sound": "lib:sfx/charge_rise"
+              },
+              "t": 0
+            }
+          ],
+          "charge": true,
+          "exits": [
+            {
+              "if": {
+                "cmp": {
+                  "a": {
+                    "read": "holdTime"
+                  },
+                  "b": 0.25,
+                  "op": "<"
+                }
+              },
+              "on": "released",
+              "to": "tap"
+            },
+            {
+              "on": "released",
+              "to": "slam"
+            },
+            {
+              "on": "time",
+              "to": "slam"
+            }
+          ],
+          "id": "grow",
+          "label": "Grow",
+          "max": 1
+        },
+        {
+          "blocks": [
+            {
+              "do": {
+                "act": "hitVolume",
+                "filter": {
+                  "rel": "any"
+                },
+                "on": {
+                  "of": "caster"
+                },
+                "onHit": [
+                  {
+                    "act": "damage",
+                    "amount": {
+                      "base": 15,
+                      "plus": [
+                        {
+                          "per": "charge",
+                          "x": 15
+                        }
+                      ]
+                    },
+                    "part": "auto",
+                    "tags": [
+                      "blunt"
+                    ],
+                    "to": "target"
+                  },
+                  {
+                    "act": "fx",
+                    "at": "hitPoint",
+                    "effect": "lib:fx/impact_burst"
+                  }
+                ],
+                "once": "perTarget",
+                "shape": {
+                  "sphere": 3
+                },
+                "who": "caster"
+              },
+              "id": "smash",
+              "label": "the slam",
+              "len": 0.1,
+              "t": 0
+            },
+            {
+              "do": {
+                "act": "sound",
+                "at": {
+                  "of": "caster"
+                },
+                "op": "play",
+                "sound": "lib:sfx/thud_heavy"
+              },
+              "t": 0
+            }
+          ],
+          "exits": [
+            {
+              "on": "time",
+              "to": "end"
+            }
+          ],
+          "id": "slam",
+          "label": "Slam",
+          "max": 0.2
+        },
+        {
+          "blocks": [
+            {
+              "do": {
+                "act": "hitVolume",
+                "filter": {
+                  "rel": "any"
+                },
+                "on": {
+                  "of": "caster"
+                },
+                "onHit": [
+                  {
+                    "act": "damage",
+                    "amount": 15,
+                    "part": "auto",
+                    "tags": [
+                      "blunt"
+                    ],
+                    "to": "target"
+                  },
+                  {
+                    "act": "fx",
+                    "at": "hitPoint",
+                    "effect": "lib:fx/impact_stars"
+                  }
+                ],
+                "once": "perTarget",
+                "shape": {
+                  "sphere": 3
+                },
+                "who": "caster"
+              },
+              "id": "tap_smash",
+              "label": "the quick slam",
+              "len": 0.1,
+              "t": 0
+            }
+          ],
+          "exits": [
+            {
+              "on": "time",
+              "to": "end"
+            }
+          ],
+          "id": "tap",
+          "label": "Quick slam",
+          "max": 0.2
+        }
+      ],
+      "schemaVersion": 2,
+      "tags": [
+        "melee"
+      ],
+      "trigger": {
+        "input": {
+          "button": {
+            "act": "slot",
+            "edge": "press"
+          },
+          "hand": {
+            "hand": "either",
+            "holdMs": 120,
+            "pose": "fist"
+          }
+        },
+        "kind": "press"
+      }
+    }
+  },
+  {
+    "cmd": "edit.set",
+    "path": "world.json.player",
+    "value": {
+      "c": {
+        "loadout": {
+          "powers": [
+            "long_reach",
+            "big_knuckle"
+          ],
+          "slots": {
+            "power1": "long_reach",
+            "power2": "big_knuckle"
+          }
+        },
+        "pools": {
+          "health": {
+            "max": 100
+          }
+        }
+      }
+    }
+  },
+  {
+    "cmd": "edit.set",
+    "path": "zones/yard/zone.json.entities.mabo.c.loadout",
+    "value": {
+      "powers": [
+        "long_reach"
+      ],
+      "slots": {
+        "power1": "long_reach"
+      }
+    }
+  }
+]

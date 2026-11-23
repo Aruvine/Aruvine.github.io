@@ -1,0 +1,19 @@
+{
+  "bytes": 6413,
+  "channels": 1,
+  "file": "step_grass.ogg",
+  "id": "step_grass",
+  "kind": "sample",
+  "label": "Step on grass",
+  "licence": "kenney_impact",
+  "maxVoices": 4,
+  "range": 15,
+  "schemaVersion": 2,
+  "seconds": 0.778,
+  "sha256": "9c496f55b49559888ec2e070fc5af29cce56109231523c27cf68f5043812d527",
+  "since": 2,
+  "tags": [
+    "step"
+  ],
+  "volume": 0.7
+}

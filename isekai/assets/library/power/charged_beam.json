@@ -1,0 +1,415 @@
+{
+  "ai": {
+    "hold": 1.5,
+    "holdChance": 0.7,
+    "minInterval": 6,
+    "needsLos": true,
+    "priority": 3,
+    "range": [
+      2,
+      {
+        "dial": "length",
+        "times": 0.9
+      }
+    ],
+    "telegraph": 0.5,
+    "use": "auto"
+  },
+  "aim": {
+    "assistDeg": 3,
+    "from": "aim",
+    "origin": "triggerHand",
+    "range": {
+      "dial": "length"
+    },
+    "sweep": {
+      "dial": "width",
+      "times": 0.5
+    }
+  },
+  "archetype": "charged_beam",
+  "casterClip": {
+    "clip": "lib:clip/charge_two_hands",
+    "layer": "upper",
+    "phase": "charge"
+  },
+  "dials": [
+    {
+      "default": 2,
+      "id": "max_charge",
+      "label": "Charge time",
+      "max": 5,
+      "min": 0.5,
+      "unit": "s"
+    },
+    {
+      "default": 60,
+      "id": "damage",
+      "label": "Damage",
+      "max": 300,
+      "min": 0,
+      "unit": "pt"
+    },
+    {
+      "default": 15,
+      "id": "length",
+      "label": "Length",
+      "max": 40,
+      "min": 3,
+      "unit": "m"
+    },
+    {
+      "default": 0.4,
+      "id": "width",
+      "label": "Width",
+      "max": 2,
+      "min": 0.1,
+      "unit": "m"
+    },
+    {
+      "default": 6,
+      "id": "cooldown",
+      "label": "Cooldown",
+      "max": 60,
+      "min": 1,
+      "unit": "s"
+    }
+  ],
+  "gate": {
+    "blockedBy": [
+      "stunned",
+      "held",
+      "down"
+    ],
+    "cooldown": {
+      "dial": "cooldown"
+    }
+  },
+  "icon": "lib:icon/beam",
+  "id": "charged_beam",
+  "label": "Charged beam",
+  "phases": [
+    {
+      "blocks": [
+        {
+          "do": {
+            "act": "fx",
+            "at": {
+              "of": "caster",
+              "socket": "triggerHand"
+            },
+            "effect": "lib:fx/magic_glow"
+          },
+          "id": "gather",
+          "label": "the gathering light",
+          "len": 5,
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "sound",
+            "at": {
+              "of": "caster"
+            },
+            "op": "loop",
+            "sound": "lib:sfx/charge_hold"
+          },
+          "id": "hum",
+          "label": "the charge sound",
+          "len": 5,
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "sound",
+            "at": {
+              "of": "caster"
+            },
+            "op": "play",
+            "sound": "lib:sfx/charge_rise"
+          },
+          "t": 0
+        }
+      ],
+      "charge": true,
+      "exits": [
+        {
+          "on": "released",
+          "to": "fire"
+        },
+        {
+          "if": {
+            "cmp": {
+              "a": {
+                "read": "charge"
+              },
+              "b": {
+                "dial": "max_charge",
+                "times": 0.2
+              },
+              "op": ">="
+            }
+          },
+          "on": "cond",
+          "to": "fire"
+        },
+        {
+          "on": "time",
+          "to": "fire"
+        }
+      ],
+      "id": "charge",
+      "label": "Charge",
+      "max": 5
+    },
+    {
+      "blocks": [
+        {
+          "do": {
+            "act": "hitVolume",
+            "filter": {
+              "rel": "enemy"
+            },
+            "on": {
+              "socket": "triggerHand"
+            },
+            "onHit": [
+              {
+                "act": "if",
+                "cond": {
+                  "all": [
+                    {
+                      "cmp": {
+                        "a": {
+                          "read": "charge"
+                        },
+                        "b": {
+                          "dial": "max_charge",
+                          "times": 0.1
+                        },
+                        "op": "<"
+                      }
+                    }
+                  ]
+                },
+                "then": [
+                  {
+                    "act": "damage",
+                    "amount": {
+                      "dial": "damage",
+                      "times": 0.25
+                    },
+                    "part": "auto",
+                    "to": "target"
+                  }
+                ]
+              },
+              {
+                "act": "if",
+                "cond": {
+                  "all": [
+                    {
+                      "cmp": {
+                        "a": {
+                          "read": "charge"
+                        },
+                        "b": {
+                          "dial": "max_charge",
+                          "times": 0.1
+                        },
+                        "op": ">="
+                      }
+                    },
+                    {
+                      "cmp": {
+                        "a": {
+                          "read": "charge"
+                        },
+                        "b": {
+                          "dial": "max_charge",
+                          "times": 0.15
+                        },
+                        "op": "<"
+                      }
+                    }
+                  ]
+                },
+                "then": [
+                  {
+                    "act": "damage",
+                    "amount": {
+                      "dial": "damage",
+                      "times": 0.5
+                    },
+                    "part": "auto",
+                    "to": "target"
+                  }
+                ]
+              },
+              {
+                "act": "if",
+                "cond": {
+                  "all": [
+                    {
+                      "cmp": {
+                        "a": {
+                          "read": "charge"
+                        },
+                        "b": {
+                          "dial": "max_charge",
+                          "times": 0.15
+                        },
+                        "op": ">="
+                      }
+                    },
+                    {
+                      "cmp": {
+                        "a": {
+                          "read": "charge"
+                        },
+                        "b": {
+                          "dial": "max_charge",
+                          "times": 0.2
+                        },
+                        "op": "<"
+                      }
+                    }
+                  ]
+                },
+                "then": [
+                  {
+                    "act": "damage",
+                    "amount": {
+                      "dial": "damage",
+                      "times": 0.75
+                    },
+                    "part": "auto",
+                    "to": "target"
+                  }
+                ]
+              },
+              {
+                "act": "if",
+                "cond": {
+                  "all": [
+                    {
+                      "cmp": {
+                        "a": {
+                          "read": "charge"
+                        },
+                        "b": {
+                          "dial": "max_charge",
+                          "times": 0.2
+                        },
+                        "op": ">="
+                      }
+                    }
+                  ]
+                },
+                "then": [
+                  {
+                    "act": "damage",
+                    "amount": {
+                      "dial": "damage",
+                      "times": 1
+                    },
+                    "part": "auto",
+                    "to": "target"
+                  }
+                ]
+              },
+              {
+                "act": "fx",
+                "at": "hitPoint",
+                "effect": "lib:fx/impact_burst"
+              },
+              {
+                "act": "sound",
+                "at": "hitPoint",
+                "op": "play",
+                "sound": "lib:sfx/hit_mid"
+              },
+              {
+                "act": "feel",
+                "amount": 0.8,
+                "kind": "haptic",
+                "seconds": 0.06,
+                "who": "caster"
+              }
+            ],
+            "once": "first",
+            "shape": {
+              "capsule": [
+                {
+                  "dial": "width",
+                  "times": 0.5
+                },
+                {
+                  "dial": "length"
+                }
+              ]
+            },
+            "who": "caster"
+          },
+          "id": "beam",
+          "label": "the beam",
+          "len": 0.3,
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "fx",
+            "at": {
+              "of": "caster",
+              "socket": "triggerHand"
+            },
+            "effect": "lib:fx/beam_energy",
+            "scale": {
+              "dial": "width",
+              "times": 2.5
+            }
+          },
+          "id": "ray",
+          "label": "the ray",
+          "len": 0.3,
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "sound",
+            "at": {
+              "of": "caster"
+            },
+            "op": "play",
+            "sound": "lib:sfx/laser"
+          },
+          "t": 0
+        }
+      ],
+      "exits": [
+        {
+          "on": "time",
+          "to": "end"
+        }
+      ],
+      "id": "fire",
+      "label": "Fire",
+      "max": 0.5
+    }
+  ],
+  "schemaVersion": 2,
+  "trigger": {
+    "input": {
+      "button": {
+        "act": "slot",
+        "edge": "press"
+      },
+      "hand": {
+        "hand": "both",
+        "holdMs": 120,
+        "pose": "palms_apart"
+      }
+    },
+    "kind": "press"
+  }
+}

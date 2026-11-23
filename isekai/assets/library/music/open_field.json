@@ -1,0 +1,20 @@
+{
+  "bus": "music",
+  "bytes": 1067125,
+  "channels": 2,
+  "file": "open_field.ogg",
+  "id": "open_field",
+  "kind": "music",
+  "label": "Open field",
+  "licence": "retro_rpg_music",
+  "loop": true,
+  "pitchVar": 0,
+  "schemaVersion": 2,
+  "seconds": 64,
+  "sha256": "2c07107c2f038d394b2c224d83731059f8b6f98a1679b2c8bf35c7bb22c0dd36",
+  "since": 2,
+  "space": "flat",
+  "tags": [
+    "explore"
+  ]
+}

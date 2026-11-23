@@ -1,0 +1,28 @@
+{
+  "id": "teleport",
+  "kind": "synth",
+  "label": "Teleport",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.3,
+    "decay": 0.3,
+    "duty": 0.3,
+    "dutyRamp": 0.1,
+    "freqLimit": 0,
+    "freqRamp": 0.35,
+    "lpfFreq": 1,
+    "phaOffset": 0.2,
+    "phaRamp": 0.1,
+    "punch": 0.15,
+    "sustain": 0.2,
+    "vibSpeed": 0.75,
+    "vibStrength": 0.4,
+    "wave": "sine"
+  },
+  "tags": [
+    "zap"
+  ]
+}

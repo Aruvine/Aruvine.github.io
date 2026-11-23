@@ -1,0 +1,12 @@
+{
+  "file": "think.vrma",
+  "group": "emotes",
+  "id": "think",
+  "label": "Think",
+  "licence": "own",
+  "loop": false,
+  "origin": "made",
+  "schemaVersion": 2,
+  "seconds": 2.5,
+  "since": 2
+}

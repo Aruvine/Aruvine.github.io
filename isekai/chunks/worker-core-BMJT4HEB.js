@@ -1,0 +1,2 @@
+import{a as e,d as s}from"./chunk-RUVJI6PA.js";import{O as i}from"./chunk-ESNQV62N.js";import"./chunk-D3D4GQN4.js";import"./chunk-RRJCXMOU.js";import"./chunk-6ZDDP2FS.js";import"./chunk-2EJ4OIV7.js";import"./chunk-GYX6BMMI.js";import"./chunk-D2XUP2M5.js";import"./chunk-XAWE4EAK.js";async function r(t){await e();let n=performance.now();return{tiles:s(t.input,t.classes,t.tiles),ms:Math.round((performance.now()-n)*10)/10,inputs:i(t.input)}}export{r as runNavBuild};
+//# sourceMappingURL=worker-core-BMJT4HEB.js.map

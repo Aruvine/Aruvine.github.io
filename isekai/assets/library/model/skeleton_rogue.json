@@ -1,0 +1,13 @@
+{
+  "bytes": 331180,
+  "file": "skeleton_rogue.glb",
+  "height": 2.308,
+  "id": "skeleton_rogue",
+  "label": "Skeleton Rogue",
+  "licence": "kaykit_skeletons",
+  "rig": "glbHumanoid",
+  "schemaVersion": 2,
+  "sha256": "d5b8f074a78a9972af0966014905ea1df2e71d2c3495d37a211980e6343ee774",
+  "triangles": 5278,
+  "yaw": 0
+}

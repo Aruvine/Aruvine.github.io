@@ -1,0 +1,23 @@
+{
+  "id": "ice_crack",
+  "kind": "synth",
+  "label": "Ice crack",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.6,
+    "decay": 0.25,
+    "freqRamp": -0.2,
+    "hpfFreq": 0.3,
+    "lpfFreq": 1,
+    "punch": 0.4,
+    "repeatSpeed": 0.6,
+    "sustain": 0.05,
+    "wave": "noise"
+  },
+  "tags": [
+    "blast"
+  ]
+}

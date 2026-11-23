@@ -1,0 +1,25 @@
+{
+  "id": "deep_bell",
+  "kind": "synth",
+  "label": "Deep bell",
+  "licence": "own",
+  "range": 60,
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "arpMod": 0,
+    "arpSpeed": 0,
+    "attack": 0,
+    "baseFreq": 0.25,
+    "decay": 0.8,
+    "lpfFreq": 1,
+    "punch": 0.45,
+    "sustain": 0.1,
+    "vibSpeed": 0.3,
+    "vibStrength": 0.05,
+    "wave": "sine"
+  },
+  "tags": [
+    "chime"
+  ]
+}

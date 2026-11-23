@@ -1,0 +1,27 @@
+{
+  "c": {
+    "body": {
+      "kind": "static"
+    },
+    "display": {
+      "kind": "nameplate",
+      "text": "Tavi Ronde"
+    },
+    "shape": {
+      "model": "lib:model/tavi_ronde",
+      "outerMeshes": [
+        "LongCoat",
+        "Glasses",
+        "Scarf"
+      ]
+    }
+  },
+  "id": "tavi_ronde",
+  "kind": "character",
+  "label": "Tavi Ronde",
+  "schemaVersion": 2,
+  "tags": [
+    "sample",
+    "archivist"
+  ]
+}

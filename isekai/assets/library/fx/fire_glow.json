@@ -1,0 +1,35 @@
+{
+  "dials": [
+    {
+      "default": 5,
+      "id": "range",
+      "label": "Range",
+      "max": 20,
+      "min": 0.5,
+      "step": 0.5,
+      "unit": "m"
+    }
+  ],
+  "id": "fire_glow",
+  "kind": "light",
+  "label": "Fire glow",
+  "layers": [
+    {
+      "id": "glow",
+      "intensity": 1.5,
+      "prim": "light",
+      "range": {
+        "dial": "range"
+      }
+    }
+  ],
+  "life": 0,
+  "palette": {
+    "a": "#ff8a30",
+    "b": "#ffcf6a"
+  },
+  "schemaVersion": 2,
+  "tags": [
+    "fire"
+  ]
+}

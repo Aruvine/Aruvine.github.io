@@ -1,0 +1,24 @@
+{
+  "id": "zap",
+  "kind": "synth",
+  "label": "Zap",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.75,
+    "decay": 0.2,
+    "duty": 0.3,
+    "dutyRamp": 0.1,
+    "freqLimit": 0.2,
+    "freqRamp": -0.3,
+    "lpfFreq": 1,
+    "punch": 0.15,
+    "sustain": 0.12,
+    "wave": "square"
+  },
+  "tags": [
+    "zap"
+  ]
+}

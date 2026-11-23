@@ -1,0 +1,31 @@
+{
+  "bus": "ambient",
+  "id": "portal_hum",
+  "kind": "synth",
+  "label": "Portal hum",
+  "licence": "own",
+  "loop": true,
+  "maxVoices": 2,
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0.2,
+    "baseFreq": 0.2,
+    "decay": 0.2,
+    "duty": 0.3,
+    "dutyRamp": 0.1,
+    "freqLimit": 0,
+    "freqRamp": 0,
+    "lpfFreq": 1,
+    "phaOffset": 0.4,
+    "punch": 0.15,
+    "sustain": 0.8,
+    "vibSpeed": 0.25,
+    "vibStrength": 0.3,
+    "wave": "sine"
+  },
+  "tags": [
+    "zap"
+  ],
+  "volume": 0.6
+}

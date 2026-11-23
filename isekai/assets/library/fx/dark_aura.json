@@ -1,0 +1,77 @@
+{
+  "dials": [
+    {
+      "default": 1,
+      "id": "size",
+      "label": "Size",
+      "max": 4,
+      "min": 0.25,
+      "step": 0.05,
+      "unit": ""
+    },
+    {
+      "default": 10,
+      "id": "amount",
+      "label": "Amount",
+      "max": 30,
+      "min": 1,
+      "step": 1,
+      "unit": ""
+    }
+  ],
+  "id": "dark_aura",
+  "kind": "aura",
+  "label": "Dark aura",
+  "layers": [
+    {
+      "color": "b",
+      "id": "glow",
+      "prim": "outline",
+      "pulse": 0.8,
+      "width": 0.008
+    },
+    {
+      "color": "a",
+      "edge": "wavy",
+      "id": "pool",
+      "prim": "decal",
+      "pulse": 0.5,
+      "r": {
+        "dial": "size",
+        "times": 0.8
+      },
+      "shape": "pool"
+    },
+    {
+      "color": "b",
+      "dir": "up",
+      "from": "body",
+      "id": "wisps",
+      "mode": "stream",
+      "particleLife": 1.2,
+      "prim": "sprites",
+      "rate": {
+        "dial": "amount"
+      },
+      "rise": 0.8,
+      "size": {
+        "dial": "size",
+        "times": 0.12
+      },
+      "sizeEnd": 0,
+      "speed": 0.5,
+      "spread": 10,
+      "sprite": "wisp"
+    }
+  ],
+  "life": 0,
+  "palette": {
+    "a": "#3a1a5c",
+    "b": "#9a5cff"
+  },
+  "schemaVersion": 2,
+  "sound": "lib:sfx/dark_swell",
+  "tags": [
+    "shadow"
+  ]
+}

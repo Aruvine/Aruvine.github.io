@@ -1,0 +1,57 @@
+{
+  "dials": [
+    {
+      "default": 40,
+      "id": "amount",
+      "label": "Amount",
+      "max": 64,
+      "min": 1,
+      "step": 1,
+      "unit": ""
+    },
+    {
+      "default": 0.8,
+      "id": "life",
+      "label": "Lasts",
+      "max": 10,
+      "min": 0.05,
+      "step": 0.05,
+      "unit": "s"
+    }
+  ],
+  "id": "light_dissolve",
+  "kind": "dissolve",
+  "label": "Light dissolve",
+  "layers": [
+    {
+      "blend": "add",
+      "count": {
+        "dial": "amount"
+      },
+      "dir": "out",
+      "from": "body",
+      "id": "bits",
+      "mode": "burst",
+      "particleLife": {
+        "dial": "life"
+      },
+      "prim": "sprites",
+      "rise": 1.2,
+      "size": 0.08,
+      "sizeEnd": 0,
+      "speed": 0.4,
+      "spread": 180,
+      "sprite": "mote"
+    }
+  ],
+  "life": 0.8,
+  "palette": {
+    "a": "#fff4b8",
+    "b": "#ffffff"
+  },
+  "schemaVersion": 2,
+  "sound": "lib:sfx/sparkle",
+  "tags": [
+    "exit"
+  ]
+}

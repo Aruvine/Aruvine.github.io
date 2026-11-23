@@ -1,0 +1,20 @@
+{
+  "bus": "music",
+  "bytes": 771951,
+  "channels": 2,
+  "file": "battle_fast.ogg",
+  "id": "battle_fast",
+  "kind": "music",
+  "label": "Fast battle",
+  "licence": "retro_rpg_music",
+  "loop": true,
+  "pitchVar": 0,
+  "schemaVersion": 2,
+  "seconds": 48,
+  "sha256": "4f2f01167f0af9156ec0e274929d1a405765372793c364a7c8fec2a27f59b368",
+  "since": 2,
+  "space": "flat",
+  "tags": [
+    "battle"
+  ]
+}

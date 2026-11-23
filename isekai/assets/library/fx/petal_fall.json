@@ -1,0 +1,79 @@
+{
+  "dials": [
+    {
+      "default": 1,
+      "id": "size",
+      "label": "Size",
+      "max": 4,
+      "min": 0.25,
+      "step": 0.05,
+      "unit": ""
+    },
+    {
+      "default": 8,
+      "id": "amount",
+      "label": "Amount",
+      "max": 30,
+      "min": 1,
+      "step": 1,
+      "unit": ""
+    },
+    {
+      "default": 0.3,
+      "id": "speed",
+      "label": "Speed",
+      "max": 20,
+      "min": 0,
+      "step": 0.1,
+      "unit": "m/s"
+    }
+  ],
+  "id": "petal_fall",
+  "kind": "stream",
+  "label": "Petal fall",
+  "layers": [
+    {
+      "dir": "down",
+      "from": "disc",
+      "fromR": {
+        "dial": "size",
+        "times": 2
+      },
+      "id": "petals",
+      "mode": "stream",
+      "offset": [
+        0,
+        3,
+        0
+      ],
+      "particleLife": 3,
+      "prim": "sprites",
+      "rate": {
+        "dial": "amount"
+      },
+      "rise": -0.6,
+      "size": {
+        "dial": "size",
+        "times": 0.06
+      },
+      "sizeEnd": {
+        "dial": "size",
+        "times": 0.06
+      },
+      "speed": {
+        "dial": "speed"
+      },
+      "spread": 60,
+      "sprite": "petal"
+    }
+  ],
+  "life": 0,
+  "palette": {
+    "a": "#ffb6d0",
+    "b": "#ffffff"
+  },
+  "schemaVersion": 2,
+  "tags": [
+    "nature"
+  ]
+}

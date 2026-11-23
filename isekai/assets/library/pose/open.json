@@ -1,0 +1,15 @@
+{
+  "curls": {
+    "index": 0,
+    "little": 0,
+    "middle": 0,
+    "ring": 0,
+    "thumb": 0
+  },
+  "id": "open",
+  "label": "Open",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 4,
+  "spread": 0.6
+}

@@ -1,0 +1,158 @@
+{
+  "c": {
+    "area": {
+      "shape": {
+        "box": [
+          1.6,
+          1,
+          1.6
+        ]
+      }
+    },
+    "body": {
+      "kind": "sensor"
+    },
+    "display": {
+      "kind": "badge",
+      "showWithin": 12,
+      "text": "Steps: {var:self.steps}"
+    },
+    "shape": {
+      "model": {
+        "prim": "box",
+        "size": [
+          1.6,
+          0.06,
+          1.6
+        ]
+      },
+      "tint": "#4caf50"
+    },
+    "vars": {
+      "steps": {
+        "init": 0,
+        "label": "Steps",
+        "scope": "entity",
+        "type": "number"
+      }
+    }
+  },
+  "cards": [
+    {
+      "do": [
+        {
+          "act": "setVar",
+          "op": "add",
+          "value": {
+            "dial": "step_value"
+          },
+          "var": "self.steps"
+        }
+      ],
+      "id": "count_steps",
+      "label": "When stepped on, count the step",
+      "on": {
+        "event": "areaEnter",
+        "who": "player"
+      }
+    }
+  ],
+  "dials": [
+    {
+      "default": 1,
+      "id": "step_value",
+      "label": "Each step counts",
+      "max": 10,
+      "min": 1,
+      "step": 1,
+      "unit": ""
+    }
+  ],
+  "id": "plate",
+  "ideas": [
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "open",
+          "to": {
+            "filter": {
+              "tagsAny": [
+                "door"
+              ]
+            },
+            "from": "around",
+            "limit": 1,
+            "order": "nearest",
+            "r": 32,
+            "shape": "sphere"
+          }
+        }
+      ],
+      "id": "open_door",
+      "label": "When stepped on, open the door",
+      "on": {
+        "event": "areaEnter",
+        "who": "player"
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "ring",
+          "to": {
+            "filter": {
+              "tagsAny": [
+                "bell"
+              ]
+            },
+            "from": "around",
+            "limit": 1,
+            "order": "nearest",
+            "r": 32,
+            "shape": "sphere"
+          }
+        }
+      ],
+      "id": "ring_bell",
+      "label": "When stepped on, ring the bell",
+      "on": {
+        "event": "areaEnter",
+        "who": "player"
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "count",
+          "to": {
+            "filter": {
+              "tagsAny": [
+                "counter"
+              ]
+            },
+            "from": "around",
+            "limit": 1,
+            "order": "nearest",
+            "r": 32,
+            "shape": "sphere"
+          }
+        }
+      ],
+      "id": "count_on_post",
+      "label": "When stepped on, count on the counter post",
+      "on": {
+        "event": "areaEnter",
+        "who": "player"
+      }
+    }
+  ],
+  "kind": "gadget",
+  "label": "Plate",
+  "schemaVersion": 2,
+  "tags": [
+    "plate"
+  ]
+}

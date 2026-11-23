@@ -1,0 +1,13 @@
+{
+  "bytes": 236504,
+  "file": "monster_flying_goleling.glb",
+  "height": 1.545,
+  "id": "monster_flying_goleling",
+  "label": "Goleling (flying)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "d0d20d6e8833679cef136e16098226ef3992bbcc63f3ec417bf6b7ca176acdbd",
+  "triangles": 3696,
+  "yaw": 0
+}

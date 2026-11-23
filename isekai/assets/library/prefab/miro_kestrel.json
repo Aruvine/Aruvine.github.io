@@ -1,0 +1,27 @@
+{
+  "c": {
+    "body": {
+      "kind": "static"
+    },
+    "display": {
+      "kind": "nameplate",
+      "text": "Miro Kestrel"
+    },
+    "shape": {
+      "model": "lib:model/miro_kestrel",
+      "outerMeshes": [
+        "Cap",
+        "Jacket",
+        "Bag"
+      ]
+    }
+  },
+  "id": "miro_kestrel",
+  "kind": "character",
+  "label": "Miro Kestrel",
+  "schemaVersion": 2,
+  "tags": [
+    "sample",
+    "courier"
+  ]
+}

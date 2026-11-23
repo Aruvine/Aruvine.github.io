@@ -1,0 +1,33 @@
+{
+  "pack": "kaykit_animations",
+  "publisher": "KayKit",
+  "title": "KayKit - Character Animations",
+  "tier": "free",
+  "version": "2026-11-08",
+  "licence": "CC0-1.0",
+  "page": "https://kaylousberg.itch.io/kaykit-character-animations",
+  "licenceQuote": "Asset license: Creative Commons Zero v1.0 Universal",
+  "fetchedOn": "2026-11-14",
+  "zipSha256": "65882f31f905ad2e953819648a59287cdeab8f623908d5ef701971d3758be20f",
+  "files": 17,
+  "use": "clip",
+  "clips": [
+    "cheer",
+    "dash_lean",
+    "grab_reach",
+    "ground_raise",
+    "guard_up",
+    "heal_palm",
+    "kick",
+    "knockdown",
+    "line_throw",
+    "mimic_touch",
+    "pick_up",
+    "rise_from_ground",
+    "sit_ground",
+    "summon_point",
+    "swipe_mark",
+    "wave",
+    "work_generic"
+  ]
+}

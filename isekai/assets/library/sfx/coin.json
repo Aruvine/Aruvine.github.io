@@ -1,0 +1,23 @@
+{
+  "id": "coin",
+  "kind": "synth",
+  "label": "Coin",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "arpMod": 0.45,
+    "arpSpeed": 0.6,
+    "attack": 0,
+    "baseFreq": 0.55,
+    "decay": 0.3,
+    "duty": 0.5,
+    "lpfFreq": 1,
+    "punch": 0.45,
+    "sustain": 0.05,
+    "wave": "square"
+  },
+  "tags": [
+    "chime"
+  ]
+}

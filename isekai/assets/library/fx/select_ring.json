@@ -1,0 +1,39 @@
+{
+  "dials": [
+    {
+      "default": 0.7,
+      "id": "size",
+      "label": "Size",
+      "max": 4,
+      "min": 0.2,
+      "step": 0.05,
+      "unit": "m"
+    }
+  ],
+  "id": "select_ring",
+  "kind": "groundMark",
+  "label": "Select ring",
+  "layers": [
+    {
+      "color": "a",
+      "edge": "hard",
+      "id": "ring",
+      "prim": "decal",
+      "pulse": 1,
+      "r": {
+        "dial": "size"
+      },
+      "role": "core",
+      "shape": "ring"
+    }
+  ],
+  "life": 0,
+  "palette": {
+    "a": "#7fe0ff",
+    "b": "#ffffff"
+  },
+  "schemaVersion": 2,
+  "tags": [
+    "ui"
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "ai": {
+    "minInterval": 0.6,
+    "needsLos": true,
+    "priority": 1,
+    "range": [
+      0,
+      1.2
+    ],
+    "telegraph": 0.3,
+    "use": "auto"
+  },
+  "casterClip": {
+    "clip": "lib:clip/punch_jab",
+    "layer": "upper"
+  },
+  "dials": [
+    {
+      "default": 8,
+      "id": "damage",
+      "label": "Damage",
+      "max": 100,
+      "min": 0,
+      "unit": "pt"
+    },
+    {
+      "default": 0.35,
+      "id": "cooldown",
+      "label": "Cooldown",
+      "max": 2,
+      "min": 0.1,
+      "unit": "s"
+    }
+  ],
+  "gate": {
+    "blockedBy": [
+      "stunned",
+      "held",
+      "down"
+    ],
+    "cooldown": {
+      "dial": "cooldown"
+    },
+    "onEmpty": "quiet",
+    "perHand": true
+  },
+  "icon": "lib:icon/main_hand",
+  "id": "punch",
+  "label": "Punch",
+  "phases": [
+    {
+      "blocks": [
+        {
+          "do": {
+            "act": "hitVolume",
+            "filter": {
+              "rel": "any"
+            },
+            "on": {
+              "socket": "triggerHand"
+            },
+            "onHit": [
+              {
+                "act": "damage",
+                "amount": {
+                  "dial": "damage"
+                },
+                "part": "auto",
+                "to": "target"
+              },
+              {
+                "act": "fx",
+                "at": "hitPoint",
+                "effect": "lib:fx/impact_stars"
+              },
+              {
+                "act": "sound",
+                "at": "hitPoint",
+                "sound": "lib:sfx/punch_soft"
+              },
+              {
+                "act": "feel",
+                "amount": 0.6,
+                "kind": "haptic",
+                "seconds": 0.08,
+                "who": "caster"
+              }
+            ],
+            "once": "perTarget",
+            "shape": {
+              "sphere": 0.15
+            },
+            "who": "caster"
+          },
+          "id": "fist",
+          "label": "the fist",
+          "len": 0.14,
+          "t": 0.06
+        }
+      ],
+      "exits": [
+        {
+          "on": "time",
+          "to": "end"
+        }
+      ],
+      "id": "strike",
+      "label": "Strike",
+      "max": 0.3
+    }
+  ],
+  "schemaVersion": 2,
+  "tags": [
+    "basic"
+  ],
+  "trigger": {
+    "input": {
+      "button": {
+        "act": "primaryR",
+        "edge": "press"
+      },
+      "hand": {
+        "hand": "either",
+        "minSpeed": 2.5,
+        "motion": "punch"
+      }
+    },
+    "kind": "press"
+  }
+}

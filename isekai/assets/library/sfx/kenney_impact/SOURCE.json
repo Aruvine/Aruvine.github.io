@@ -1,0 +1,14 @@
+{
+  "pack": "kenney_impact",
+  "publisher": "Kenney",
+  "title": "Impact Sounds",
+  "tier": "free",
+  "version": "1.0",
+  "licence": "CC0-1.0",
+  "page": "https://kenney.nl/assets/impact-sounds",
+  "licenceQuote": "License: Creative Commons CC0",
+  "fetchedOn": "2026-11-14",
+  "zipSha256": "029d734af1582474edf3a694d1b0cebc97c1c152f2f39fa34d4c2bafc5de77f8",
+  "files": 8,
+  "use": "sfx"
+}

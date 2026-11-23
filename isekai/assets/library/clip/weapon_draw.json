@@ -1,0 +1,12 @@
+{
+  "file": "weapon_draw.vrma",
+  "group": "caster",
+  "id": "weapon_draw",
+  "label": "Draw a weapon",
+  "licence": "own",
+  "loop": false,
+  "origin": "made",
+  "schemaVersion": 2,
+  "seconds": 1.2,
+  "since": 2
+}

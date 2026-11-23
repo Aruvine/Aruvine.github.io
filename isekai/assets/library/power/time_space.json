@@ -1,0 +1,175 @@
+{
+  "ai": {
+    "minInterval": 30,
+    "needsLos": false,
+    "priority": 3,
+    "range": [
+      0,
+      {
+        "dial": "radius",
+        "times": 0.9
+      }
+    ],
+    "use": "auto"
+  },
+  "archetype": "time_space",
+  "casterClip": {
+    "clip": "lib:clip/clap",
+    "layer": "upper",
+    "phase": "slip"
+  },
+  "dials": [
+    {
+      "default": 10,
+      "id": "radius",
+      "label": "Radius",
+      "max": 30,
+      "min": 2,
+      "unit": "m"
+    },
+    {
+      "default": 0.3,
+      "id": "slow",
+      "label": "Slow to",
+      "max": 0.9,
+      "min": 0.1,
+      "unit": "×"
+    },
+    {
+      "default": 4,
+      "id": "duration",
+      "label": "Duration",
+      "max": 20,
+      "min": 1,
+      "unit": "s"
+    },
+    {
+      "default": 30,
+      "id": "cooldown",
+      "label": "Cooldown",
+      "max": 600,
+      "min": 5,
+      "unit": "s"
+    }
+  ],
+  "gate": {
+    "blockedBy": [
+      "stunned",
+      "held",
+      "down"
+    ],
+    "cooldown": {
+      "dial": "cooldown"
+    }
+  },
+  "icon": "lib:icon/time_slip",
+  "id": "time_space",
+  "label": "Time slip",
+  "phases": [
+    {
+      "blocks": [
+        {
+          "do": {
+            "act": "fx",
+            "at": {
+              "of": "caster"
+            },
+            "effect": "lib:fx/glyph_circle",
+            "scale": {
+              "dial": "radius",
+              "times": 0.2
+            }
+          },
+          "t": 0.15
+        },
+        {
+          "do": {
+            "act": "sound",
+            "at": {
+              "of": "caster"
+            },
+            "op": "play",
+            "sound": "lib:sfx/deep_bell"
+          },
+          "t": 0.15
+        },
+        {
+          "do": {
+            "act": "forEach",
+            "do": [
+              {
+                "act": "if",
+                "cond": {
+                  "cmp": {
+                    "a": {
+                      "of": "each",
+                      "read": "distance"
+                    },
+                    "b": 0,
+                    "op": ">"
+                  }
+                },
+                "then": [
+                  {
+                    "act": "modify",
+                    "id": "time_slip",
+                    "op": "mul",
+                    "prop": "timeScale",
+                    "seconds": {
+                      "dial": "duration"
+                    },
+                    "value": {
+                      "dial": "slow"
+                    },
+                    "who": "each"
+                  }
+                ]
+              }
+            ],
+            "sel": {
+              "at": {
+                "of": "caster"
+              },
+              "filter": {
+                "rel": "any"
+              },
+              "from": "around",
+              "limit": 8,
+              "order": "nearest",
+              "r": {
+                "dial": "radius"
+              }
+            }
+          },
+          "id": "slow",
+          "label": "slowed time",
+          "t": 0.15
+        }
+      ],
+      "exits": [
+        {
+          "on": "time",
+          "to": "end"
+        }
+      ],
+      "id": "slip",
+      "label": "Slip",
+      "max": 0.5
+    }
+  ],
+  "schemaVersion": 2,
+  "trigger": {
+    "input": {
+      "button": {
+        "act": "slot",
+        "edge": "press"
+      },
+      "hand": {
+        "hand": "both",
+        "minSpeed": 1.5,
+        "motion": "clap"
+      }
+    },
+    "kind": "press"
+  }
+}

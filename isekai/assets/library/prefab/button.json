@@ -1,0 +1,140 @@
+{
+  "c": {
+    "body": {
+      "kind": "static"
+    },
+    "display": {
+      "kind": "badge",
+      "showWithin": 8,
+      "text": "Presses: {var:self.presses}"
+    },
+    "interact": {
+      "how": "use",
+      "prompt": "Press"
+    },
+    "shape": {
+      "model": {
+        "prim": "cylinder",
+        "size": [
+          0.35,
+          1.1,
+          0.35
+        ]
+      },
+      "tint": "#d9534f"
+    },
+    "vars": {
+      "presses": {
+        "init": 0,
+        "label": "Presses",
+        "scope": "entity",
+        "type": "number"
+      }
+    }
+  },
+  "cards": [
+    {
+      "do": [
+        {
+          "act": "setVar",
+          "op": "add",
+          "value": 1,
+          "var": "self.presses"
+        }
+      ],
+      "id": "count_presses",
+      "label": "When pressed, count the press",
+      "on": {
+        "event": "used",
+        "how": "use"
+      }
+    }
+  ],
+  "id": "button",
+  "ideas": [
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "open",
+          "to": {
+            "filter": {
+              "tagsAny": [
+                "door"
+              ]
+            },
+            "from": "around",
+            "limit": 1,
+            "order": "nearest",
+            "r": 32,
+            "shape": "sphere"
+          }
+        }
+      ],
+      "id": "open_door",
+      "label": "When pressed, open the door",
+      "on": {
+        "event": "used",
+        "how": "use"
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "ring",
+          "to": {
+            "filter": {
+              "tagsAny": [
+                "bell"
+              ]
+            },
+            "from": "around",
+            "limit": 1,
+            "order": "nearest",
+            "r": 32,
+            "shape": "sphere"
+          }
+        }
+      ],
+      "id": "ring_bell",
+      "label": "When pressed, ring the bell",
+      "on": {
+        "event": "used",
+        "how": "use"
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "go",
+          "to": {
+            "filter": {
+              "tagsAny": [
+                "lift"
+              ]
+            },
+            "from": "around",
+            "limit": 1,
+            "order": "nearest",
+            "r": 32,
+            "shape": "sphere"
+          }
+        }
+      ],
+      "id": "start_lift",
+      "label": "When pressed, start the lift",
+      "on": {
+        "event": "used",
+        "how": "use"
+      }
+    }
+  ],
+  "kind": "gadget",
+  "label": "Button",
+  "schemaVersion": 2,
+  "tags": [
+    "button"
+  ]
+}

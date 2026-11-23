@@ -1,0 +1,169 @@
+{
+  "c": {
+    "area": {
+      "shape": {
+        "box": [
+          3,
+          1.2,
+          3
+        ]
+      }
+    },
+    "body": {
+      "kind": "kinematic"
+    },
+    "display": {
+      "kind": "badge",
+      "showWithin": 15,
+      "text": "Rides: {var:self.rides}"
+    },
+    "mover": {
+      "kind": "lift",
+      "path": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          4,
+          0
+        ]
+      ],
+      "speed": 1.5
+    },
+    "shape": {
+      "model": {
+        "prim": "box",
+        "size": [
+          3,
+          0.2,
+          3
+        ]
+      },
+      "tint": "#7f8a99"
+    },
+    "vars": {
+      "rides": {
+        "init": 0,
+        "label": "Rides",
+        "scope": "entity",
+        "type": "number"
+      }
+    }
+  },
+  "cards": [
+    {
+      "cooldown": 2,
+      "do": [
+        {
+          "act": "setActive",
+          "on": true,
+          "part": "mover",
+          "who": "self"
+        },
+        {
+          "act": "setVar",
+          "op": "add",
+          "value": 1,
+          "var": "self.rides"
+        },
+        {
+          "act": "wait",
+          "s": {
+            "dial": "wait_top"
+          }
+        },
+        {
+          "act": "setActive",
+          "on": false,
+          "part": "mover",
+          "who": "self"
+        }
+      ],
+      "id": "ride",
+      "label": "When asked to go, ride up, wait, ride down and count the ride",
+      "on": {
+        "event": "signal",
+        "name": "go"
+      }
+    }
+  ],
+  "dials": [
+    {
+      "default": 6,
+      "id": "wait_top",
+      "label": "Waits at the top",
+      "max": 60,
+      "min": 2,
+      "step": 0.5,
+      "unit": "s"
+    }
+  ],
+  "id": "lift",
+  "ideas": [
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "go",
+          "to": "self"
+        }
+      ],
+      "id": "ride_on_step",
+      "label": "When stepped on, ride up",
+      "on": {
+        "event": "areaEnter",
+        "who": "player"
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "go",
+          "to": "self"
+        }
+      ],
+      "id": "ride_every",
+      "label": "Ride up and down every 15 seconds",
+      "on": {
+        "event": "timer",
+        "every": 15
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "ring",
+          "to": {
+            "filter": {
+              "tagsAny": [
+                "bell"
+              ]
+            },
+            "from": "around",
+            "limit": 1,
+            "order": "nearest",
+            "r": 32,
+            "shape": "sphere"
+          }
+        }
+      ],
+      "id": "ring_on_ride",
+      "label": "When a ride starts, ring the bell",
+      "on": {
+        "event": "signal",
+        "name": "go"
+      }
+    }
+  ],
+  "kind": "gadget",
+  "label": "Lift",
+  "schemaVersion": 2,
+  "tags": [
+    "lift"
+  ]
+}

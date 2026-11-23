@@ -1,0 +1,13 @@
+{
+  "bytes": 225108,
+  "file": "monster_flying_demon.glb",
+  "height": 2.19,
+  "id": "monster_flying_demon",
+  "label": "Demon (flying)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "fba1c35d92e8f2d44f6377c7f09c6373aae8e1e47b7ed7f55838a0d77f314ba5",
+  "triangles": 4784,
+  "yaw": 0
+}

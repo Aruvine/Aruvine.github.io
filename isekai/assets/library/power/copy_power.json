@@ -1,0 +1,138 @@
+{
+  "ai": {
+    "aim": "atLaunch",
+    "minInterval": 30,
+    "needsLos": true,
+    "priority": 2,
+    "range": [
+      0,
+      1.2
+    ],
+    "use": "auto"
+  },
+  "archetype": "copy_power",
+  "casterClip": {
+    "clip": "lib:clip/mimic_touch",
+    "layer": "upper",
+    "phase": "touch"
+  },
+  "dials": [
+    {
+      "default": 30,
+      "id": "duration",
+      "label": "Keeps it for",
+      "max": 600,
+      "min": 5,
+      "unit": "s"
+    },
+    {
+      "default": 30,
+      "id": "cooldown",
+      "label": "Cooldown",
+      "max": 600,
+      "min": 1,
+      "unit": "s"
+    }
+  ],
+  "gate": {
+    "blockedBy": [
+      "stunned",
+      "held",
+      "down"
+    ],
+    "cooldown": {
+      "dial": "cooldown"
+    }
+  },
+  "icon": "lib:icon/mimic",
+  "id": "copy_power",
+  "label": "Mimic",
+  "phases": [
+    {
+      "blocks": [
+        {
+          "do": {
+            "act": "hitVolume",
+            "filter": {
+              "rel": "enemy"
+            },
+            "on": {
+              "socket": "triggerHand"
+            },
+            "onHit": [
+              {
+                "act": "powerOp",
+                "from": "target",
+                "op": "copyFrom",
+                "seconds": {
+                  "dial": "duration"
+                },
+                "who": "caster"
+              },
+              {
+                "act": "fx",
+                "at": "hitPoint",
+                "effect": "lib:fx/sparkle_card"
+              },
+              {
+                "act": "sound",
+                "at": "hitPoint",
+                "op": "play",
+                "sound": "lib:sfx/sparkle"
+              },
+              {
+                "act": "feel",
+                "amount": 0.4,
+                "kind": "haptic",
+                "seconds": 0.06,
+                "who": "caster"
+              }
+            ],
+            "once": "first",
+            "shape": {
+              "sphere": 0.3
+            },
+            "who": "caster"
+          },
+          "id": "mimic",
+          "label": "the touch",
+          "len": 0.3,
+          "t": 0.05
+        }
+      ],
+      "exits": [
+        {
+          "on": "hit",
+          "to": "end"
+        },
+        {
+          "on": "time",
+          "to": "end"
+        }
+      ],
+      "id": "touch",
+      "label": "Touch",
+      "max": 0.4
+    }
+  ],
+  "schemaVersion": 2,
+  "tags": [
+    "mimic"
+  ],
+  "trigger": {
+    "input": {
+      "button": {
+        "act": "slot",
+        "edge": "press"
+      },
+      "hand": {
+        "hand": "either",
+        "touch": {
+          "rel": "enemy"
+        },
+        "withPose": "open_palm"
+      }
+    },
+    "kind": "press"
+  }
+}

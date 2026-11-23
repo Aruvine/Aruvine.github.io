@@ -1,0 +1,19 @@
+{
+  "bytes": 5959,
+  "channels": 1,
+  "file": "step_sand.ogg",
+  "id": "step_sand",
+  "kind": "sample",
+  "label": "Step on sand",
+  "licence": "kenney_impact",
+  "maxVoices": 4,
+  "range": 15,
+  "schemaVersion": 2,
+  "seconds": 0.374,
+  "sha256": "17d2c49df2895cd92b823c7f7ad536e5df92c499ff3f554bea2b56a95695781f",
+  "since": 2,
+  "tags": [
+    "step"
+  ],
+  "volume": 0.7
+}

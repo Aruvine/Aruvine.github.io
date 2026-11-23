@@ -1,0 +1,148 @@
+{
+  "ai": {
+    "minInterval": 10,
+    "needsLos": true,
+    "priority": 2,
+    "range": [
+      0,
+      10
+    ],
+    "use": "auto"
+  },
+  "archetype": "weapon_release",
+  "casterClip": {
+    "clip": "lib:clip/weapon_draw",
+    "layer": "upper",
+    "phase": "held"
+  },
+  "dials": [
+    {
+      "default": 60,
+      "id": "duration",
+      "label": "Lasts",
+      "max": 600,
+      "min": 5,
+      "unit": "s"
+    },
+    {
+      "default": 10,
+      "id": "cooldown",
+      "label": "Cooldown",
+      "max": 120,
+      "min": 1,
+      "unit": "s"
+    }
+  ],
+  "gate": {
+    "blockedBy": [
+      "stunned",
+      "held",
+      "down"
+    ],
+    "cooldown": {
+      "dial": "cooldown"
+    }
+  },
+  "icon": "lib:icon/weapon",
+  "id": "weapon_release",
+  "label": "Weapon call",
+  "phases": [
+    {
+      "blocks": [
+        {
+          "do": {
+            "act": "body",
+            "effect": "heldItem",
+            "op": "start",
+            "shape": "lib:prefab/called_blade",
+            "socket": "triggerHand",
+            "who": "caster"
+          },
+          "id": "weapon",
+          "label": "blade",
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "fx",
+            "at": {
+              "of": "caster",
+              "socket": "triggerHand"
+            },
+            "effect": "lib:fx/flash_light"
+          },
+          "id": "flash",
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "sound",
+            "at": {
+              "of": "caster",
+              "socket": "triggerHand"
+            },
+            "op": "play",
+            "sound": "lib:sfx/whoosh_up"
+          },
+          "id": "draw",
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "fx",
+            "at": {
+              "of": "caster",
+              "socket": "triggerTip"
+            },
+            "effect": "lib:fx/blade_trail"
+          },
+          "id": "trail",
+          "label": "trail",
+          "t": 0
+        }
+      ],
+      "exits": [
+        {
+          "on": "pressed",
+          "to": "end"
+        },
+        {
+          "if": {
+            "cmp": {
+              "a": {
+                "read": "phaseTime"
+              },
+              "b": {
+                "dial": "duration"
+              },
+              "op": ">="
+            }
+          },
+          "on": "cond",
+          "to": "end"
+        }
+      ],
+      "id": "held",
+      "label": "Weapon out",
+      "max": "untilExit"
+    }
+  ],
+  "schemaVersion": 2,
+  "tags": [
+    "weapon"
+  ],
+  "trigger": {
+    "input": {
+      "button": {
+        "act": "slot",
+        "edge": "press"
+      },
+      "hand": {
+        "hand": "either",
+        "minSpeed": 2.5,
+        "motion": "pull"
+      }
+    },
+    "kind": "press"
+  }
+}

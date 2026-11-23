@@ -1,0 +1,22 @@
+{
+  "id": "punch_soft",
+  "kind": "synth",
+  "label": "Soft punch",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.25,
+    "decay": 0.15,
+    "freqRamp": -0.4,
+    "hpfFreq": 0.02,
+    "lpfFreq": 0.6,
+    "punch": 0.3,
+    "sustain": 0.04,
+    "wave": "noise"
+  },
+  "tags": [
+    "hit"
+  ]
+}

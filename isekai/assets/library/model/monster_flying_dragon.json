@@ -1,0 +1,13 @@
+{
+  "bytes": 268016,
+  "file": "monster_flying_dragon.glb",
+  "height": 1.51,
+  "id": "monster_flying_dragon",
+  "label": "Dragon (flying)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "40e18479a5db5bfa0951893158ad4ce7f5c57361d3d88cde3ba7280e0628d321",
+  "triangles": 4562,
+  "yaw": 0
+}

@@ -1,0 +1,19 @@
+{
+  "c": {
+    "shape": {
+      "model": {
+        "prim": "capsule",
+        "size": [
+          0.6,
+          1.7,
+          0.6
+        ]
+      },
+      "tint": "#9a9a9a"
+    }
+  },
+  "id": "placeholder",
+  "kind": "prop",
+  "label": "Placeholder",
+  "schemaVersion": 2
+}

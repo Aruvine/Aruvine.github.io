@@ -1,0 +1,84 @@
+{
+  "dials": [
+    {
+      "default": 1,
+      "id": "size",
+      "label": "Size",
+      "max": 4,
+      "min": 0.25,
+      "step": 0.05,
+      "unit": ""
+    },
+    {
+      "default": 24,
+      "id": "amount",
+      "label": "Amount",
+      "max": 64,
+      "min": 1,
+      "step": 1,
+      "unit": ""
+    },
+    {
+      "default": 4,
+      "id": "speed",
+      "label": "Speed",
+      "max": 20,
+      "min": 0,
+      "step": 0.1,
+      "unit": "m/s"
+    }
+  ],
+  "id": "burst_earth",
+  "kind": "burst",
+  "label": "Earth burst",
+  "layers": [
+    {
+      "blend": "cutout",
+      "count": {
+        "dial": "amount"
+      },
+      "dir": "out",
+      "id": "bits",
+      "mode": "burst",
+      "particleLife": 0.5,
+      "prim": "sprites",
+      "rise": -8,
+      "size": {
+        "dial": "size",
+        "times": 0.12
+      },
+      "sizeEnd": 0,
+      "speed": {
+        "dial": "speed"
+      },
+      "spread": 180,
+      "sprite": "shard"
+    },
+    {
+      "blend": "add",
+      "color": "b",
+      "fade": 1,
+      "grow": [
+        0.3,
+        1.6
+      ],
+      "id": "ring",
+      "life": 0.35,
+      "mesh": "ring",
+      "prim": "shape",
+      "size": {
+        "dial": "size",
+        "times": 0.6
+      }
+    }
+  ],
+  "life": 0.6,
+  "palette": {
+    "a": "#9a6b3c",
+    "b": "#d9c49a"
+  },
+  "schemaVersion": 2,
+  "tags": [
+    "earth"
+  ]
+}

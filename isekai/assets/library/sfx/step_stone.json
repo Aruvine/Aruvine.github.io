@@ -1,0 +1,19 @@
+{
+  "bytes": 4545,
+  "channels": 1,
+  "file": "step_stone.ogg",
+  "id": "step_stone",
+  "kind": "sample",
+  "label": "Step on stone",
+  "licence": "kenney_impact",
+  "maxVoices": 4,
+  "range": 15,
+  "schemaVersion": 2,
+  "seconds": 0.106,
+  "sha256": "f0bc5e1962c768876e7d703d20c91f7811c52d9748c59eea6ada7b23b7c51c29",
+  "since": 2,
+  "tags": [
+    "step"
+  ],
+  "volume": 0.7
+}

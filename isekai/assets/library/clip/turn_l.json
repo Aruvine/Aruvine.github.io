@@ -1,0 +1,12 @@
+{
+  "file": "turn_l.vrma",
+  "group": "locomotion",
+  "id": "turn_l",
+  "label": "Turn left",
+  "licence": "own",
+  "loop": false,
+  "origin": "made",
+  "schemaVersion": 2,
+  "seconds": 0.8,
+  "since": 2
+}

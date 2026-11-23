@@ -1,0 +1,19 @@
+{
+  "bus": "ui",
+  "bytes": 9915,
+  "channels": 1,
+  "file": "ui_close.ogg",
+  "id": "ui_close",
+  "kind": "sample",
+  "label": "Menu closes",
+  "licence": "kenney_interface",
+  "pitchVar": 0,
+  "schemaVersion": 2,
+  "seconds": 0.148,
+  "sha256": "44af8249b933e0fd35ec957a638bb1a0b01f85b53fbe9674bf77bd3ca3168ef4",
+  "since": 2,
+  "space": "flat",
+  "tags": [
+    "ui"
+  ]
+}

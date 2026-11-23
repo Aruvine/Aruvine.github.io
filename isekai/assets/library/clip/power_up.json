@@ -1,0 +1,12 @@
+{
+  "file": "power_up.vrma",
+  "group": "caster",
+  "id": "power_up",
+  "label": "Power up",
+  "licence": "own",
+  "loop": false,
+  "origin": "made",
+  "schemaVersion": 2,
+  "seconds": 1.6,
+  "since": 2
+}

@@ -1,0 +1,13 @@
+{
+  "bytes": 98752,
+  "file": "monster_blob_wizard.glb",
+  "height": 2.586,
+  "id": "monster_blob_wizard",
+  "label": "Wizard (blob)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "0be2e27ad82bf7e11bf9ebf02dd49f6b19e25c1199ec62f681d1eb520433934f",
+  "triangles": 1674,
+  "yaw": 0
+}

@@ -1,0 +1,56 @@
+{
+  "dials": [
+    {
+      "default": 40,
+      "id": "amount",
+      "label": "Amount",
+      "max": 64,
+      "min": 1,
+      "step": 1,
+      "unit": ""
+    },
+    {
+      "default": 0.8,
+      "id": "life",
+      "label": "Lasts",
+      "max": 10,
+      "min": 0.05,
+      "step": 0.05,
+      "unit": "s"
+    }
+  ],
+  "id": "petal_dissolve",
+  "kind": "dissolve",
+  "label": "Petal dissolve",
+  "layers": [
+    {
+      "count": {
+        "dial": "amount"
+      },
+      "dir": "out",
+      "from": "body",
+      "id": "bits",
+      "mode": "burst",
+      "particleLife": {
+        "dial": "life"
+      },
+      "prim": "sprites",
+      "rise": -0.4,
+      "size": 0.07,
+      "sizeEnd": 0.05,
+      "speed": 1,
+      "spread": 180,
+      "sprite": "petal"
+    }
+  ],
+  "life": 0.8,
+  "palette": {
+    "a": "#ffb6d0",
+    "b": "#ffffff"
+  },
+  "schemaVersion": 2,
+  "sound": "lib:sfx/flutter",
+  "tags": [
+    "exit"
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "dials": [
+    {
+      "default": 0.8,
+      "id": "size",
+      "label": "Size",
+      "max": 4,
+      "min": 0.2,
+      "step": 0.05,
+      "unit": "m"
+    }
+  ],
+  "id": "target_ring",
+  "kind": "groundMark",
+  "label": "Target ring",
+  "layers": [
+    {
+      "color": "a",
+      "edge": "hard",
+      "id": "ring",
+      "prim": "decal",
+      "pulse": 2,
+      "r": {
+        "dial": "size"
+      },
+      "role": "core",
+      "shape": "ring"
+    },
+    {
+      "color": "b",
+      "edge": "hard",
+      "id": "arrow",
+      "prim": "decal",
+      "r": {
+        "dial": "size",
+        "times": 0.4
+      },
+      "shape": "arrow"
+    }
+  ],
+  "life": 0,
+  "palette": {
+    "a": "#ff4a4a",
+    "b": "#ffd0d0"
+  },
+  "schemaVersion": 2,
+  "tags": [
+    "ui",
+    "aim"
+  ]
+}

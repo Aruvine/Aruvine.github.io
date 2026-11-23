@@ -1,0 +1,26 @@
+{
+  "c": {
+    "body": {
+      "kind": "static"
+    },
+    "display": {
+      "kind": "nameplate",
+      "text": "Suzu Amarin"
+    },
+    "shape": {
+      "model": "lib:model/suzu_amarin",
+      "outerMeshes": [
+        "StrawHat",
+        "Apron"
+      ]
+    }
+  },
+  "id": "suzu_amarin",
+  "kind": "character",
+  "label": "Suzu Amarin",
+  "schemaVersion": 2,
+  "tags": [
+    "sample",
+    "gardener"
+  ]
+}

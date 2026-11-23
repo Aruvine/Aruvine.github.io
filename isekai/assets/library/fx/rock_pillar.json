@@ -1,0 +1,68 @@
+{
+  "dials": [
+    {
+      "default": 1.2,
+      "id": "size",
+      "label": "Size",
+      "max": 4,
+      "min": 0.05,
+      "step": 0.05,
+      "unit": "m"
+    },
+    {
+      "default": 0,
+      "id": "spin",
+      "label": "Spin",
+      "max": 720,
+      "min": -720,
+      "step": 10,
+      "unit": "°/s"
+    }
+  ],
+  "id": "rock_pillar",
+  "kind": "meshEffect",
+  "label": "Rock pillar",
+  "layers": [
+    {
+      "blend": "cutout",
+      "color": "a",
+      "fade": 0.3,
+      "id": "mesh",
+      "mesh": "pillar",
+      "prim": "shape",
+      "size": {
+        "dial": "size"
+      },
+      "spin": {
+        "dial": "spin"
+      }
+    },
+    {
+      "color": "b",
+      "count": 12,
+      "dir": "up",
+      "from": "disc",
+      "fromR": 0.5,
+      "id": "dust",
+      "mode": "burst",
+      "particleLife": 0.8,
+      "prim": "sprites",
+      "rise": -1,
+      "size": 0.2,
+      "sizeEnd": 0.4,
+      "speed": 1.2,
+      "spread": 70,
+      "sprite": "puff"
+    }
+  ],
+  "life": 1,
+  "palette": {
+    "a": "#8a6a48",
+    "b": "#c8b490"
+  },
+  "schemaVersion": 2,
+  "sound": "lib:sfx/rock_break",
+  "tags": [
+    "earth"
+  ]
+}

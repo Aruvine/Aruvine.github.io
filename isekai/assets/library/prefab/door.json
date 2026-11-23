@@ -1,0 +1,130 @@
+{
+  "c": {
+    "body": {
+      "kind": "kinematic"
+    },
+    "mover": {
+      "kind": "door",
+      "path": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          1.5,
+          0,
+          0
+        ]
+      ],
+      "speed": 2
+    },
+    "shape": {
+      "model": {
+        "prim": "box",
+        "size": [
+          1.4,
+          2.4,
+          0.2
+        ]
+      },
+      "tint": "#8a6a4a"
+    }
+  },
+  "cards": [
+    {
+      "cooldown": 1,
+      "do": [
+        {
+          "act": "setActive",
+          "on": true,
+          "part": "mover",
+          "who": "self"
+        },
+        {
+          "act": "wait",
+          "s": {
+            "dial": "open_time"
+          }
+        },
+        {
+          "act": "setActive",
+          "on": false,
+          "part": "mover",
+          "who": "self"
+        }
+      ],
+      "id": "open",
+      "label": "When asked to open, open, and close again after a while",
+      "on": {
+        "event": "signal",
+        "name": "open"
+      }
+    }
+  ],
+  "dials": [
+    {
+      "default": 5,
+      "id": "open_time",
+      "label": "Stays open",
+      "max": 60,
+      "min": 1,
+      "step": 0.5,
+      "unit": "s"
+    }
+  ],
+  "id": "door",
+  "ideas": [
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "open",
+          "to": "self"
+        }
+      ],
+      "id": "open_on_bump",
+      "label": "When bumped, open",
+      "on": {
+        "event": "contact",
+        "minSpeed": 0.5,
+        "who": "player"
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "open",
+          "to": "self"
+        }
+      ],
+      "id": "open_every",
+      "label": "Open every 10 seconds",
+      "on": {
+        "event": "timer",
+        "every": 10
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "open",
+          "to": "self"
+        }
+      ],
+      "id": "open_at_start",
+      "label": "When the world starts, open",
+      "on": {
+        "event": "start"
+      }
+    }
+  ],
+  "kind": "gadget",
+  "label": "Door",
+  "schemaVersion": 2,
+  "tags": [
+    "door"
+  ]
+}

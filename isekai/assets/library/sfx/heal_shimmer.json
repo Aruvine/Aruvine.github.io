@@ -1,0 +1,26 @@
+{
+  "id": "heal_shimmer",
+  "kind": "synth",
+  "label": "Heal shimmer",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "arpMod": 0.25,
+    "arpSpeed": 0.4,
+    "attack": 0.15,
+    "baseFreq": 0.55,
+    "decay": 0.4,
+    "duty": 0.4,
+    "freqRamp": 0.1,
+    "lpfFreq": 0.8,
+    "punch": 0,
+    "sustain": 0.3,
+    "vibSpeed": 0.7,
+    "vibStrength": 0.2,
+    "wave": "sine"
+  },
+  "tags": [
+    "charge"
+  ]
+}

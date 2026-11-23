@@ -1,0 +1,71 @@
+{
+  "dials": [
+    {
+      "default": 0.18,
+      "id": "width",
+      "label": "Width",
+      "max": 1,
+      "min": 0.01,
+      "step": 0.01,
+      "unit": "m"
+    },
+    {
+      "default": 12,
+      "id": "length",
+      "label": "Length",
+      "max": 60,
+      "min": 0.5,
+      "step": 0.5,
+      "unit": "m"
+    }
+  ],
+  "id": "beam_lightning",
+  "kind": "beam",
+  "label": "Beam lightning",
+  "layers": [
+    {
+      "blend": "add",
+      "color": "a",
+      "color2": "b",
+      "core": 0.4,
+      "ends": true,
+      "id": "beam",
+      "jitter": 0.15,
+      "length": {
+        "dial": "length"
+      },
+      "path": "forward",
+      "points": 24,
+      "prim": "ribbon",
+      "scroll": 4,
+      "width": {
+        "dial": "width"
+      }
+    },
+    {
+      "blend": "add",
+      "color": "b",
+      "dir": "out",
+      "id": "tip",
+      "mode": "stream",
+      "particleLife": 0.35,
+      "prim": "sprites",
+      "rate": 14,
+      "size": 0.08,
+      "sizeEnd": 0,
+      "speed": 1.2,
+      "spread": 70,
+      "sprite": "spark"
+    }
+  ],
+  "life": 0,
+  "palette": {
+    "a": "#fff35c",
+    "b": "#7fb2ff"
+  },
+  "schemaVersion": 2,
+  "sound": "lib:sfx/zap_long",
+  "tags": [
+    "lightning"
+  ]
+}

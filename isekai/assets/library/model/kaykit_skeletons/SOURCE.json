@@ -1,0 +1,14 @@
+{
+  "pack": "kaykit_skeletons",
+  "publisher": "KayKit",
+  "title": "KayKit - Character Pack : Skeletons",
+  "tier": "free",
+  "version": "2026-11-08",
+  "licence": "CC0-1.0",
+  "page": "https://kaylousberg.itch.io/kaykit-skeletons",
+  "licenceQuote": "Asset license: Creative Commons Zero v1.0 Universal",
+  "fetchedOn": "2026-11-14",
+  "zipSha256": "21fbad59ee6cc1d7bed12d0e425acab8ebe564b8620bbc1d017aedb29dd8a3d2",
+  "files": 4,
+  "use": "creature"
+}

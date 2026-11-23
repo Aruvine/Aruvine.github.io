@@ -1,0 +1,23 @@
+{
+  "id": "crunch",
+  "kind": "synth",
+  "label": "Crunch",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.3,
+    "decay": 0.3,
+    "freqRamp": -0.3,
+    "hpfFreq": 0.02,
+    "lpfFreq": 1,
+    "punch": 0.5,
+    "repeatSpeed": 0.55,
+    "sustain": 0.04,
+    "wave": "noise"
+  },
+  "tags": [
+    "hit"
+  ]
+}

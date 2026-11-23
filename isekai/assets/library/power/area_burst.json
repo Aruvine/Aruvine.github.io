@@ -1,0 +1,185 @@
+{
+  "ai": {
+    "minInterval": 5,
+    "needsLos": true,
+    "priority": 3,
+    "range": [
+      0,
+      {
+        "dial": "radius",
+        "times": 0.9
+      }
+    ],
+    "telegraph": 0.5,
+    "use": "auto"
+  },
+  "archetype": "area_burst",
+  "casterClip": {
+    "clip": "lib:clip/push_burst",
+    "layer": "upper",
+    "phase": "burst"
+  },
+  "dials": [
+    {
+      "default": 4,
+      "id": "radius",
+      "label": "Radius",
+      "max": 15,
+      "min": 1,
+      "unit": "m"
+    },
+    {
+      "default": 25,
+      "id": "damage",
+      "label": "Damage",
+      "max": 200,
+      "min": 0,
+      "unit": "pt"
+    },
+    {
+      "default": 8,
+      "id": "push",
+      "label": "Push",
+      "max": 40,
+      "min": 0,
+      "unit": "m/s"
+    },
+    {
+      "default": 5,
+      "id": "cooldown",
+      "label": "Cooldown",
+      "max": 60,
+      "min": 0.5,
+      "unit": "s"
+    }
+  ],
+  "gate": {
+    "blockedBy": [
+      "stunned",
+      "held",
+      "down"
+    ],
+    "cooldown": {
+      "dial": "cooldown"
+    }
+  },
+  "icon": "lib:icon/burst",
+  "id": "area_burst",
+  "label": "Burst",
+  "phases": [
+    {
+      "blocks": [
+        {
+          "do": {
+            "act": "fx",
+            "at": {
+              "of": "caster"
+            },
+            "effect": "lib:fx/shockwave_ring",
+            "scale": {
+              "dial": "radius",
+              "times": 0.25
+            }
+          },
+          "t": 0.12
+        },
+        {
+          "do": {
+            "act": "sound",
+            "at": {
+              "of": "caster"
+            },
+            "op": "play",
+            "sound": "lib:sfx/shockwave"
+          },
+          "t": 0.12
+        },
+        {
+          "do": {
+            "act": "forEach",
+            "do": [
+              {
+                "act": "damage",
+                "amount": {
+                  "dial": "damage"
+                },
+                "part": "auto",
+                "to": "each"
+              },
+              {
+                "act": "force",
+                "dir": "away",
+                "from": {
+                  "of": "caster"
+                },
+                "kind": "push",
+                "speed": {
+                  "dial": "push"
+                },
+                "who": "each"
+              },
+              {
+                "act": "fx",
+                "at": {
+                  "of": "each"
+                },
+                "effect": "lib:fx/impact_stars"
+              }
+            ],
+            "sel": {
+              "at": {
+                "of": "caster"
+              },
+              "filter": {
+                "rel": "enemy"
+              },
+              "from": "around",
+              "limit": 8,
+              "order": "nearest",
+              "r": {
+                "dial": "radius"
+              }
+            }
+          },
+          "id": "wave",
+          "label": "the wave",
+          "t": 0.12
+        },
+        {
+          "do": {
+            "act": "feel",
+            "amount": 0.8,
+            "kind": "haptic",
+            "seconds": 0.12,
+            "who": "caster"
+          },
+          "t": 0.12
+        }
+      ],
+      "exits": [
+        {
+          "on": "time",
+          "to": "end"
+        }
+      ],
+      "id": "burst",
+      "label": "Burst",
+      "max": 0.5
+    }
+  ],
+  "schemaVersion": 2,
+  "trigger": {
+    "input": {
+      "button": {
+        "act": "slot",
+        "edge": "press"
+      },
+      "hand": {
+        "hand": "both",
+        "minSpeed": 2.5,
+        "motion": "push"
+      }
+    },
+    "kind": "press"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "file": "stagger.vrma",
+  "group": "reactions",
+  "id": "stagger",
+  "label": "Stagger",
+  "licence": "ual_2",
+  "loop": false,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 0.8333,
+  "since": 2
+}

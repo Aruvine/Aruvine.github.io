@@ -1,0 +1,119 @@
+{
+  "c": {
+    "area": {
+      "shape": {
+        "cylinder": [
+          2,
+          2
+        ]
+      }
+    },
+    "display": {
+      "kind": "marker",
+      "text": "Spawn"
+    },
+    "shape": {
+      "model": {
+        "prim": "cylinder",
+        "size": [
+          1.2,
+          0.04,
+          1.2
+        ]
+      },
+      "tint": "#8f6fd8"
+    }
+  },
+  "cards": [
+    {
+      "cooldown": 0.5,
+      "do": [
+        {
+          "act": "spawn",
+          "at": {
+            "of": "self",
+            "offset": [
+              0,
+              0.6,
+              0
+            ]
+          },
+          "life": {
+            "dial": "life"
+          },
+          "what": "lib:prefab/crate"
+        }
+      ],
+      "id": "make",
+      "label": "When asked to make, make a crate here",
+      "on": {
+        "event": "signal",
+        "name": "make"
+      }
+    }
+  ],
+  "dials": [
+    {
+      "default": 30,
+      "id": "life",
+      "label": "Lasts",
+      "max": 600,
+      "min": 1,
+      "step": 1,
+      "unit": "s"
+    }
+  ],
+  "id": "spawn_marker",
+  "ideas": [
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "make",
+          "to": "self"
+        }
+      ],
+      "id": "make_at_start",
+      "label": "When the world starts, make one",
+      "on": {
+        "event": "start"
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "make",
+          "to": "self"
+        }
+      ],
+      "id": "make_every",
+      "label": "Make one every 10 seconds",
+      "on": {
+        "event": "timer",
+        "every": 10
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "make",
+          "to": "self"
+        }
+      ],
+      "id": "make_on_step",
+      "label": "When the player comes near, make one",
+      "on": {
+        "event": "areaEnter",
+        "who": "player"
+      }
+    }
+  ],
+  "kind": "gadget",
+  "label": "Spawn marker",
+  "schemaVersion": 2,
+  "tags": [
+    "spawn_marker"
+  ]
+}

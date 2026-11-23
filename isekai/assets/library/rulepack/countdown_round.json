@@ -1,0 +1,100 @@
+{
+  "cards": [
+    {
+      "do": [
+        {
+          "act": "setVar",
+          "op": "set",
+          "value": 60,
+          "var": "world.round_left"
+        },
+        {
+          "act": "ui",
+          "op": "countdown",
+          "seconds": 60,
+          "text": "Round"
+        }
+      ],
+      "id": "round_begin",
+      "label": "When the world starts, the round begins",
+      "on": {
+        "event": "start",
+        "scope": "world"
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "setVar",
+          "op": "add",
+          "value": -1,
+          "var": "world.round_left"
+        }
+      ],
+      "id": "round_tick",
+      "if": {
+        "cmp": {
+          "a": {
+            "read": "var:world.round_left"
+          },
+          "b": 0,
+          "op": ">"
+        }
+      },
+      "label": "Every second, the round counts down",
+      "on": {
+        "event": "timer",
+        "every": 1
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "round_over"
+        },
+        {
+          "act": "ui",
+          "op": "banner",
+          "text": "Time is up!"
+        }
+      ],
+      "id": "round_over",
+      "label": "When the time is up, the round is over",
+      "on": {
+        "event": "var",
+        "reaches": 0,
+        "var": "world.round_left"
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "setVar",
+          "op": "set",
+          "value": 60,
+          "var": "world.round_left"
+        },
+        {
+          "act": "ui",
+          "op": "countdown",
+          "seconds": 60,
+          "text": "Round"
+        }
+      ],
+      "id": "round_again",
+      "label": "When asked, start a new round",
+      "on": {
+        "event": "signal",
+        "name": "round_again"
+      }
+    }
+  ],
+  "id": "countdown_round",
+  "label": "A countdown round",
+  "schemaVersion": 2,
+  "summary": "A 60 second round starts with the world; when the time is up, every Thing hears the signal round_over.",
+  "vars": [
+    "round_left"
+  ]
+}

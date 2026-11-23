@@ -1,0 +1,12 @@
+{
+  "file": "open_door.vrma",
+  "group": "everyday",
+  "id": "open_door",
+  "label": "Open a door",
+  "licence": "ual_1",
+  "loop": false,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 2,
+  "since": 2
+}

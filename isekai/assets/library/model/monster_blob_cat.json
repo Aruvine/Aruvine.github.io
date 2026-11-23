@@ -1,0 +1,13 @@
+{
+  "bytes": 109448,
+  "file": "monster_blob_cat.glb",
+  "height": 1.856,
+  "id": "monster_blob_cat",
+  "label": "Cat (blob)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "2de9e4b3dedde1dad3e239c820c2f9fd19ec34e45e2cf1c4793eecaafe645d08",
+  "triangles": 1772,
+  "yaw": 0
+}

@@ -1,0 +1,22 @@
+{
+  "id": "hit_mid",
+  "kind": "synth",
+  "label": "Hit",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.35,
+    "decay": 0.2,
+    "freqRamp": -0.4,
+    "hpfFreq": 0.02,
+    "lpfFreq": 1,
+    "punch": 0.4,
+    "sustain": 0.04,
+    "wave": "noise"
+  },
+  "tags": [
+    "hit"
+  ]
+}

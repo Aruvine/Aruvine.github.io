@@ -1,0 +1,52 @@
+{
+  "dials": [
+    {
+      "default": 2,
+      "id": "size",
+      "label": "Size",
+      "max": 8,
+      "min": 0.5,
+      "step": 0.1,
+      "unit": "m"
+    }
+  ],
+  "id": "shadow_pool",
+  "kind": "groundMark",
+  "label": "Shadow pool",
+  "layers": [
+    {
+      "color": "a",
+      "edge": "wavy",
+      "id": "pool",
+      "prim": "decal",
+      "pulse": 0.3,
+      "r": {
+        "dial": "size"
+      },
+      "ripple": true,
+      "role": "core",
+      "shape": "pool"
+    },
+    {
+      "color": "b",
+      "edge": "soft",
+      "id": "rim",
+      "prim": "decal",
+      "pulse": 0.3,
+      "r": {
+        "dial": "size",
+        "times": 1.05
+      },
+      "shape": "ring"
+    }
+  ],
+  "life": 0,
+  "palette": {
+    "a": "#0c0614",
+    "b": "#5a2ccc"
+  },
+  "schemaVersion": 2,
+  "tags": [
+    "shadow"
+  ]
+}

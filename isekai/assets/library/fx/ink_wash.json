@@ -1,0 +1,44 @@
+{
+  "dials": [
+    {
+      "default": 0.25,
+      "id": "wipe",
+      "label": "Wipe",
+      "max": 2,
+      "min": 0,
+      "step": 0.05,
+      "unit": "s"
+    }
+  ],
+  "floor": {
+    "color": "#d8d4c8",
+    "glow": null,
+    "pattern": "clouds"
+  },
+  "fog": {
+    "color": "#c8c4b8",
+    "far": 28,
+    "near": 6
+  },
+  "id": "ink_wash",
+  "kind": "backdrop",
+  "label": "Ink wash",
+  "life": 0,
+  "light": {
+    "level": 1,
+    "tint": "#f0ece0"
+  },
+  "schemaVersion": 2,
+  "sky": {
+    "horizon": "#9a968a",
+    "moon": false,
+    "stars": 0,
+    "top": "#e8e4d8"
+  },
+  "tags": [
+    "backdrop"
+  ],
+  "wipe": {
+    "dial": "wipe"
+  }
+}

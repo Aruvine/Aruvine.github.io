@@ -1,0 +1,15 @@
+{
+  "curls": {
+    "index": 1,
+    "little": 1,
+    "middle": 1,
+    "ring": 1,
+    "thumb": 0.8
+  },
+  "id": "fist",
+  "label": "Fist",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 4,
+  "spread": 0
+}

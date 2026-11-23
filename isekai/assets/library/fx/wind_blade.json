@@ -1,0 +1,66 @@
+{
+  "dials": [
+    {
+      "default": 0.9,
+      "id": "size",
+      "label": "Size",
+      "max": 4,
+      "min": 0.05,
+      "step": 0.05,
+      "unit": "m"
+    },
+    {
+      "default": 360,
+      "id": "spin",
+      "label": "Spin",
+      "max": 720,
+      "min": -720,
+      "step": 10,
+      "unit": "°/s"
+    }
+  ],
+  "id": "wind_blade",
+  "kind": "meshEffect",
+  "label": "Wind blade",
+  "layers": [
+    {
+      "blend": "cutout",
+      "color": "a",
+      "fade": 0.3,
+      "id": "mesh",
+      "mesh": "crescent",
+      "prim": "shape",
+      "size": {
+        "dial": "size"
+      },
+      "spin": {
+        "dial": "spin"
+      }
+    },
+    {
+      "color": "b",
+      "dir": "out",
+      "id": "streaks",
+      "mode": "stream",
+      "particleLife": 0.3,
+      "prim": "sprites",
+      "rate": 12,
+      "size": 0.06,
+      "sizeEnd": 0,
+      "speed": 0.5,
+      "spread": 20,
+      "sprite": "streak",
+      "stretch": 3
+    }
+  ],
+  "life": 1,
+  "palette": {
+    "a": "#c9f7e4",
+    "b": "#ffffff"
+  },
+  "schemaVersion": 2,
+  "sound": "lib:sfx/whoosh",
+  "tags": [
+    "wind"
+  ]
+}

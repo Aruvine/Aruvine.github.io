@@ -1,0 +1,15 @@
+{
+  "curls": {
+    "index": 0.6,
+    "little": 0.1,
+    "middle": 0.2,
+    "ring": 0.15,
+    "thumb": 0.6
+  },
+  "id": "pinch",
+  "label": "Pinch",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 4,
+  "spread": 0.2
+}

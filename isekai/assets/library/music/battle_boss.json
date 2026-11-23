@@ -1,0 +1,20 @@
+{
+  "bus": "music",
+  "bytes": 1148634,
+  "channels": 2,
+  "file": "battle_boss.ogg",
+  "id": "battle_boss",
+  "kind": "music",
+  "label": "Boss battle",
+  "licence": "super_16bit_sounds",
+  "loop": true,
+  "pitchVar": 0,
+  "schemaVersion": 2,
+  "seconds": 42.667,
+  "sha256": "9731e30f907b85f2390ad28bd034a3a30e5fb1ea4de9f23a4ba97349f21da524",
+  "since": 2,
+  "space": "flat",
+  "tags": [
+    "battle"
+  ]
+}

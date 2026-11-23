@@ -1,0 +1,51 @@
+{
+  "dials": [
+    {
+      "default": 0.6,
+      "id": "amount",
+      "label": "Amount",
+      "max": 1,
+      "min": 0,
+      "step": 0.05,
+      "unit": ""
+    },
+    {
+      "default": 0.2,
+      "id": "life",
+      "label": "Lasts",
+      "max": 10,
+      "min": 0.05,
+      "step": 0.05,
+      "unit": "s"
+    }
+  ],
+  "id": "flash_red",
+  "kind": "screen",
+  "label": "Flash red",
+  "layers": [
+    {
+      "amount": {
+        "dial": "amount"
+      },
+      "color": "a",
+      "id": "screen",
+      "kind": "flash",
+      "prim": "screen",
+      "seconds": {
+        "dial": "life"
+      }
+    }
+  ],
+  "life": {
+    "dial": "life"
+  },
+  "palette": {
+    "a": "#ff2a2a",
+    "b": "#ff8080"
+  },
+  "schemaVersion": 2,
+  "tags": [
+    "flash",
+    "hurt"
+  ]
+}

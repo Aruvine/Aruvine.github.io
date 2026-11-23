@@ -1,0 +1,12 @@
+{
+  "file": "knockout.vrma",
+  "group": "reactions",
+  "id": "knockout",
+  "label": "Knocked out",
+  "licence": "ual_1",
+  "loop": false,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 2.4,
+  "since": 2
+}

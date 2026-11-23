@@ -1,0 +1,13 @@
+{
+  "bytes": 69812,
+  "file": "monster_blob_pink_blob.glb",
+  "height": 1.997,
+  "id": "monster_blob_pink_blob",
+  "label": "Pink Blob (blob)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "83391d565345f92bddf2e3805bb0b92ace830dc726a0b5670ab55ce398621e3b",
+  "triangles": 1030,
+  "yaw": 0
+}

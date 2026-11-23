@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 2,
+  "power": "passive_aura",
+  "prefabs": [
+    {
+      "schemaVersion": 2,
+      "id": "aura_area",
+      "label": "Aura",
+      "kind": "area",
+      "tags": [
+        "aura"
+      ],
+      "icon": "lib:icon/aura",
+      "dials": [
+        {
+          "id": "bonus",
+          "label": "Bonus",
+          "unit": "×",
+          "min": 1,
+          "max": 3,
+          "default": 1.2
+        }
+      ],
+      "c": {
+        "area": {
+          "shape": {
+            "sphere": 4
+          },
+          "shell": "lib:fx/aura_light",
+          "inside": [
+            {
+              "who": {
+                "rel": "ally"
+              },
+              "status": "aura_boost",
+              "strength": {
+                "dial": "bonus"
+              }
+            }
+          ],
+          "follow": "owner",
+          "endWhen": [
+            "ownerDefeated"
+          ]
+        }
+      }
+    }
+  ],
+  "statuses": [
+    {
+      "id": "aura_boost",
+      "label": "Aura boost",
+      "mods": [
+        {
+          "prop": "damageDealt",
+          "op": "mul",
+          "value": {
+            "read": "statusStrength"
+          }
+        }
+      ]
+    }
+  ]
+}

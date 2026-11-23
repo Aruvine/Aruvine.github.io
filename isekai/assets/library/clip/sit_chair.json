@@ -1,0 +1,12 @@
+{
+  "file": "sit_chair.vrma",
+  "group": "everyday",
+  "id": "sit_chair",
+  "label": "Sit on a chair",
+  "licence": "ual_1",
+  "loop": true,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 1.6667,
+  "since": 2
+}

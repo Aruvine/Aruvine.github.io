@@ -1,0 +1,198 @@
+{
+  "ai": {
+    "aim": "atLaunch",
+    "minInterval": 60,
+    "needsLos": false,
+    "priority": 4,
+    "range": [
+      0,
+      {
+        "dial": "radius",
+        "times": 0.9
+      }
+    ],
+    "use": "auto",
+    "when": {
+      "count": {
+        "n": 1,
+        "op": ">=",
+        "sel": {
+          "at": {
+            "of": "self"
+          },
+          "filter": {
+            "rel": "enemy"
+          },
+          "from": "around",
+          "limit": 8,
+          "r": 10,
+          "shape": "sphere"
+        }
+      }
+    }
+  },
+  "archetype": "domain",
+  "casterClip": {
+    "clip": "lib:clip/domain_open",
+    "layer": "upper",
+    "phase": "expand"
+  },
+  "dials": [
+    {
+      "default": 12,
+      "id": "radius",
+      "label": "Radius",
+      "max": 64,
+      "min": 4,
+      "unit": "m"
+    },
+    {
+      "default": 20,
+      "id": "duration",
+      "label": "Lasts",
+      "max": 120,
+      "min": 5,
+      "unit": "s"
+    },
+    {
+      "default": 0.5,
+      "id": "slow",
+      "label": "Slow to",
+      "max": 1,
+      "min": 0.2,
+      "unit": "×"
+    },
+    {
+      "default": 30,
+      "id": "cost",
+      "label": "Energy",
+      "max": 200,
+      "min": 0,
+      "unit": "pt"
+    },
+    {
+      "default": 45,
+      "id": "cooldown",
+      "label": "Cooldown",
+      "max": 600,
+      "min": 5,
+      "unit": "s"
+    }
+  ],
+  "gate": {
+    "blockedBy": [
+      "stunned",
+      "held",
+      "down"
+    ],
+    "cooldown": {
+      "dial": "cooldown"
+    },
+    "cost": [
+      {
+        "amount": {
+          "dial": "cost"
+        },
+        "pool": "energy"
+      }
+    ],
+    "maxAlive": {
+      "n": 1,
+      "of": "caster",
+      "tag": "domain"
+    }
+  },
+  "icon": "lib:icon/sphere",
+  "id": "domain",
+  "label": "Domain",
+  "phases": [
+    {
+      "blocks": [
+        {
+          "do": {
+            "act": "spawn",
+            "at": {
+              "of": "caster"
+            },
+            "life": {
+              "dial": "duration"
+            },
+            "over": {
+              "area.shape": {
+                "sphere": {
+                  "dial": "radius"
+                }
+              },
+              "dial.slow": {
+                "dial": "slow"
+              }
+            },
+            "owner": "caster",
+            "team": "caster",
+            "what": "domain_area"
+          },
+          "id": "open_court",
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "sound",
+            "at": {
+              "of": "caster"
+            },
+            "op": "play",
+            "sound": "lib:sfx/domain_open"
+          },
+          "id": "toll",
+          "t": 0
+        }
+      ],
+      "exits": [
+        {
+          "on": "time",
+          "to": "hold"
+        }
+      ],
+      "id": "expand",
+      "label": "Expand",
+      "max": 0.8
+    },
+    {
+      "blocks": [],
+      "exits": [
+        {
+          "if": {
+            "count": {
+              "n": 0,
+              "op": "==",
+              "sel": "spawned"
+            }
+          },
+          "on": "cond",
+          "to": "end"
+        }
+      ],
+      "id": "hold",
+      "label": "While it stands",
+      "max": "untilExit"
+    }
+  ],
+  "schemaVersion": 2,
+  "tags": [
+    "domain"
+  ],
+  "trigger": {
+    "input": {
+      "button": {
+        "act": "slot",
+        "edge": "press"
+      },
+      "hand": {
+        "hand": "both",
+        "holdMs": 300,
+        "pose": "palms_apart"
+      }
+    },
+    "kind": "press"
+  }
+}

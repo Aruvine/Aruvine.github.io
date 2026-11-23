@@ -1,0 +1,17 @@
+{
+  "pack": "own",
+  "publisher": "Isekai",
+  "title": "Our own core pieces",
+  "licence": "own",
+  "page": "tools/core-kit.mjs",
+  "use": "kit",
+  "pieces": [
+    {
+      "id": "glow"
+    },
+    {
+      "id": "bell"
+    }
+  ],
+  "files": 2
+}

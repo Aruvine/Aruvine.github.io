@@ -1,0 +1,12 @@
+{
+  "file": "dash_lean.vrma",
+  "group": "caster",
+  "id": "dash_lean",
+  "label": "Dash",
+  "licence": "kaykit_animations",
+  "loop": false,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 0.4,
+  "since": 2
+}

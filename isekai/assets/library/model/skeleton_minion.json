@@ -1,0 +1,13 @@
+{
+  "bytes": 318520,
+  "file": "skeleton_minion.glb",
+  "height": 2.166,
+  "id": "skeleton_minion",
+  "label": "Skeleton Minion",
+  "licence": "kaykit_skeletons",
+  "rig": "glbHumanoid",
+  "schemaVersion": 2,
+  "sha256": "1fadbf1bc66fd7ce008eecd0ffccc8f8089e1c2887813559ca553680a738fece",
+  "triangles": 5288,
+  "yaw": 0
+}

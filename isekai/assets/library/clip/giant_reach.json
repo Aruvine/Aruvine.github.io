@@ -1,0 +1,12 @@
+{
+  "file": "giant_reach.vrma",
+  "group": "caster",
+  "id": "giant_reach",
+  "label": "Giant reach to the ground",
+  "licence": "own",
+  "loop": false,
+  "origin": "made",
+  "schemaVersion": 2,
+  "seconds": 1.4,
+  "since": 2
+}

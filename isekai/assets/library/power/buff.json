@@ -1,0 +1,195 @@
+{
+  "ai": {
+    "minInterval": 20,
+    "needsLos": true,
+    "priority": 2,
+    "range": [
+      0,
+      20
+    ],
+    "use": "auto"
+  },
+  "archetype": "buff",
+  "casterClip": {
+    "clip": "lib:clip/power_up",
+    "layer": "upper",
+    "phase": "boost"
+  },
+  "dials": [
+    {
+      "default": 10,
+      "id": "duration",
+      "label": "Duration",
+      "max": 120,
+      "min": 1,
+      "unit": "s"
+    },
+    {
+      "default": 1.3,
+      "id": "speed",
+      "label": "Speed",
+      "max": 3,
+      "min": 1,
+      "unit": "×"
+    },
+    {
+      "default": 1.2,
+      "id": "damage",
+      "label": "Damage",
+      "max": 3,
+      "min": 1,
+      "unit": "×"
+    },
+    {
+      "default": 20,
+      "id": "cooldown",
+      "label": "Cooldown",
+      "max": 600,
+      "min": 1,
+      "unit": "s"
+    }
+  ],
+  "gate": {
+    "blockedBy": [
+      "stunned",
+      "held",
+      "down"
+    ],
+    "cooldown": {
+      "dial": "cooldown"
+    }
+  },
+  "icon": "lib:icon/boost",
+  "id": "buff",
+  "label": "Boost",
+  "phases": [
+    {
+      "blocks": [
+        {
+          "bind": true,
+          "do": {
+            "act": "modify",
+            "id": "boost_speed",
+            "op": "mul",
+            "prop": "moveSpeed",
+            "value": {
+              "dial": "speed"
+            },
+            "who": "caster"
+          },
+          "id": "faster",
+          "label": "faster",
+          "t": 0.2
+        },
+        {
+          "bind": true,
+          "do": {
+            "act": "modify",
+            "id": "boost_damage",
+            "op": "mul",
+            "prop": "damageDealt",
+            "value": {
+              "dial": "damage"
+            },
+            "who": "caster"
+          },
+          "id": "stronger",
+          "label": "stronger",
+          "t": 0.2
+        },
+        {
+          "do": {
+            "act": "fx",
+            "at": {
+              "of": "caster"
+            },
+            "effect": "lib:fx/power_aura"
+          },
+          "id": "aura",
+          "keep": "instance",
+          "label": "the aura",
+          "t": 0.2
+        },
+        {
+          "do": {
+            "act": "sound",
+            "at": {
+              "of": "caster"
+            },
+            "op": "play",
+            "sound": "lib:sfx/power_up"
+          },
+          "t": 0.2
+        }
+      ],
+      "exits": [
+        {
+          "if": {
+            "cmp": {
+              "a": {
+                "read": "phaseTime"
+              },
+              "b": {
+                "dial": "duration",
+                "plus": 0.2
+              },
+              "op": ">="
+            }
+          },
+          "on": "cond",
+          "to": "end"
+        },
+        {
+          "on": "time",
+          "to": "more"
+        }
+      ],
+      "id": "boost",
+      "label": "Boost",
+      "max": 60
+    },
+    {
+      "blocks": [],
+      "exits": [
+        {
+          "if": {
+            "cmp": {
+              "a": {
+                "read": "phaseTime"
+              },
+              "b": {
+                "dial": "duration",
+                "plus": -59.8
+              },
+              "op": ">="
+            }
+          },
+          "on": "cond",
+          "to": "end"
+        },
+        {
+          "on": "time",
+          "to": "end"
+        }
+      ],
+      "id": "more",
+      "label": "Boost goes on",
+      "max": 60
+    }
+  ],
+  "schemaVersion": 2,
+  "trigger": {
+    "input": {
+      "button": {
+        "act": "slot",
+        "edge": "press"
+      },
+      "hand": {
+        "hand": "both",
+        "holdMs": 500,
+        "pose": "fist"
+      }
+    },
+    "kind": "press"
+  }
+}

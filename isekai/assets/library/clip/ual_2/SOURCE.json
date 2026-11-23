@@ -1,0 +1,23 @@
+{
+  "pack": "ual_2",
+  "publisher": "Quaternius",
+  "title": "Universal Animation Library 2",
+  "tier": "Standard",
+  "version": "2026-11-08",
+  "licence": "CC0-1.0",
+  "page": "https://quaternius.com/packs/universalanimationlibrary2.html",
+  "licenceQuote": "Free to use in personal, educational and commercial projects. (CC0 License)",
+  "fetchedOn": "2026-11-14",
+  "zipSha256": "4008ea208a604773a2b2177d965f0f5d3195498b5bf838c3f5785d68e95f2a68",
+  "files": 7,
+  "use": "clip",
+  "clips": [
+    "climb",
+    "get_up",
+    "nod",
+    "punch_windup",
+    "shake_head",
+    "stagger",
+    "throw_overhand"
+  ]
+}

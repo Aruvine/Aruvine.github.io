@@ -1,0 +1,138 @@
+{
+  "ai": {
+    "aim": "atLaunch",
+    "minInterval": 30,
+    "needsLos": false,
+    "priority": 3,
+    "range": [
+      0,
+      15
+    ],
+    "telegraph": 0.4,
+    "use": "auto"
+  },
+  "archetype": "summon",
+  "casterClip": {
+    "clip": "lib:clip/summon_point",
+    "layer": "upper",
+    "phase": "call"
+  },
+  "dials": [
+    {
+      "default": 2,
+      "id": "count",
+      "label": "How many",
+      "max": 16,
+      "min": 1,
+      "unit": ""
+    },
+    {
+      "default": 30,
+      "id": "life",
+      "label": "Lifetime",
+      "max": 600,
+      "min": 5,
+      "unit": "s"
+    },
+    {
+      "default": 20,
+      "id": "cooldown",
+      "label": "Cooldown",
+      "max": 600,
+      "min": 1,
+      "unit": "s"
+    }
+  ],
+  "gate": {
+    "blockedBy": [
+      "stunned",
+      "held",
+      "down"
+    ],
+    "cooldown": {
+      "dial": "cooldown"
+    }
+  },
+  "icon": "lib:icon/summon",
+  "id": "summon",
+  "label": "Summon",
+  "phases": [
+    {
+      "blocks": [
+        {
+          "do": {
+            "act": "spawn",
+            "at": {
+              "ring": {
+                "around": "caster",
+                "r": 1.5
+              }
+            },
+            "count": {
+              "dial": "count"
+            },
+            "enter": "smoke",
+            "exit": "smoke",
+            "life": {
+              "dial": "life"
+            },
+            "owner": "caster",
+            "team": "caster",
+            "what": "summoned_ally"
+          },
+          "id": "call_allies",
+          "label": "the allies",
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "fx",
+            "at": {
+              "of": "caster"
+            },
+            "effect": "lib:fx/glyph_circle"
+          },
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "sound",
+            "at": {
+              "of": "caster"
+            },
+            "op": "play",
+            "sound": "lib:sfx/poof"
+          },
+          "t": 0
+        }
+      ],
+      "exits": [
+        {
+          "on": "time",
+          "to": "end"
+        }
+      ],
+      "id": "call",
+      "label": "Call",
+      "max": 0.4
+    }
+  ],
+  "schemaVersion": 2,
+  "tags": [
+    "summoning"
+  ],
+  "trigger": {
+    "input": {
+      "button": {
+        "act": "slot",
+        "edge": "press"
+      },
+      "hand": {
+        "hand": "either",
+        "holdMs": 300,
+        "pose": "hand_forward"
+      }
+    },
+    "kind": "press"
+  }
+}

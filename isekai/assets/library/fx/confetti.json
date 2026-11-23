@@ -1,0 +1,99 @@
+{
+  "dials": [
+    {
+      "default": 1,
+      "id": "size",
+      "label": "Size",
+      "max": 4,
+      "min": 0.25,
+      "step": 0.05,
+      "unit": ""
+    },
+    {
+      "default": 40,
+      "id": "amount",
+      "label": "Amount",
+      "max": 64,
+      "min": 1,
+      "step": 1,
+      "unit": ""
+    },
+    {
+      "default": 5,
+      "id": "speed",
+      "label": "Speed",
+      "max": 20,
+      "min": 0,
+      "step": 0.1,
+      "unit": "m/s"
+    }
+  ],
+  "id": "confetti",
+  "kind": "burst",
+  "label": "Confetti",
+  "layers": [
+    {
+      "color": "a",
+      "color2": "#ffe14a",
+      "count": {
+        "dial": "amount"
+      },
+      "dir": "up",
+      "id": "paper_a",
+      "mode": "burst",
+      "particleLife": 1.8,
+      "prim": "sprites",
+      "rise": -4,
+      "size": {
+        "dial": "size",
+        "times": 0.06
+      },
+      "sizeEnd": {
+        "dial": "size",
+        "times": 0.06
+      },
+      "speed": {
+        "dial": "speed"
+      },
+      "spread": 35,
+      "sprite": "square"
+    },
+    {
+      "color": "b",
+      "color2": "#7dff8a",
+      "count": {
+        "dial": "amount",
+        "times": 0.5
+      },
+      "dir": "up",
+      "id": "paper_b",
+      "mode": "burst",
+      "particleLife": 1.8,
+      "prim": "sprites",
+      "rise": -4,
+      "size": {
+        "dial": "size",
+        "times": 0.06
+      },
+      "sizeEnd": {
+        "dial": "size",
+        "times": 0.06
+      },
+      "speed": {
+        "dial": "speed"
+      },
+      "spread": 35,
+      "sprite": "square"
+    }
+  ],
+  "life": 2,
+  "palette": {
+    "a": "#ff5a8a",
+    "b": "#5ad0ff"
+  },
+  "schemaVersion": 2,
+  "sound": "lib:sfx/poof_triple",
+  "tags": [
+    "party"
+  ]
+}

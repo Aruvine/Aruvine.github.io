@@ -1,0 +1,43 @@
+{
+  "dials": [
+    {
+      "default": 0.25,
+      "id": "wipe",
+      "label": "Wipe",
+      "max": 2,
+      "min": 0,
+      "step": 0.05,
+      "unit": "s"
+    }
+  ],
+  "floor": {
+    "color": "#6a8aa8",
+    "glow": null,
+    "pattern": "ripples"
+  },
+  "fog": {
+    "far": 48,
+    "near": 12
+  },
+  "id": "still_lake",
+  "kind": "backdrop",
+  "label": "Still lake",
+  "life": 0,
+  "light": {
+    "level": 1,
+    "tint": "#e8f0ff"
+  },
+  "schemaVersion": 2,
+  "sky": {
+    "horizon": "#c8d8e8",
+    "moon": false,
+    "stars": 0,
+    "top": "#3a5a8a"
+  },
+  "tags": [
+    "backdrop"
+  ],
+  "wipe": {
+    "dial": "wipe"
+  }
+}

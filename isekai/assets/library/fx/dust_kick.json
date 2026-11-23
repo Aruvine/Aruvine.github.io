@@ -1,0 +1,73 @@
+{
+  "dials": [
+    {
+      "default": 1,
+      "id": "size",
+      "label": "Size",
+      "max": 4,
+      "min": 0.25,
+      "step": 0.05,
+      "unit": ""
+    },
+    {
+      "default": 10,
+      "id": "amount",
+      "label": "Amount",
+      "max": 24,
+      "min": 1,
+      "step": 1,
+      "unit": ""
+    },
+    {
+      "default": 1.2,
+      "id": "speed",
+      "label": "Speed",
+      "max": 20,
+      "min": 0,
+      "step": 0.1,
+      "unit": "m/s"
+    }
+  ],
+  "id": "dust_kick",
+  "kind": "burst",
+  "label": "Dust kick",
+  "layers": [
+    {
+      "blend": "cutout",
+      "count": {
+        "dial": "amount"
+      },
+      "dir": "up",
+      "from": "disc",
+      "fromR": 0.2,
+      "id": "dust",
+      "mode": "burst",
+      "particleLife": 0.7,
+      "prim": "sprites",
+      "rise": -0.5,
+      "size": {
+        "dial": "size",
+        "times": 0.18
+      },
+      "sizeEnd": {
+        "dial": "size",
+        "times": 0.35
+      },
+      "speed": {
+        "dial": "speed"
+      },
+      "spread": 70,
+      "sprite": "puff"
+    }
+  ],
+  "life": 0.8,
+  "palette": {
+    "a": "#c8b49a",
+    "b": "#e8dccb"
+  },
+  "schemaVersion": 2,
+  "tags": [
+    "dust",
+    "step"
+  ]
+}

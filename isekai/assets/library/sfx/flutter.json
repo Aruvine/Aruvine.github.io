@@ -1,0 +1,25 @@
+{
+  "id": "flutter",
+  "kind": "synth",
+  "label": "Flutter",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0.05,
+    "baseFreq": 0.5,
+    "decay": 0.2,
+    "freqRamp": 0.1,
+    "hpfFreq": 0.08,
+    "lpfFreq": 0.3,
+    "lpfRamp": 0.15,
+    "punch": 0,
+    "sustain": 0.2,
+    "vibSpeed": 0.7,
+    "vibStrength": 0.6,
+    "wave": "noise"
+  },
+  "tags": [
+    "whoosh"
+  ]
+}

@@ -1,0 +1,135 @@
+{
+  "ai": {
+    "minInterval": 12,
+    "needsLos": true,
+    "priority": 1,
+    "range": [
+      2,
+      13.5
+    ],
+    "use": "auto"
+  },
+  "aim": {
+    "assistDeg": 0,
+    "from": "aim",
+    "ground": true,
+    "origin": "head",
+    "range": 15
+  },
+  "archetype": "construct",
+  "casterClip": {
+    "clip": "lib:clip/ground_raise",
+    "layer": "upper",
+    "phase": "raise"
+  },
+  "dials": [
+    {
+      "default": 4,
+      "id": "width",
+      "label": "Width",
+      "max": 12,
+      "min": 1,
+      "unit": "m"
+    },
+    {
+      "default": 10,
+      "id": "life",
+      "label": "Lasts",
+      "max": 120,
+      "min": 2,
+      "unit": "s"
+    },
+    {
+      "default": 100,
+      "id": "health",
+      "label": "Health",
+      "max": 2000,
+      "min": 10,
+      "unit": "pt"
+    },
+    {
+      "default": 12,
+      "id": "cooldown",
+      "label": "Cooldown",
+      "max": 120,
+      "min": 1,
+      "unit": "s"
+    }
+  ],
+  "gate": {
+    "blockedBy": [
+      "stunned",
+      "held",
+      "down"
+    ],
+    "cooldown": {
+      "dial": "cooldown"
+    }
+  },
+  "icon": "lib:icon/wall",
+  "id": "construct",
+  "label": "Wall",
+  "phases": [
+    {
+      "blocks": [
+        {
+          "do": {
+            "act": "spawn",
+            "at": {
+              "ground": "aimPoint"
+            },
+            "enter": {
+              "fx": "lib:fx/dust_kick",
+              "rise": {
+                "depth": 2,
+                "seconds": 0.4
+              },
+              "sound": "lib:sfx/rumble"
+            },
+            "exit": "shards",
+            "life": {
+              "dial": "life"
+            },
+            "over": {
+              "dial.health": {
+                "dial": "health"
+              },
+              "dial.width": {
+                "dial": "width"
+              }
+            },
+            "owner": "caster",
+            "what": "lib:prefab/raised_wall"
+          },
+          "id": "wall",
+          "label": "the wall",
+          "t": 0.25
+        }
+      ],
+      "exits": [
+        {
+          "on": "time",
+          "to": "end"
+        }
+      ],
+      "id": "raise",
+      "label": "Raise",
+      "max": 0.6
+    }
+  ],
+  "schemaVersion": 2,
+  "trigger": {
+    "input": {
+      "button": {
+        "act": "slot",
+        "edge": "press"
+      },
+      "hand": {
+        "hand": "both",
+        "minSpeed": 2,
+        "motion": "raise"
+      }
+    },
+    "kind": "press"
+  }
+}

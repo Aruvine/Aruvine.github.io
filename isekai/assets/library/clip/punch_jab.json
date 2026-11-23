@@ -1,0 +1,12 @@
+{
+  "file": "punch_jab.vrma",
+  "group": "caster",
+  "id": "punch_jab",
+  "label": "Jab",
+  "licence": "ual_1",
+  "loop": false,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 0.8667,
+  "since": 2
+}

@@ -1,0 +1,24 @@
+{
+  "id": "poof_triple",
+  "kind": "synth",
+  "label": "Triple poof",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.45,
+    "decay": 0.35,
+    "duty": 0.5,
+    "freqRamp": -0.2,
+    "hpfFreq": 0,
+    "lpfFreq": 0.5,
+    "punch": 0.2,
+    "repeatSpeed": 0.55,
+    "sustain": 0.1,
+    "wave": "noise"
+  },
+  "tags": [
+    "pop"
+  ]
+}

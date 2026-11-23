@@ -1,0 +1,57 @@
+{
+  "dials": [
+    {
+      "default": 0.6,
+      "id": "size",
+      "label": "Size",
+      "max": 3,
+      "min": 0.2,
+      "step": 0.05,
+      "unit": "m"
+    }
+  ],
+  "id": "shadow_mark",
+  "kind": "groundMark",
+  "label": "Shadow mark",
+  "layers": [
+    {
+      "color": "a",
+      "edge": "wavy",
+      "id": "pool",
+      "prim": "decal",
+      "pulse": 0.5,
+      "r": {
+        "dial": "size"
+      },
+      "role": "core",
+      "shape": "pool"
+    },
+    {
+      "blend": "add",
+      "color": "b",
+      "from": "disc",
+      "fromR": {
+        "dial": "size",
+        "times": 0.8
+      },
+      "id": "wisps",
+      "mode": "stream",
+      "particleLife": 1.2,
+      "prim": "sprites",
+      "rate": 6,
+      "rise": 1.5,
+      "size": 0.12,
+      "sizeEnd": 0,
+      "sprite": "wisp"
+    }
+  ],
+  "life": 0,
+  "palette": {
+    "a": "#120a1e",
+    "b": "#6a3cff"
+  },
+  "schemaVersion": 2,
+  "tags": [
+    "shadow"
+  ]
+}

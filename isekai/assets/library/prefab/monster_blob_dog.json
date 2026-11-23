@@ -1,0 +1,29 @@
+{
+  "c": {
+    "body": {
+      "kind": "static"
+    },
+    "clipmap": {
+      "attack": "Bite_Front",
+      "cheer": "Dance",
+      "defeat": "Death",
+      "hit": "HitRecieve",
+      "idle": "Idle",
+      "jump": "Jump",
+      "move": "Walk",
+      "no": "No",
+      "yes": "Yes"
+    },
+    "shape": {
+      "model": "lib:model/monster_blob_dog"
+    }
+  },
+  "id": "monster_blob_dog",
+  "kind": "creature",
+  "label": "Dog (blob)",
+  "schemaVersion": 2,
+  "tags": [
+    "monster",
+    "blob"
+  ]
+}

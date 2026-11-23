@@ -1,0 +1,17 @@
+{
+  "bytes": 12054,
+  "channels": 1,
+  "file": "door_open.ogg",
+  "id": "door_open",
+  "kind": "sample",
+  "label": "Door opens",
+  "licence": "kenney_rpg_audio",
+  "range": 20,
+  "schemaVersion": 2,
+  "seconds": 0.919,
+  "sha256": "485785e1baf9589f7804569419aec07bdb61e5845c99267aacbe2bf4ef69567f",
+  "since": 2,
+  "tags": [
+    "door"
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "dials": [
+    {
+      "default": 1,
+      "id": "size",
+      "label": "Size",
+      "max": 4,
+      "min": 0.25,
+      "step": 0.05,
+      "unit": ""
+    },
+    {
+      "default": 12,
+      "id": "amount",
+      "label": "Amount",
+      "max": 40,
+      "min": 1,
+      "step": 1,
+      "unit": ""
+    },
+    {
+      "default": 0.8,
+      "id": "speed",
+      "label": "Speed",
+      "max": 20,
+      "min": 0,
+      "step": 0.1,
+      "unit": "m/s"
+    }
+  ],
+  "id": "stream_earth",
+  "kind": "stream",
+  "label": "Earth stream",
+  "layers": [
+    {
+      "blend": "cutout",
+      "dir": "up",
+      "from": "disc",
+      "fromR": {
+        "dial": "size",
+        "times": 0.3
+      },
+      "id": "flow",
+      "mode": "stream",
+      "particleLife": 1.2,
+      "prim": "sprites",
+      "rate": {
+        "dial": "amount"
+      },
+      "rise": -8,
+      "size": {
+        "dial": "size",
+        "times": 0.1
+      },
+      "sizeEnd": 0.02,
+      "speed": {
+        "dial": "speed"
+      },
+      "spread": 25,
+      "sprite": "shard"
+    }
+  ],
+  "life": 0,
+  "palette": {
+    "a": "#9a6b3c",
+    "b": "#d9c49a"
+  },
+  "schemaVersion": 2,
+  "tags": [
+    "earth"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "c": {
+    "body": {
+      "kind": "static"
+    },
+    "clipmap": {
+      "attack": "lib:clip/punch_jab",
+      "defeat": "lib:clip/knockout",
+      "hit": "lib:clip/hit_front",
+      "idle": "lib:clip/idle",
+      "move": "lib:clip/walk",
+      "run": "lib:clip/run"
+    },
+    "shape": {
+      "model": "lib:model/skeleton_warrior"
+    }
+  },
+  "id": "skeleton_warrior",
+  "kind": "creature",
+  "label": "Skeleton Warrior",
+  "schemaVersion": 2,
+  "tags": [
+    "skeleton",
+    "undead"
+  ]
+}

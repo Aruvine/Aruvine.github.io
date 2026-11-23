@@ -1,0 +1,52 @@
+{
+  "dials": [
+    {
+      "default": 0.3,
+      "id": "width",
+      "label": "Width",
+      "max": 1,
+      "min": 0.01,
+      "step": 0.01,
+      "unit": "m"
+    },
+    {
+      "default": 0.18,
+      "id": "length",
+      "label": "Length",
+      "max": 2,
+      "min": 0.05,
+      "step": 0.05,
+      "unit": "s"
+    }
+  ],
+  "id": "blade_trail",
+  "kind": "trail",
+  "label": "Blade trail",
+  "layers": [
+    {
+      "blend": "add",
+      "color": "a",
+      "color2": "b",
+      "core": 0.25,
+      "history": {
+        "dial": "length"
+      },
+      "id": "trail",
+      "path": "trail",
+      "points": 24,
+      "prim": "ribbon",
+      "width": {
+        "dial": "width"
+      }
+    }
+  ],
+  "life": 0,
+  "palette": {
+    "a": "#e8f6ff",
+    "b": "#7fc4ff"
+  },
+  "schemaVersion": 2,
+  "tags": [
+    "blade"
+  ]
+}

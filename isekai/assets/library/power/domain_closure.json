@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 2,
+  "power": "domain",
+  "prefabs": [
+    {
+      "schemaVersion": 2,
+      "id": "domain_area",
+      "label": "Domain",
+      "kind": "area",
+      "tags": [
+        "domain"
+      ],
+      "icon": "lib:icon/sphere",
+      "dials": [
+        {
+          "id": "slow",
+          "label": "Slow to",
+          "unit": "×",
+          "min": 0.2,
+          "max": 1,
+          "default": 0.5
+        }
+      ],
+      "c": {
+        "area": {
+          "shape": {
+            "sphere": 12
+          },
+          "grow": {
+            "from": 0.5,
+            "seconds": 0.8
+          },
+          "strength": {
+            "read": "stat:resolve",
+            "of": "owner"
+          },
+          "clash": {
+            "group": "domain",
+            "rule": "weakerCollapses",
+            "tie": "bothEnd"
+          },
+          "backdrop": "lib:fx/starfield_void",
+          "shell": "lib:fx/domain_rim",
+          "music": "lib:music/domain_tension",
+          "inside": [
+            {
+              "who": "owner",
+              "status": "domain_master"
+            },
+            {
+              "who": "others",
+              "status": "domain_stilled",
+              "strength": {
+                "dial": "slow"
+              }
+            }
+          ],
+          "endWhen": [
+            "ownerDown",
+            "ownerDefeated"
+          ]
+        },
+        "life": {
+          "seconds": 20,
+          "exit": "fade"
+        }
+      }
+    }
+  ],
+  "statuses": [
+    {
+      "id": "domain_master",
+      "label": "Cannot miss",
+      "mods": [
+        {
+          "prop": "sureHit",
+          "op": "set",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "domain_stilled",
+      "label": "Stilled",
+      "mods": [
+        {
+          "prop": "timeScale",
+          "op": "mul",
+          "value": {
+            "read": "statusStrength"
+          }
+        }
+      ],
+      "fx": "lib:fx/aura_ice"
+    }
+  ]
+}

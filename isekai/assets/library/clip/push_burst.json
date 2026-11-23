@@ -1,0 +1,12 @@
+{
+  "file": "push_burst.vrma",
+  "group": "caster",
+  "id": "push_burst",
+  "label": "Push burst",
+  "licence": "ual_1",
+  "loop": false,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 0.5,
+  "since": 2
+}

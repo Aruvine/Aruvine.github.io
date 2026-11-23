@@ -1,0 +1,27 @@
+{
+  "c": {
+    "body": {
+      "kind": "static"
+    },
+    "clipmap": {
+      "attack": "lib:clip/punch_jab",
+      "cheer": "lib:clip/cheer",
+      "defeat": "lib:clip/knockout",
+      "hit": "lib:clip/hit_front",
+      "idle": "lib:clip/idle",
+      "move": "lib:clip/walk",
+      "run": "lib:clip/run",
+      "sit": "lib:clip/sit_chair"
+    },
+    "shape": {
+      "model": "lib:model/adventurer_rogue_hooded"
+    }
+  },
+  "id": "adventurer_rogue_hooded",
+  "kind": "character",
+  "label": "Adventurer: Rogue Hooded",
+  "schemaVersion": 2,
+  "tags": [
+    "adventurer"
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "id": "slap",
+  "kind": "synth",
+  "label": "Slap",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.6,
+    "decay": 0.1,
+    "freqRamp": -0.4,
+    "hpfFreq": 0.25,
+    "lpfFreq": 1,
+    "punch": 0.5,
+    "sustain": 0.01,
+    "wave": "noise"
+  },
+  "tags": [
+    "hit"
+  ]
+}

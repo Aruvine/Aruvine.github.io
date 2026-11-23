@@ -1,0 +1,12 @@
+{
+  "file": "kneel.vrma",
+  "group": "caster",
+  "id": "kneel",
+  "label": "Kneel",
+  "licence": "own",
+  "loop": false,
+  "origin": "made",
+  "schemaVersion": 2,
+  "seconds": 1.5,
+  "since": 2
+}

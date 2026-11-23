@@ -1,0 +1,13 @@
+{
+  "bytes": 165368,
+  "file": "monster_blob_birb.glb",
+  "height": 2.814,
+  "id": "monster_blob_birb",
+  "label": "Birb (blob)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "c12f3e3ecae871537cfa9685a3541ca1e802d7a1c78b65aad7efd4f35bd4747b",
+  "triangles": 3164,
+  "yaw": 0
+}

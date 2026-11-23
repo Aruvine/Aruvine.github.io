@@ -1,0 +1,50 @@
+{
+  "dials": [
+    {
+      "default": 0.8,
+      "id": "amount",
+      "label": "Amount",
+      "max": 1,
+      "min": 0,
+      "step": 0.05,
+      "unit": ""
+    },
+    {
+      "default": 0.15,
+      "id": "life",
+      "label": "Lasts",
+      "max": 10,
+      "min": 0.05,
+      "step": 0.05,
+      "unit": "s"
+    }
+  ],
+  "id": "flash_white",
+  "kind": "screen",
+  "label": "Flash white",
+  "layers": [
+    {
+      "amount": {
+        "dial": "amount"
+      },
+      "color": "a",
+      "id": "screen",
+      "kind": "flash",
+      "prim": "screen",
+      "seconds": {
+        "dial": "life"
+      }
+    }
+  ],
+  "life": {
+    "dial": "life"
+  },
+  "palette": {
+    "a": "#ffffff",
+    "b": "#ffffff"
+  },
+  "schemaVersion": 2,
+  "tags": [
+    "flash"
+  ]
+}

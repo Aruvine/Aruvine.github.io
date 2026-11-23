@@ -1,0 +1,26 @@
+{
+  "bus": "ui",
+  "id": "deny",
+  "kind": "synth",
+  "label": "Deny",
+  "licence": "own",
+  "pitchVar": 0,
+  "schemaVersion": 2,
+  "since": 2,
+  "space": "flat",
+  "synth": {
+    "arpMod": -0.3,
+    "arpSpeed": 0.6,
+    "attack": 0,
+    "baseFreq": 0.25,
+    "decay": 0.2,
+    "duty": 0.5,
+    "lpfFreq": 1,
+    "punch": 0.2,
+    "sustain": 0.1,
+    "wave": "square"
+  },
+  "tags": [
+    "chime"
+  ]
+}

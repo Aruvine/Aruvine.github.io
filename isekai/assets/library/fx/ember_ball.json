@@ -1,0 +1,67 @@
+{
+  "dials": [
+    {
+      "default": 0.35,
+      "id": "size",
+      "label": "Size",
+      "max": 4,
+      "min": 0.05,
+      "step": 0.05,
+      "unit": "m"
+    },
+    {
+      "default": 0,
+      "id": "spin",
+      "label": "Spin",
+      "max": 720,
+      "min": -720,
+      "step": 10,
+      "unit": "°/s"
+    }
+  ],
+  "id": "ember_ball",
+  "kind": "meshEffect",
+  "label": "Ember ball",
+  "layers": [
+    {
+      "blend": "cutout",
+      "color": "a",
+      "fade": 0.3,
+      "id": "mesh",
+      "mesh": "puff",
+      "prim": "shape",
+      "size": {
+        "dial": "size"
+      },
+      "spin": {
+        "dial": "spin"
+      }
+    },
+    {
+      "blend": "add",
+      "color": "b",
+      "dir": "out",
+      "id": "embers",
+      "mode": "stream",
+      "particleLife": 0.4,
+      "prim": "sprites",
+      "rate": 14,
+      "rise": 1,
+      "size": 0.06,
+      "sizeEnd": 0,
+      "speed": 0.3,
+      "spread": 60,
+      "sprite": "ember"
+    }
+  ],
+  "life": 1,
+  "palette": {
+    "a": "#ff6a1a",
+    "b": "#ffd23f"
+  },
+  "schemaVersion": 2,
+  "sound": "lib:sfx/fire_burst",
+  "tags": [
+    "fire"
+  ]
+}

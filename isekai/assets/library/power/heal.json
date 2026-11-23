@@ -1,0 +1,186 @@
+{
+  "ai": {
+    "minInterval": 15,
+    "needsLos": false,
+    "priority": 2,
+    "range": [
+      0,
+      15
+    ],
+    "use": "auto",
+    "when": {
+      "cmp": {
+        "a": {
+          "read": "poolFrac:health"
+        },
+        "b": 0.5,
+        "op": "<"
+      }
+    }
+  },
+  "archetype": "heal",
+  "casterClip": {
+    "clip": "lib:clip/heal_palm",
+    "layer": "upper",
+    "phase": "heal"
+  },
+  "dials": [
+    {
+      "default": 30,
+      "id": "amount",
+      "label": "Amount",
+      "max": 500,
+      "min": 1,
+      "unit": "pt"
+    },
+    {
+      "default": 0,
+      "id": "radius",
+      "label": "Radius",
+      "max": 15,
+      "min": 0,
+      "unit": "m"
+    },
+    {
+      "default": 15,
+      "id": "cooldown",
+      "label": "Cooldown",
+      "max": 600,
+      "min": 1,
+      "unit": "s"
+    }
+  ],
+  "gate": {
+    "blockedBy": [
+      "stunned",
+      "held",
+      "down"
+    ],
+    "cooldown": {
+      "dial": "cooldown"
+    }
+  },
+  "icon": "lib:icon/heal",
+  "id": "heal",
+  "label": "Heal",
+  "phases": [
+    {
+      "blocks": [
+        {
+          "do": {
+            "act": "pool",
+            "amount": {
+              "dial": "amount"
+            },
+            "op": "add",
+            "pool": "health",
+            "who": "caster"
+          },
+          "id": "self",
+          "label": "the caster healed",
+          "t": 0.2
+        },
+        {
+          "do": {
+            "act": "forEach",
+            "do": [
+              {
+                "act": "if",
+                "cond": {
+                  "cmp": {
+                    "a": {
+                      "of": "each",
+                      "read": "distance"
+                    },
+                    "b": 0,
+                    "op": ">"
+                  }
+                },
+                "then": [
+                  {
+                    "act": "pool",
+                    "amount": {
+                      "dial": "amount"
+                    },
+                    "op": "add",
+                    "pool": "health",
+                    "who": "each"
+                  },
+                  {
+                    "act": "fx",
+                    "at": {
+                      "of": "each"
+                    },
+                    "effect": "lib:fx/heal_motes"
+                  }
+                ]
+              }
+            ],
+            "sel": {
+              "at": {
+                "of": "caster"
+              },
+              "filter": {
+                "rel": "ally"
+              },
+              "from": "around",
+              "limit": 8,
+              "order": "nearest",
+              "r": {
+                "dial": "radius"
+              }
+            }
+          },
+          "id": "allies",
+          "label": "allies healed",
+          "t": 0.2
+        },
+        {
+          "do": {
+            "act": "fx",
+            "at": {
+              "of": "caster"
+            },
+            "effect": "lib:fx/heal_circle"
+          },
+          "t": 0.2
+        },
+        {
+          "do": {
+            "act": "sound",
+            "at": {
+              "of": "caster"
+            },
+            "op": "play",
+            "sound": "lib:sfx/heal_shimmer"
+          },
+          "t": 0.2
+        }
+      ],
+      "exits": [
+        {
+          "on": "time",
+          "to": "end"
+        }
+      ],
+      "id": "heal",
+      "label": "Heal",
+      "max": 0.6
+    }
+  ],
+  "schemaVersion": 2,
+  "trigger": {
+    "input": {
+      "button": {
+        "act": "slot",
+        "edge": "press"
+      },
+      "hand": {
+        "hand": "either",
+        "holdMs": 500,
+        "pose": "open_palm"
+      }
+    },
+    "kind": "press"
+  }
+}

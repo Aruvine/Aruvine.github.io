@@ -1,0 +1,25 @@
+{
+  "id": "parry_ring",
+  "kind": "synth",
+  "label": "Parry ring",
+  "licence": "own",
+  "range": 35,
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.7,
+    "decay": 0.55,
+    "freqRamp": 0,
+    "hpfFreq": 0.02,
+    "lpfFreq": 1,
+    "punch": 0.6,
+    "sustain": 0.05,
+    "vibSpeed": 0.6,
+    "vibStrength": 0.05,
+    "wave": "sine"
+  },
+  "tags": [
+    "hit"
+  ]
+}

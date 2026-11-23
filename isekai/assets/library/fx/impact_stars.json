@@ -1,0 +1,84 @@
+{
+  "dials": [
+    {
+      "default": 1,
+      "id": "size",
+      "label": "Size",
+      "max": 4,
+      "min": 0.25,
+      "step": 0.05,
+      "unit": ""
+    },
+    {
+      "default": 8,
+      "id": "amount",
+      "label": "Amount",
+      "max": 24,
+      "min": 1,
+      "step": 1,
+      "unit": ""
+    },
+    {
+      "default": 3,
+      "id": "speed",
+      "label": "Speed",
+      "max": 20,
+      "min": 0,
+      "step": 0.1,
+      "unit": "m/s"
+    }
+  ],
+  "id": "impact_stars",
+  "kind": "burst",
+  "label": "Impact stars",
+  "layers": [
+    {
+      "blend": "cutout",
+      "count": {
+        "dial": "amount"
+      },
+      "dir": "out",
+      "id": "stars",
+      "mode": "burst",
+      "particleLife": 0.5,
+      "prim": "sprites",
+      "size": {
+        "dial": "size",
+        "times": 0.14
+      },
+      "sizeEnd": 0.04,
+      "speed": {
+        "dial": "speed"
+      },
+      "spread": 180,
+      "sprite": "star"
+    },
+    {
+      "blend": "add",
+      "color": "b",
+      "fade": 1,
+      "grow": [
+        0.3,
+        1.4
+      ],
+      "id": "ring",
+      "life": 0.25,
+      "mesh": "ring",
+      "prim": "shape",
+      "size": {
+        "dial": "size",
+        "times": 0.5
+      }
+    }
+  ],
+  "life": 0.6,
+  "palette": {
+    "a": "#fff6a0",
+    "b": "#ffffff"
+  },
+  "schemaVersion": 2,
+  "sound": "lib:sfx/hit_mid",
+  "tags": [
+    "hit"
+  ]
+}

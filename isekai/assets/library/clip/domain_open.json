@@ -1,0 +1,12 @@
+{
+  "file": "domain_open.vrma",
+  "group": "caster",
+  "id": "domain_open",
+  "label": "Open a domain",
+  "licence": "own",
+  "loop": false,
+  "origin": "made",
+  "schemaVersion": 2,
+  "seconds": 2,
+  "since": 2
+}

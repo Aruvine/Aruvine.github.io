@@ -1,0 +1,12 @@
+{
+  "file": "piggyback.vrma",
+  "group": "social",
+  "id": "piggyback",
+  "label": "Piggyback",
+  "licence": "own",
+  "loop": true,
+  "origin": "made",
+  "schemaVersion": 2,
+  "seconds": 2,
+  "since": 2
+}

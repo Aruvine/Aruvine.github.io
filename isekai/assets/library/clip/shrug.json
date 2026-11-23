@@ -1,0 +1,12 @@
+{
+  "file": "shrug.vrma",
+  "group": "emotes",
+  "id": "shrug",
+  "label": "Shrug",
+  "licence": "own",
+  "loop": false,
+  "origin": "made",
+  "schemaVersion": 2,
+  "seconds": 1.5,
+  "since": 2
+}

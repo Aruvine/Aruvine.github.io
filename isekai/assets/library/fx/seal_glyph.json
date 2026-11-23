@@ -1,0 +1,52 @@
+{
+  "dials": [
+    {
+      "default": 0.5,
+      "id": "size",
+      "label": "Size",
+      "max": 2,
+      "min": 0.05,
+      "step": 0.01,
+      "unit": "m"
+    },
+    {
+      "default": 0.5,
+      "id": "speed",
+      "label": "Speed",
+      "max": 20,
+      "min": 0,
+      "step": 0.1,
+      "unit": "m/s"
+    }
+  ],
+  "id": "seal_glyph",
+  "kind": "spriteCard",
+  "label": "Seal glyph",
+  "layers": [
+    {
+      "blend": "cutout",
+      "color": "a",
+      "fade": 0.3,
+      "id": "card",
+      "mesh": "ring",
+      "prim": "shape",
+      "size": {
+        "dial": "size"
+      },
+      "spin": {
+        "dial": "speed",
+        "times": 90
+      }
+    }
+  ],
+  "life": 1.5,
+  "palette": {
+    "a": "#ff4a8a",
+    "b": "#ffd0e0"
+  },
+  "schemaVersion": 2,
+  "sound": "lib:sfx/seal_tick",
+  "tags": [
+    "magic"
+  ]
+}

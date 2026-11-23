@@ -1,0 +1,53 @@
+{
+  "dials": [
+    {
+      "default": 0.03,
+      "id": "width",
+      "label": "Width",
+      "max": 1,
+      "min": 0.01,
+      "step": 0.01,
+      "unit": "m"
+    },
+    {
+      "default": 8,
+      "id": "length",
+      "label": "Length",
+      "max": 60,
+      "min": 0.5,
+      "step": 0.5,
+      "unit": "m"
+    }
+  ],
+  "id": "steel_line",
+  "kind": "beam",
+  "label": "Steel line",
+  "layers": [
+    {
+      "blend": "cutout",
+      "color": "a",
+      "color2": "b",
+      "core": 0,
+      "id": "line",
+      "length": {
+        "dial": "length"
+      },
+      "path": "between",
+      "points": 16,
+      "prim": "ribbon",
+      "width": {
+        "dial": "width"
+      }
+    }
+  ],
+  "life": 0,
+  "palette": {
+    "a": "#c0c8d0",
+    "b": "#ffffff"
+  },
+  "schemaVersion": 2,
+  "tags": [
+    "steel",
+    "line"
+  ]
+}

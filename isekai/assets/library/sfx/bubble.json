@@ -1,0 +1,23 @@
+{
+  "id": "bubble",
+  "kind": "synth",
+  "label": "Bubble",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.35,
+    "decay": 0.12,
+    "duty": 0.5,
+    "freqRamp": 0.4,
+    "hpfFreq": 0.05,
+    "lpfFreq": 1,
+    "punch": 0.1,
+    "sustain": 0.04,
+    "wave": "sine"
+  },
+  "tags": [
+    "pop"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "id": "blast_small",
+  "kind": "synth",
+  "label": "Small blast",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.25,
+    "decay": 0.3,
+    "freqRamp": -0.15,
+    "lpfFreq": 1,
+    "punch": 0.6,
+    "sustain": 0.15,
+    "wave": "noise"
+  },
+  "tags": [
+    "blast"
+  ]
+}

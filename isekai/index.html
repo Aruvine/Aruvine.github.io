@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#12141c">
-  <meta name="isekai-build" content="2f283219.1">
+  <meta name="isekai-build" content="c0889fad.2">
   <title>Isekai</title>
   <link rel="manifest" href="/isekai/manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="/isekai/assets/icons/icon-192.png">
@@ -59,6 +59,9 @@
       text-align: center;
     }
     .isekai-hint[hidden] { display: none; }
+    /* A line of text and a button that cannot be pressed never take a click from the view below
+       (with "Pointer only" the near ground under them is clicked to teleport, 11 7). */
+    #overlay > .isekai-hint, #overlay > .isekai-btn:disabled { pointer-events: none; }
     /* Shown while the bundle downloads and starts (several MB on a Quest); main.ts removes it. */
     .isekai-loading {
       position: absolute;
@@ -173,11 +176,11 @@
   <div id="overlay"><div id="loading" class="isekai-loading">Loading Isekai...</div></div>
   <noscript>Isekai needs JavaScript and WebGL2.</noscript>
   <script>
-    window.__ISEKAI_BUILD = '2f283219.1';
+    window.__ISEKAI_BUILD = 'c0889fad.2';
     window.__ISEKAI_BASE = '/isekai/';
   </script>
   <!-- The bundle URL carries the build id: a new index never runs an older cached bundle (sw.js). -->
-  <script type="module" src="/isekai/main.js?v=2f283219.1"></script>
+  <script type="module" src="/isekai/main.js?v=c0889fad.2"></script>
   <script>
     // Register the service worker only on real hosts. Localhost (dev and Playwright)
     // must always see the freshest build, so the app-shell cache stays off there.

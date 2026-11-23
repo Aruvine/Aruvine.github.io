@@ -1,0 +1,19 @@
+{
+  "bus": "ui",
+  "bytes": 9834,
+  "channels": 1,
+  "file": "ui_open.ogg",
+  "id": "ui_open",
+  "kind": "sample",
+  "label": "Menu opens",
+  "licence": "kenney_interface",
+  "pitchVar": 0,
+  "schemaVersion": 2,
+  "seconds": 0.148,
+  "sha256": "a27c6bb0df7da1e6af5dd5937593c98bc58b6e513f42fe6a3254cd6a6949c648",
+  "since": 2,
+  "space": "flat",
+  "tags": [
+    "ui"
+  ]
+}

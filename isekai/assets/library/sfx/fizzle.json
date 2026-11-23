@@ -1,0 +1,24 @@
+{
+  "id": "fizzle",
+  "kind": "synth",
+  "label": "Fizzle",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.5,
+    "decay": 0.3,
+    "freqRamp": -0.35,
+    "hpfFreq": 0.3,
+    "lpfFreq": 1,
+    "punch": 0,
+    "repeatSpeed": 0.7,
+    "sustain": 0.15,
+    "wave": "noise"
+  },
+  "tags": [
+    "blast"
+  ],
+  "volume": 0.8
+}

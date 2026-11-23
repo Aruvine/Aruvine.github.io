@@ -1,0 +1,12 @@
+{
+  "file": "throw_overhand.vrma",
+  "group": "caster",
+  "id": "throw_overhand",
+  "label": "Overhand throw",
+  "licence": "ual_2",
+  "loop": false,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 1.3333,
+  "since": 2
+}

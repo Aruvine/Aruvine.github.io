@@ -1,0 +1,12 @@
+{
+  "file": "line_throw.vrma",
+  "group": "caster",
+  "id": "line_throw",
+  "label": "Line throw",
+  "licence": "kaykit_animations",
+  "loop": false,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 1.3667,
+  "since": 2
+}

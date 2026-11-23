@@ -1,0 +1,58 @@
+{
+  "dials": [
+    {
+      "default": 1.4,
+      "id": "size",
+      "label": "Size",
+      "max": 4,
+      "min": 0.5,
+      "step": 0.1,
+      "unit": "m"
+    }
+  ],
+  "id": "shield_bubble",
+  "kind": "shell",
+  "label": "Shield bubble",
+  "layers": [
+    {
+      "blend": "cutout",
+      "color": "a",
+      "fade": 0,
+      "id": "bubble",
+      "mesh": "rimSphere",
+      "prim": "shape",
+      "role": "core",
+      "size": {
+        "dial": "size"
+      }
+    },
+    {
+      "blend": "add",
+      "color": "b",
+      "from": "sphere",
+      "fromR": {
+        "dial": "size",
+        "times": 0.5
+      },
+      "id": "glints",
+      "mode": "stream",
+      "particleLife": 0.6,
+      "prim": "sprites",
+      "rate": 2,
+      "size": 0.06,
+      "sizeEnd": 0,
+      "speed": 0,
+      "sprite": "star"
+    }
+  ],
+  "life": 0,
+  "palette": {
+    "a": "#9fe8ff",
+    "b": "#ffffff"
+  },
+  "schemaVersion": 2,
+  "sound": "lib:sfx/shield_hit",
+  "tags": [
+    "shield"
+  ]
+}

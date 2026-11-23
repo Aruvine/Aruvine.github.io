@@ -1,0 +1,112 @@
+{
+  "cards": [
+    {
+      "do": [
+        {
+          "act": "setVar",
+          "op": "set",
+          "value": 3,
+          "var": "world.lives"
+        },
+        {
+          "act": "ui",
+          "op": "toast",
+          "text": "Lives: {var:world.lives}"
+        }
+      ],
+      "id": "lives_begin",
+      "label": "When the world starts, 3 lives",
+      "on": {
+        "event": "start",
+        "scope": "world"
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "setVar",
+          "op": "add",
+          "value": -1,
+          "var": "world.lives"
+        },
+        {
+          "act": "ui",
+          "op": "toast",
+          "text": "Lives left: {var:world.lives}"
+        }
+      ],
+      "id": "lives_fall",
+      "if": {
+        "cmp": {
+          "a": {
+            "read": "var:world.lives"
+          },
+          "b": 0,
+          "op": ">"
+        }
+      },
+      "label": "When the player falls out, lose a life",
+      "on": {
+        "event": "outOfBounds",
+        "who": "player"
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "setVar",
+          "op": "add",
+          "value": -1,
+          "var": "world.lives"
+        },
+        {
+          "act": "ui",
+          "op": "toast",
+          "text": "Lives left: {var:world.lives}"
+        }
+      ],
+      "id": "lives_lose",
+      "if": {
+        "cmp": {
+          "a": {
+            "read": "var:world.lives"
+          },
+          "b": 0,
+          "op": ">"
+        }
+      },
+      "label": "When asked, lose a life",
+      "on": {
+        "event": "signal",
+        "name": "lose_life"
+      }
+    },
+    {
+      "do": [
+        {
+          "act": "signal",
+          "name": "out_of_lives"
+        },
+        {
+          "act": "ui",
+          "op": "banner",
+          "text": "No lives left"
+        }
+      ],
+      "id": "lives_gone",
+      "label": "With no lives left, the game is over",
+      "on": {
+        "event": "var",
+        "reaches": 0,
+        "var": "world.lives"
+      }
+    }
+  ],
+  "id": "lives",
+  "label": "Lives",
+  "schemaVersion": 2,
+  "summary": "The player has 3 lives: a fall out of the world or the signal lose_life takes one; at 0 every Thing hears out_of_lives.",
+  "vars": [
+    "lives"
+  ]
+}

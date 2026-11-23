@@ -1,0 +1,12 @@
+{
+  "file": "swipe_mark.vrma",
+  "group": "caster",
+  "id": "swipe_mark",
+  "label": "Swipe",
+  "licence": "kaykit_animations",
+  "loop": false,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 1,
+  "since": 2
+}

@@ -1,0 +1,12 @@
+{
+  "file": "guard_up.vrma",
+  "group": "caster",
+  "id": "guard_up",
+  "label": "Guard",
+  "licence": "kaykit_animations",
+  "loop": true,
+  "origin": "imported",
+  "schemaVersion": 2,
+  "seconds": 1.0667,
+  "since": 2
+}

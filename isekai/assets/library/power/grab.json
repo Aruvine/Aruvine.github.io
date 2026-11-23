@@ -1,0 +1,248 @@
+{
+  "ai": {
+    "hold": 1,
+    "holdChance": 1,
+    "minInterval": 4,
+    "needsLos": true,
+    "priority": 2,
+    "range": [
+      0,
+      {
+        "dial": "reach",
+        "times": 0.9
+      }
+    ],
+    "telegraph": 0.3,
+    "use": "auto"
+  },
+  "aim": {
+    "assistDeg": 7,
+    "from": "aim",
+    "origin": "head",
+    "range": 20
+  },
+  "archetype": "grab",
+  "casterClip": {
+    "clip": "lib:clip/grab_reach",
+    "layer": "upper",
+    "phase": "reach"
+  },
+  "dials": [
+    {
+      "default": 1.2,
+      "id": "reach",
+      "label": "Reach",
+      "max": 3,
+      "min": 0.5,
+      "unit": "m"
+    },
+    {
+      "default": 12,
+      "id": "throw_speed",
+      "label": "Throw speed",
+      "max": 40,
+      "min": 0,
+      "unit": "m/s"
+    },
+    {
+      "default": 5,
+      "id": "hold_max",
+      "label": "Hold for",
+      "max": 30,
+      "min": 1,
+      "unit": "s"
+    },
+    {
+      "default": 2,
+      "id": "cooldown",
+      "label": "Cooldown",
+      "max": 30,
+      "min": 0.2,
+      "unit": "s"
+    }
+  ],
+  "gate": {
+    "blockedBy": [
+      "stunned",
+      "held",
+      "down"
+    ],
+    "cooldown": {
+      "dial": "cooldown"
+    }
+  },
+  "icon": "lib:icon/grab",
+  "id": "grab",
+  "label": "Grab and throw",
+  "phases": [
+    {
+      "blocks": [
+        {
+          "do": {
+            "act": "hitVolume",
+            "filter": {
+              "rel": "enemy"
+            },
+            "on": {
+              "socket": "triggerHand"
+            },
+            "onHit": [
+              {
+                "act": "attach",
+                "kind": "hold",
+                "to": {
+                  "socket": "triggerHand",
+                  "who": "caster"
+                },
+                "what": "target"
+              },
+              {
+                "act": "fx",
+                "at": "hitPoint",
+                "effect": "lib:fx/pop_ring"
+              },
+              {
+                "act": "sound",
+                "at": "hitPoint",
+                "op": "play",
+                "sound": "lib:sfx/grip"
+              },
+              {
+                "act": "feel",
+                "amount": 0.5,
+                "kind": "haptic",
+                "seconds": 0.08,
+                "who": "caster"
+              }
+            ],
+            "once": "first",
+            "shape": {
+              "sphere": {
+                "dial": "reach",
+                "times": 0.5
+              }
+            },
+            "who": "caster"
+          },
+          "id": "grip",
+          "label": "the grip",
+          "len": 0.3,
+          "t": 0.05
+        }
+      ],
+      "exits": [
+        {
+          "on": "hit",
+          "to": "hold"
+        },
+        {
+          "on": "time",
+          "to": "end"
+        }
+      ],
+      "id": "reach",
+      "label": "Reach",
+      "max": 0.4
+    },
+    {
+      "blocks": [],
+      "exits": [
+        {
+          "on": "released",
+          "to": "throw"
+        },
+        {
+          "if": {
+            "cmp": {
+              "a": {
+                "read": "phaseTime"
+              },
+              "b": {
+                "dial": "hold_max"
+              },
+              "op": ">="
+            }
+          },
+          "on": "cond",
+          "to": "throw"
+        },
+        {
+          "on": "time",
+          "to": "throw"
+        }
+      ],
+      "id": "hold",
+      "label": "Hold",
+      "max": 30
+    },
+    {
+      "blocks": [
+        {
+          "do": {
+            "act": "detach",
+            "what": "target"
+          },
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "force",
+            "dir": "aim",
+            "kind": "throw",
+            "speed": {
+              "dial": "throw_speed"
+            },
+            "who": "target"
+          },
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "fx",
+            "at": {
+              "of": "target"
+            },
+            "effect": "lib:fx/speed_lines"
+          },
+          "t": 0
+        },
+        {
+          "do": {
+            "act": "sound",
+            "at": {
+              "of": "caster"
+            },
+            "op": "play",
+            "sound": "lib:sfx/throw"
+          },
+          "t": 0
+        }
+      ],
+      "exits": [
+        {
+          "on": "time",
+          "to": "end"
+        }
+      ],
+      "id": "throw",
+      "label": "Throw",
+      "max": 0.3
+    }
+  ],
+  "schemaVersion": 2,
+  "trigger": {
+    "input": {
+      "button": {
+        "act": "slot",
+        "edge": "press"
+      },
+      "hand": {
+        "hand": "either",
+        "touch": {
+          "rel": "enemy"
+        }
+      }
+    },
+    "kind": "press"
+  }
+}

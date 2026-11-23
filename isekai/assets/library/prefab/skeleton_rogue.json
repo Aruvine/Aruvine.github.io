@@ -1,0 +1,26 @@
+{
+  "c": {
+    "body": {
+      "kind": "static"
+    },
+    "clipmap": {
+      "attack": "lib:clip/punch_jab",
+      "defeat": "lib:clip/knockout",
+      "hit": "lib:clip/hit_front",
+      "idle": "lib:clip/idle",
+      "move": "lib:clip/walk",
+      "run": "lib:clip/run"
+    },
+    "shape": {
+      "model": "lib:model/skeleton_rogue"
+    }
+  },
+  "id": "skeleton_rogue",
+  "kind": "creature",
+  "label": "Skeleton Rogue",
+  "schemaVersion": 2,
+  "tags": [
+    "skeleton",
+    "undead"
+  ]
+}

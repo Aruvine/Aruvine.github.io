@@ -1,0 +1,13 @@
+{
+  "bytes": 138060,
+  "file": "monster_blob_orc.glb",
+  "height": 2.364,
+  "id": "monster_blob_orc",
+  "label": "Orc (blob)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "dd35b8f6e0e695d14c15955104ec388c4e2d5f7532e898082f7e7d14180e1465",
+  "triangles": 2296,
+  "yaw": 0
+}

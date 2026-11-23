@@ -1,0 +1,20 @@
+{
+  "bus": "music",
+  "bytes": 976499,
+  "channels": 2,
+  "file": "domain_tension.ogg",
+  "id": "domain_tension",
+  "kind": "music",
+  "label": "Domain tension",
+  "licence": "retro_rpg_music",
+  "loop": true,
+  "pitchVar": 0,
+  "schemaVersion": 2,
+  "seconds": 64,
+  "sha256": "eaf1d100e24b69fbe433a1a8bbe6c64e00abaa50d5c8611d9ed6f2bf7126347a",
+  "since": 2,
+  "space": "flat",
+  "tags": [
+    "battle"
+  ]
+}

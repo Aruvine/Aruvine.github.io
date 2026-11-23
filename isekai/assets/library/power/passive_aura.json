@@ -1,0 +1,88 @@
+{
+  "ai": {
+    "use": "never"
+  },
+  "archetype": "passive_aura",
+  "dials": [
+    {
+      "default": 4,
+      "id": "radius",
+      "label": "Radius",
+      "max": 15,
+      "min": 1,
+      "unit": "m"
+    },
+    {
+      "default": 1.2,
+      "id": "bonus",
+      "label": "Bonus",
+      "max": 3,
+      "min": 1,
+      "unit": "×"
+    }
+  ],
+  "gate": {
+    "blockedBy": [
+      "stunned",
+      "held",
+      "down"
+    ],
+    "maxAlive": {
+      "n": 1,
+      "of": "caster",
+      "tag": "aura"
+    }
+  },
+  "icon": "lib:icon/aura",
+  "id": "passive_aura",
+  "label": "Aura",
+  "phases": [
+    {
+      "blocks": [
+        {
+          "do": {
+            "act": "spawn",
+            "at": {
+              "of": "caster"
+            },
+            "over": {
+              "area.shape": {
+                "sphere": {
+                  "dial": "radius"
+                }
+              },
+              "dial.bonus": {
+                "dial": "bonus"
+              }
+            },
+            "owner": "caster",
+            "team": "caster",
+            "what": "aura_area"
+          },
+          "id": "spread",
+          "t": 0
+        }
+      ],
+      "exits": [
+        {
+          "on": "time",
+          "to": "end"
+        }
+      ],
+      "id": "act",
+      "label": "Spread",
+      "max": 0.3
+    }
+  ],
+  "schemaVersion": 2,
+  "tags": [
+    "aura"
+  ],
+  "trigger": {
+    "kind": "auto",
+    "on": {
+      "event": "start",
+      "scope": "self"
+    }
+  }
+}

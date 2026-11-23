@@ -1,0 +1,20 @@
+{
+  "bus": "music",
+  "bytes": 297053,
+  "channels": 2,
+  "file": "sorrow.ogg",
+  "id": "sorrow",
+  "kind": "music",
+  "label": "Sorrow",
+  "licence": "retro_rpg_music",
+  "loop": true,
+  "pitchVar": 0,
+  "schemaVersion": 2,
+  "seconds": 16,
+  "sha256": "b600dcc622f438f0a3b48422cb359789201b836f5cd3ac4a1a39f29c95a6ae33",
+  "since": 2,
+  "space": "flat",
+  "tags": [
+    "sad"
+  ]
+}

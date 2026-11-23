@@ -1,0 +1,26 @@
+{
+  "bus": "ui",
+  "id": "confirm",
+  "kind": "synth",
+  "label": "Confirm",
+  "licence": "own",
+  "pitchVar": 0,
+  "schemaVersion": 2,
+  "since": 2,
+  "space": "flat",
+  "synth": {
+    "arpMod": 0.25,
+    "arpSpeed": 0.65,
+    "attack": 0,
+    "baseFreq": 0.45,
+    "decay": 0.2,
+    "duty": 0.5,
+    "lpfFreq": 1,
+    "punch": 0.45,
+    "sustain": 0.06,
+    "wave": "square"
+  },
+  "tags": [
+    "chime"
+  ]
+}

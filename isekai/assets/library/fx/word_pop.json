@@ -1,0 +1,39 @@
+{
+  "dials": [
+    {
+      "default": 0.3,
+      "id": "size",
+      "label": "Size",
+      "max": 2,
+      "min": 0.05,
+      "step": 0.05,
+      "unit": "m"
+    }
+  ],
+  "id": "word_pop",
+  "kind": "textPop",
+  "label": "Word pop",
+  "layers": [
+    {
+      "color": "a",
+      "color2": "b",
+      "id": "text",
+      "prim": "glyph",
+      "rise": 0.8,
+      "size": {
+        "dial": "size"
+      },
+      "style": "word",
+      "text": "Nice!"
+    }
+  ],
+  "life": 0.8,
+  "palette": {
+    "a": "#ffffff",
+    "b": "#7fd8ff"
+  },
+  "schemaVersion": 2,
+  "tags": [
+    "word"
+  ]
+}

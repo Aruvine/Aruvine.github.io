@@ -1,0 +1,13 @@
+{
+  "bytes": 218476,
+  "file": "mannequin.vrm",
+  "height": 1.753,
+  "id": "mannequin",
+  "label": "Mannequin",
+  "licence": "own",
+  "rig": "vrm1",
+  "schemaVersion": 2,
+  "sha256": "f798631547fb61c944fccd943bf15ac1060dbf358713aa2aff9a7e286af737b0",
+  "triangles": 4704,
+  "yaw": 0
+}

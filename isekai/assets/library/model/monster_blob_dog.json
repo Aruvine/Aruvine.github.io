@@ -1,0 +1,13 @@
+{
+  "bytes": 84280,
+  "file": "monster_blob_dog.glb",
+  "height": 1.814,
+  "id": "monster_blob_dog",
+  "label": "Dog (blob)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "dcadd28b91bac728bf8515c0e7b5fe9bbfb4501d09720c49b61a305a585af31d",
+  "triangles": 1392,
+  "yaw": 0
+}

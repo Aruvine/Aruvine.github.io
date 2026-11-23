@@ -1,0 +1,37 @@
+{
+  "dials": [
+    {
+      "default": 12,
+      "id": "range",
+      "label": "Range",
+      "max": 20,
+      "min": 0.5,
+      "step": 0.5,
+      "unit": "m"
+    }
+  ],
+  "id": "lightning_flash",
+  "kind": "light",
+  "label": "Lightning flash",
+  "layers": [
+    {
+      "flash": 0.15,
+      "id": "flash",
+      "intensity": 5,
+      "prim": "light",
+      "range": {
+        "dial": "range"
+      }
+    }
+  ],
+  "life": 0.3,
+  "palette": {
+    "a": "#d8e8ff",
+    "b": "#ffffff"
+  },
+  "schemaVersion": 2,
+  "sound": "lib:sfx/thunder_crack",
+  "tags": [
+    "lightning"
+  ]
+}

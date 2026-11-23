@@ -1,0 +1,26 @@
+{
+  "bus": "ui",
+  "id": "click",
+  "kind": "synth",
+  "label": "Click",
+  "licence": "own",
+  "pitchVar": 0,
+  "schemaVersion": 2,
+  "since": 2,
+  "space": "flat",
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.8,
+    "decay": 0.03,
+    "duty": 0.5,
+    "freqRamp": 0,
+    "hpfFreq": 0.4,
+    "lpfFreq": 1,
+    "punch": 0.5,
+    "sustain": 0.005,
+    "wave": "noise"
+  },
+  "tags": [
+    "pop"
+  ]
+}

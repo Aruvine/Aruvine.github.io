@@ -1,0 +1,77 @@
+{
+  "dials": [
+    {
+      "default": 1,
+      "id": "size",
+      "label": "Size",
+      "max": 4,
+      "min": 0.25,
+      "step": 0.05,
+      "unit": ""
+    },
+    {
+      "default": 10,
+      "id": "amount",
+      "label": "Amount",
+      "max": 30,
+      "min": 1,
+      "step": 1,
+      "unit": ""
+    }
+  ],
+  "id": "aura_shadow",
+  "kind": "aura",
+  "label": "Shadow aura",
+  "layers": [
+    {
+      "color": "a",
+      "id": "glow",
+      "prim": "outline",
+      "pulse": 1.2,
+      "width": 0.006
+    },
+    {
+      "color": "b",
+      "edge": "soft",
+      "id": "ring",
+      "prim": "decal",
+      "pulse": 0.8,
+      "r": {
+        "dial": "size",
+        "times": 0.7
+      },
+      "shape": "ring"
+    },
+    {
+      "blend": "cutout",
+      "dir": "up",
+      "from": "body",
+      "id": "streaks",
+      "mode": "stream",
+      "particleLife": 0.9,
+      "prim": "sprites",
+      "rate": {
+        "dial": "amount"
+      },
+      "rise": 1,
+      "size": {
+        "dial": "size",
+        "times": 0.08
+      },
+      "sizeEnd": 0,
+      "speed": 0.6,
+      "spread": 10,
+      "sprite": "wisp",
+      "stretch": 1.5
+    }
+  ],
+  "life": 0,
+  "palette": {
+    "a": "#2b1745",
+    "b": "#8c52ff"
+  },
+  "schemaVersion": 2,
+  "tags": [
+    "shadow"
+  ]
+}

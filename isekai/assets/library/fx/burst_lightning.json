@@ -1,0 +1,84 @@
+{
+  "dials": [
+    {
+      "default": 1,
+      "id": "size",
+      "label": "Size",
+      "max": 4,
+      "min": 0.25,
+      "step": 0.05,
+      "unit": ""
+    },
+    {
+      "default": 24,
+      "id": "amount",
+      "label": "Amount",
+      "max": 64,
+      "min": 1,
+      "step": 1,
+      "unit": ""
+    },
+    {
+      "default": 4,
+      "id": "speed",
+      "label": "Speed",
+      "max": 20,
+      "min": 0,
+      "step": 0.1,
+      "unit": "m/s"
+    }
+  ],
+  "id": "burst_lightning",
+  "kind": "burst",
+  "label": "Lightning burst",
+  "layers": [
+    {
+      "blend": "add",
+      "count": {
+        "dial": "amount"
+      },
+      "dir": "out",
+      "id": "bits",
+      "mode": "burst",
+      "particleLife": 0.5,
+      "prim": "sprites",
+      "rise": 0,
+      "size": {
+        "dial": "size",
+        "times": 0.12
+      },
+      "sizeEnd": 0,
+      "speed": {
+        "dial": "speed"
+      },
+      "spread": 180,
+      "sprite": "spark"
+    },
+    {
+      "blend": "add",
+      "color": "b",
+      "fade": 1,
+      "grow": [
+        0.3,
+        1.6
+      ],
+      "id": "ring",
+      "life": 0.35,
+      "mesh": "ring",
+      "prim": "shape",
+      "size": {
+        "dial": "size",
+        "times": 0.6
+      }
+    }
+  ],
+  "life": 0.6,
+  "palette": {
+    "a": "#fff35c",
+    "b": "#7fb2ff"
+  },
+  "schemaVersion": 2,
+  "tags": [
+    "lightning"
+  ]
+}

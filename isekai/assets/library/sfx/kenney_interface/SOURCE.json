@@ -1,0 +1,14 @@
+{
+  "pack": "kenney_interface",
+  "publisher": "Kenney",
+  "title": "Interface Sounds",
+  "tier": "free",
+  "version": "1.0",
+  "licence": "CC0-1.0",
+  "page": "https://kenney.nl/assets/interface-sounds",
+  "licenceQuote": "License: Creative Commons CC0",
+  "fetchedOn": "2026-11-14",
+  "zipSha256": "f2193d072726d6758a5f7871b2dcc54dcce0d5c35c6f0a62f92549b327c81232",
+  "files": 2,
+  "use": "sfx"
+}

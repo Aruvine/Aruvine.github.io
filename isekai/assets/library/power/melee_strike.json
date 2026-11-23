@@ -1,0 +1,237 @@
+{
+  "ai": {
+    "minInterval": 1,
+    "needsLos": true,
+    "priority": 2,
+    "range": [
+      0,
+      1.2
+    ],
+    "telegraph": 0.3,
+    "use": "auto"
+  },
+  "archetype": "melee_strike",
+  "casterClip": {
+    "clip": "lib:clip/punch_jab",
+    "layer": "upper",
+    "phase": "strike"
+  },
+  "dials": [
+    {
+      "default": 15,
+      "id": "damage",
+      "label": "Damage",
+      "max": 200,
+      "min": 0,
+      "unit": "pt"
+    },
+    {
+      "default": 0.4,
+      "id": "radius",
+      "label": "Radius",
+      "max": 2,
+      "min": 0.1,
+      "unit": "m"
+    },
+    {
+      "default": 3,
+      "id": "push",
+      "label": "Push",
+      "max": 40,
+      "min": 0,
+      "unit": "m/s"
+    },
+    {
+      "default": 0.5,
+      "id": "cooldown",
+      "label": "Cooldown",
+      "max": 10,
+      "min": 0.1,
+      "unit": "s"
+    },
+    {
+      "default": 4,
+      "id": "heavy_at",
+      "label": "Heavy at",
+      "max": 10,
+      "min": 1,
+      "unit": "m/s"
+    }
+  ],
+  "gate": {
+    "blockedBy": [
+      "stunned",
+      "held",
+      "down"
+    ],
+    "cooldown": {
+      "dial": "cooldown"
+    }
+  },
+  "icon": "lib:icon/strike",
+  "id": "melee_strike",
+  "label": "Strike",
+  "phases": [
+    {
+      "blocks": [
+        {
+          "do": {
+            "act": "hitVolume",
+            "filter": {
+              "rel": "enemy"
+            },
+            "on": {
+              "socket": "triggerHand"
+            },
+            "onHit": [
+              {
+                "act": "if",
+                "cond": {
+                  "cmp": {
+                    "a": {
+                      "read": "impactSpeed"
+                    },
+                    "b": {
+                      "dial": "heavy_at"
+                    },
+                    "op": ">="
+                  }
+                },
+                "else": [
+                  {
+                    "act": "damage",
+                    "amount": {
+                      "dial": "damage"
+                    },
+                    "part": "auto",
+                    "to": "target"
+                  },
+                  {
+                    "act": "fx",
+                    "at": "hitPoint",
+                    "effect": "lib:fx/impact_stars"
+                  },
+                  {
+                    "act": "sound",
+                    "at": "hitPoint",
+                    "op": "play",
+                    "sound": "lib:sfx/punch_soft"
+                  },
+                  {
+                    "act": "feel",
+                    "amount": 0.6,
+                    "kind": "haptic",
+                    "seconds": 0.06,
+                    "who": "caster"
+                  }
+                ],
+                "then": [
+                  {
+                    "act": "damage",
+                    "amount": {
+                      "dial": "damage",
+                      "times": 1.5
+                    },
+                    "part": "auto",
+                    "to": "target"
+                  },
+                  {
+                    "act": "fx",
+                    "at": "hitPoint",
+                    "effect": "lib:fx/impact_burst"
+                  },
+                  {
+                    "act": "sound",
+                    "at": "hitPoint",
+                    "op": "play",
+                    "sound": "lib:sfx/thud_heavy"
+                  },
+                  {
+                    "act": "feel",
+                    "amount": 0.9,
+                    "kind": "haptic",
+                    "seconds": 0.06,
+                    "who": "caster"
+                  }
+                ]
+              },
+              {
+                "act": "force",
+                "dir": "away",
+                "from": {
+                  "of": "caster"
+                },
+                "kind": "push",
+                "speed": {
+                  "dial": "push"
+                },
+                "who": "target"
+              }
+            ],
+            "once": "perTarget",
+            "shape": {
+              "sphere": {
+                "dial": "radius"
+              }
+            },
+            "who": "caster"
+          },
+          "id": "fist",
+          "label": "the fist",
+          "len": 0.15,
+          "t": 0.06
+        },
+        {
+          "do": {
+            "act": "fx",
+            "at": {
+              "of": "caster",
+              "socket": "triggerHand"
+            },
+            "effect": "lib:fx/fist_trail"
+          },
+          "id": "trail",
+          "label": "the trail",
+          "len": 0.15,
+          "t": 0.06
+        },
+        {
+          "do": {
+            "act": "sound",
+            "at": {
+              "of": "caster",
+              "socket": "triggerHand"
+            },
+            "op": "play",
+            "sound": "lib:sfx/swing_fast"
+          },
+          "t": 0.04
+        }
+      ],
+      "exits": [
+        {
+          "on": "time",
+          "to": "end"
+        }
+      ],
+      "id": "strike",
+      "label": "Strike",
+      "max": 0.3
+    }
+  ],
+  "schemaVersion": 2,
+  "trigger": {
+    "input": {
+      "button": {
+        "act": "slot",
+        "edge": "press"
+      },
+      "hand": {
+        "hand": "either",
+        "minSpeed": 4,
+        "motion": "punch"
+      }
+    },
+    "kind": "press"
+  }
+}

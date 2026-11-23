@@ -1,0 +1,14 @@
+{
+  "pack": "kaykit_adventurers",
+  "publisher": "KayKit",
+  "title": "KayKit - Character Pack : Adventurers",
+  "tier": "free",
+  "version": "2026-11-08",
+  "licence": "CC0-1.0",
+  "page": "https://kaylousberg.itch.io/kaykit-adventurers",
+  "licenceQuote": "Asset license: Creative Commons Zero v1.0 Universal",
+  "fetchedOn": "2026-11-14",
+  "zipSha256": "abe48f4763fba0896bab486ee9e6d08ca6b5b3884b9601f235c8847ae94dc479",
+  "files": 6,
+  "use": "creature"
+}

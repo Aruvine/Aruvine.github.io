@@ -1,0 +1,65 @@
+{
+  "dials": [
+    {
+      "default": 0.8,
+      "id": "size",
+      "label": "Size",
+      "max": 4,
+      "min": 0.05,
+      "step": 0.05,
+      "unit": "m"
+    },
+    {
+      "default": 0,
+      "id": "spin",
+      "label": "Spin",
+      "max": 720,
+      "min": -720,
+      "step": 10,
+      "unit": "°/s"
+    }
+  ],
+  "id": "ice_spike",
+  "kind": "meshEffect",
+  "label": "Ice spike",
+  "layers": [
+    {
+      "blend": "cutout",
+      "color": "a",
+      "fade": 0.3,
+      "id": "mesh",
+      "mesh": "spikes",
+      "prim": "shape",
+      "size": {
+        "dial": "size"
+      },
+      "spin": {
+        "dial": "spin"
+      }
+    },
+    {
+      "color": "b",
+      "count": 12,
+      "dir": "up",
+      "id": "frost",
+      "mode": "burst",
+      "particleLife": 0.6,
+      "prim": "sprites",
+      "size": 0.05,
+      "sizeEnd": 0,
+      "speed": 1,
+      "spread": 90,
+      "sprite": "flake"
+    }
+  ],
+  "life": 1,
+  "palette": {
+    "a": "#8fe3ff",
+    "b": "#ffffff"
+  },
+  "schemaVersion": 2,
+  "sound": "lib:sfx/ice_crack",
+  "tags": [
+    "ice"
+  ]
+}

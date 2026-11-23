@@ -1,0 +1,53 @@
+{
+  "dials": [
+    {
+      "default": 2,
+      "id": "size",
+      "label": "Size",
+      "max": 16,
+      "min": 0.5,
+      "step": 0.1,
+      "unit": "m"
+    }
+  ],
+  "id": "telegraph",
+  "kind": "groundMark",
+  "label": "Telegraph",
+  "layers": [
+    {
+      "color": "a",
+      "edge": "hard",
+      "id": "area",
+      "prim": "decal",
+      "pulse": 2,
+      "r": {
+        "dial": "size"
+      },
+      "role": "core",
+      "shape": "disc"
+    },
+    {
+      "color": "b",
+      "edge": "soft",
+      "grow": [
+        0,
+        1
+      ],
+      "id": "fill",
+      "prim": "decal",
+      "r": {
+        "dial": "size"
+      },
+      "shape": "disc"
+    }
+  ],
+  "life": 0,
+  "palette": {
+    "a": "#ff3a2a",
+    "b": "#ffb0a0"
+  },
+  "schemaVersion": 2,
+  "tags": [
+    "warning"
+  ]
+}

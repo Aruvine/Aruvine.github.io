@@ -1,0 +1,67 @@
+{
+  "dials": [
+    {
+      "default": 1.2,
+      "id": "size",
+      "label": "Size",
+      "max": 4,
+      "min": 0.05,
+      "step": 0.05,
+      "unit": "m"
+    },
+    {
+      "default": 0,
+      "id": "spin",
+      "label": "Spin",
+      "max": 720,
+      "min": -720,
+      "step": 10,
+      "unit": "°/s"
+    }
+  ],
+  "id": "slash_arc",
+  "kind": "meshEffect",
+  "label": "Slash arc",
+  "layers": [
+    {
+      "blend": "cutout",
+      "color": "a",
+      "fade": 0.3,
+      "id": "mesh",
+      "mesh": "crescent",
+      "prim": "shape",
+      "size": {
+        "dial": "size"
+      },
+      "spin": {
+        "dial": "spin"
+      }
+    },
+    {
+      "blend": "add",
+      "color": "b",
+      "count": 10,
+      "dir": "forward",
+      "id": "sparks",
+      "mode": "burst",
+      "particleLife": 0.25,
+      "prim": "sprites",
+      "size": 0.05,
+      "sizeEnd": 0,
+      "speed": 3,
+      "spread": 30,
+      "sprite": "spark",
+      "stretch": 2
+    }
+  ],
+  "life": 1,
+  "palette": {
+    "a": "#e8f6ff",
+    "b": "#7fc4ff"
+  },
+  "schemaVersion": 2,
+  "sound": "lib:sfx/swing_fast",
+  "tags": [
+    "blade"
+  ]
+}

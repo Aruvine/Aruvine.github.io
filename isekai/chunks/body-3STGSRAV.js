@@ -1,0 +1,2 @@
+import{a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r}from"./chunk-W3BZJEJJ.js";import"./chunk-OJ3G4LYC.js";import"./chunk-5ZXQV45G.js";import"./chunk-D2M7RLIY.js";import"./chunk-4ZGMG5FA.js";import"./chunk-XAWE4EAK.js";export{r as BodyEffectsView,g as BodyLimbs,n as END_BLEND_S,k as END_BONES,a as END_WEIGHT,i as HELD_BONES,j as HeldItemView,d as LIMB_NAMES,l as REGION_BONES,e as SNAP_BACK_S,f as TUBE_RADIUS,q as allocateTubes,o as effectBodyOfCopy,p as effectBodyOfRig,m as resizedView,h as skinnedMeshesOf,b as splitByEnds,c as subtreeBones};
+//# sourceMappingURL=body-3STGSRAV.js.map

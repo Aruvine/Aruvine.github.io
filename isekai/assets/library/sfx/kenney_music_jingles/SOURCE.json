@@ -1,0 +1,14 @@
+{
+  "pack": "kenney_music_jingles",
+  "publisher": "Kenney",
+  "title": "Music Jingles",
+  "tier": "free",
+  "version": "1.0",
+  "licence": "CC0-1.0",
+  "page": "https://kenney.nl/assets/music-jingles",
+  "licenceQuote": "License: Creative Commons CC0",
+  "fetchedOn": "2026-11-14",
+  "zipSha256": "b729ba57959bd58793d2c5cafa348aaf2655d354f3da35ec4729e03ec77197b8",
+  "files": 3,
+  "use": "sfx"
+}

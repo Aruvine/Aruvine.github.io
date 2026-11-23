@@ -1,0 +1,43 @@
+{
+  "dials": [
+    {
+      "default": 0.25,
+      "id": "wipe",
+      "label": "Wipe",
+      "max": 2,
+      "min": 0,
+      "step": 0.05,
+      "unit": "s"
+    }
+  ],
+  "floor": {
+    "color": "#5ab0d0",
+    "glow": "#c8f4ff",
+    "pattern": "grid"
+  },
+  "fog": {
+    "far": 36,
+    "near": 10
+  },
+  "id": "crystal_hall",
+  "kind": "backdrop",
+  "label": "Crystal hall",
+  "life": 0,
+  "light": {
+    "level": 1.2,
+    "tint": "#d8f4ff"
+  },
+  "schemaVersion": 2,
+  "sky": {
+    "horizon": "#8ae0ff",
+    "moon": false,
+    "stars": 0.3,
+    "top": "#1a3a5a"
+  },
+  "tags": [
+    "backdrop"
+  ],
+  "wipe": {
+    "dial": "wipe"
+  }
+}

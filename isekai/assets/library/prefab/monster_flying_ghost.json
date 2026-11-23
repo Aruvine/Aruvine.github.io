@@ -1,0 +1,28 @@
+{
+  "c": {
+    "body": {
+      "kind": "static"
+    },
+    "clipmap": {
+      "attack": "Headbutt",
+      "defeat": "Death",
+      "hit": "HitReact",
+      "idle": "Flying_Idle",
+      "move": "Fast_Flying",
+      "no": "No",
+      "run": "Fast_Flying",
+      "yes": "Yes"
+    },
+    "shape": {
+      "model": "lib:model/monster_flying_ghost"
+    }
+  },
+  "id": "monster_flying_ghost",
+  "kind": "creature",
+  "label": "Ghost (flying)",
+  "schemaVersion": 2,
+  "tags": [
+    "monster",
+    "flying"
+  ]
+}

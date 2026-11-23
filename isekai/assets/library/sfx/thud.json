@@ -1,0 +1,22 @@
+{
+  "id": "thud",
+  "kind": "synth",
+  "label": "Thud",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.18,
+    "decay": 0.25,
+    "freqRamp": -0.25,
+    "hpfFreq": 0.02,
+    "lpfFreq": 0.5,
+    "punch": 0.4,
+    "sustain": 0.04,
+    "wave": "noise"
+  },
+  "tags": [
+    "hit"
+  ]
+}

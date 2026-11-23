@@ -1,0 +1,13 @@
+{
+  "bytes": 327732,
+  "file": "monster_flying_ghost.glb",
+  "height": 3.059,
+  "id": "monster_flying_ghost",
+  "label": "Ghost (flying)",
+  "licence": "ultimate_monsters",
+  "rig": "creature",
+  "schemaVersion": 2,
+  "sha256": "98f4cb7aa8c22ef681865df115f926dfe02b58c91e8eb15f19aa910a98e67d4c",
+  "triangles": 3192,
+  "yaw": 0
+}

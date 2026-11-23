@@ -1,0 +1,26 @@
+{
+  "bus": "ui",
+  "id": "tick",
+  "kind": "synth",
+  "label": "Tick",
+  "licence": "own",
+  "pitchVar": 0,
+  "schemaVersion": 2,
+  "since": 2,
+  "space": "flat",
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.75,
+    "decay": 0.04,
+    "duty": 0.5,
+    "freqRamp": 0,
+    "hpfFreq": 0.3,
+    "lpfFreq": 1,
+    "punch": 0.3,
+    "sustain": 0.005,
+    "wave": "square"
+  },
+  "tags": [
+    "pop"
+  ]
+}

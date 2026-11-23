@@ -1,0 +1,12 @@
+{
+  "file": "held_struggle.vrma",
+  "group": "reactions",
+  "id": "held_struggle",
+  "label": "Struggle when held",
+  "licence": "own",
+  "loop": true,
+  "origin": "made",
+  "schemaVersion": 2,
+  "seconds": 1.6,
+  "since": 2
+}

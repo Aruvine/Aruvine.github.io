@@ -1,0 +1,37 @@
+[
+  {
+    "cmd": "edit.set",
+    "path": "prefabs/dead_branch.json",
+    "value": {
+      "c": {
+        "body": {
+          "collider": "box",
+          "kind": "static"
+        },
+        "shape": {
+          "model": {
+            "prim": "box",
+            "size": [
+              6,
+              0.8,
+              0.8
+            ]
+          },
+          "tint": "#6f6a55"
+        },
+        "surface": {
+          "traits": [
+            "hookable"
+          ]
+        }
+      },
+      "id": "dead_branch",
+      "kind": "prop",
+      "label": "Dead branch",
+      "schemaVersion": 2,
+      "tags": [
+        "tree"
+      ]
+    }
+  }
+]

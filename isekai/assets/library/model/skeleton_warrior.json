@@ -1,0 +1,13 @@
+{
+  "bytes": 367484,
+  "file": "skeleton_warrior.glb",
+  "height": 2.59,
+  "id": "skeleton_warrior",
+  "label": "Skeleton Warrior",
+  "licence": "kaykit_skeletons",
+  "rig": "glbHumanoid",
+  "schemaVersion": 2,
+  "sha256": "992d5cfd6beb5565c50f742587d492f2a2cfcdfb3ffe4435aa16461c6d0e54be",
+  "triangles": 5934,
+  "yaw": 0
+}

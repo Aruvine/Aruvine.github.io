@@ -1,0 +1,23 @@
+{
+  "id": "rock_break",
+  "kind": "synth",
+  "label": "Rock breaks",
+  "licence": "own",
+  "range": 40,
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0,
+    "baseFreq": 0.12,
+    "decay": 0.45,
+    "freqRamp": -0.05,
+    "lpfFreq": 0.6,
+    "punch": 0.6,
+    "repeatSpeed": 0.45,
+    "sustain": 0.2,
+    "wave": "noise"
+  },
+  "tags": [
+    "blast"
+  ]
+}

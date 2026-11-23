@@ -1,0 +1,25 @@
+{
+  "id": "buff_rise",
+  "kind": "synth",
+  "label": "Buff rising",
+  "licence": "own",
+  "schemaVersion": 2,
+  "since": 2,
+  "synth": {
+    "attack": 0.1,
+    "baseFreq": 0.35,
+    "decay": 0.3,
+    "duty": 0.25,
+    "dutyRamp": 0.2,
+    "freqRamp": 0.2,
+    "lpfFreq": 0.8,
+    "punch": 0,
+    "sustain": 0.2,
+    "vibSpeed": 0.4,
+    "vibStrength": 0.15,
+    "wave": "square"
+  },
+  "tags": [
+    "charge"
+  ]
+}
